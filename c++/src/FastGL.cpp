@@ -1,6 +1,7 @@
 #include "FastGL/FastGL.hpp"
 
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_events.h>
 #include <SDL3/SDL_mouse.h>
 #include <bgfx/platform.h>
 #include <bx/math.h>
@@ -15,7 +16,8 @@
 
 namespace fastgl {
 
-bool FastGL::Run() {
+bool FastGL::Run(bool headless) {
+  headless_ = headless;
   if (!Init()) {
     return false;
   }
@@ -44,7 +46,13 @@ bool FastGL::Init() {
     return false;
   }
 
-  window_ = SDL_CreateWindow("Main view", width_, height_, SDL_WINDOW_OCCLUDED);
+  if (headless_) {
+    window_ = SDL_CreateWindow("Main view", width_, height_,
+                               SDL_WINDOW_HIDDEN | SDL_WINDOW_OCCLUDED);
+  } else {
+    window_ =
+        SDL_CreateWindow("Main view", width_, height_, SDL_WINDOW_OCCLUDED);
+  }
 
   if (window_ == nullptr) {
     printf("Window could not be created. SDL_Error: %s\n", SDL_GetError());
@@ -122,22 +130,36 @@ void FastGL::MouseOperation() {
     float mouse_x;
     float mouse_y;
     const uint32_t buttons = SDL_GetMouseState(&mouse_x, &mouse_y);
+
+    // マウスの移動量を計算
+    float delta_x = mouse_x - prev_mouse_x_;
+    float delta_y = mouse_y - prev_mouse_y_;
+
+    // 左ボタンドラッグで回転
     if ((buttons & SDL_BUTTON_LMASK) != 0) {
-      float delta_x = mouse_x - prev_mouse_x_;
-      float delta_y = mouse_y - prev_mouse_y_;
-      cam_yaw_ -= (-delta_x) * rot_scale_;
+      cam_yaw_ += (-delta_x) * rot_scale_;
       cam_pitch_ += (-delta_y) * rot_scale_;
     }
+
+    // 中ボタンドラッグでパン
+    if ((buttons & SDL_BUTTON_MMASK) != 0) {
+      cam_pan_x_ -= delta_x * pan_scale_;
+      cam_pan_y_ += delta_y * pan_scale_;  // Y軸は逆方向
+    }
+
     prev_mouse_x_ = mouse_x;
     prev_mouse_y_ = mouse_y;
   }
 
+  // カメラの回転行列を計算
   float cam_rotation[16];
   bx::mtxRotateXYZ(cam_rotation, cam_pitch_, cam_yaw_, 0.0F);
 
+  // パンとズームを含む移動行列を計算
   float cam_translation[16];
-  bx::mtxTranslate(cam_translation, 0.0F, 0.0F, -10.0F);
+  bx::mtxTranslate(cam_translation, cam_pan_x_, cam_pan_y_, zoom_distance_);
 
+  // 最終的なカメラ変換行列を計算
   float cam_transform[16];
   bx::mtxMul(cam_transform, cam_translation, cam_rotation);
 
@@ -166,6 +188,9 @@ void FastGL::MainLoop() {
       if (event.type == SDL_EVENT_QUIT) {
         quit = true;
         break;
+      }
+      if (event.type == SDL_EVENT_MOUSE_WHEEL) {
+        zoom_distance_ += event.wheel.y * zoom_scale_;
       }
     }
 

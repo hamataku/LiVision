@@ -8,11 +8,6 @@
 #include "Utils.hpp"
 
 namespace fastgl {
-struct PosVertex {
-  float x;
-  float y;
-  float z;
-};
 
 class Box : public ObjectBase {
  public:
@@ -56,10 +51,10 @@ class Box : public ObjectBase {
   glm::vec3 size_ = glm::vec3(1.0F, 1.0F, 1.0F);
   float color_[4] = {1.0F, 0.0F, 0.0F, 1.0F};  // RGBA
 
-  static constexpr PosVertex kCubeVertices[8] = {
-      {-1.0F, 1.0F, 1.0F},   {1.0F, 1.0F, 1.0F},   {-1.0F, -1.0F, 1.0F},
-      {1.0F, -1.0F, 1.0F},   {-1.0F, 1.0F, -1.0F}, {1.0F, 1.0F, -1.0F},
-      {-1.0F, -1.0F, -1.0F}, {1.0F, -1.0F, -1.0F},
+  static constexpr utils::PosVertex kCubeVertices[8] = {
+      {-0.5F, 0.5F, 0.5F},   {0.5F, 0.5F, 0.5F},   {-0.5F, -0.5F, 0.5F},
+      {0.5F, -0.5F, 0.5F},   {-0.5F, 0.5F, -0.5F}, {0.5F, 0.5F, -0.5F},
+      {-0.5F, -0.5F, -0.5F}, {0.5F, -0.5F, -0.5F},
   };
 
   static constexpr uint16_t kCubeTriList[36] = {
