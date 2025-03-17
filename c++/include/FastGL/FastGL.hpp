@@ -1,7 +1,9 @@
 #pragma once
-#include <bgfx/bgfx.h>
 #include <SDL3/SDL.h>
+#include <bgfx/bgfx.h>
+
 #include <string>
+
 #include "SceneBase.hpp"
 
 namespace fastgl {
@@ -16,7 +18,9 @@ class FastGL {
 
  private:
   bool Init();
+  void MouseOperation();
   void MainLoop();
+  void PrintFPS();
   void PrintBackend();
   bgfx::ShaderHandle CreateShader(const std::string& shader, const char* name);
 
@@ -35,5 +39,8 @@ class FastGL {
 
   SceneBase* scene_ = nullptr;
   bool scene_set_ = false;
+
+  Uint64 last_counter_ = 0;
+  int fps_print_counter_ = 0;
 };
 }  // namespace fastgl

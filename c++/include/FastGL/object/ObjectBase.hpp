@@ -1,16 +1,16 @@
 #pragma once
 
-#include <glm/glm.hpp>
-#include <glm/gtc/quaternion.hpp>
 #include <bgfx/bgfx.h>
 #include <bx/math.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <iostream>
 
 namespace fastgl {
 class ObjectBase {
  public:
-  virtual void Init() {};
+  virtual void Init(){};
   virtual void Draw(bgfx::ProgramHandle& program) = 0;
 
   void SetPos(const glm::vec3& pos) { pos_ = pos; }

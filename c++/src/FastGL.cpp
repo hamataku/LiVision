@@ -7,6 +7,7 @@
 
 #include <iostream>
 
+#include "FastGL/object/Utils.hpp"
 #include "bgfx-imgui/imgui_impl_bgfx.h"
 #include "file-ops.h"
 #include "imgui.h"
@@ -22,6 +23,7 @@ bool FastGL::Run() {
   MainLoop();
 
   // Cleanup
+  utils::DeInit();
   bgfx::destroy(program_);
 
   ImGui_ImplSDL3_Shutdown();
@@ -110,8 +112,44 @@ bool FastGL::Init() {
   program_ = bgfx::createProgram(vsh, fsh, true);
 
   PrintBackend();
+  utils::Init();
 
   return true;
+}
+
+void FastGL::MouseOperation() {
+  if (!ImGui::GetIO().WantCaptureMouse) {
+    float mouse_x;
+    float mouse_y;
+    const uint32_t buttons = SDL_GetMouseState(&mouse_x, &mouse_y);
+    if ((buttons & SDL_BUTTON_LMASK) != 0) {
+      float delta_x = mouse_x - prev_mouse_x_;
+      float delta_y = mouse_y - prev_mouse_y_;
+      cam_yaw_ -= (-delta_x) * rot_scale_;
+      cam_pitch_ += (-delta_y) * rot_scale_;
+    }
+    prev_mouse_x_ = mouse_x;
+    prev_mouse_y_ = mouse_y;
+  }
+
+  float cam_rotation[16];
+  bx::mtxRotateXYZ(cam_rotation, cam_pitch_, cam_yaw_, 0.0F);
+
+  float cam_translation[16];
+  bx::mtxTranslate(cam_translation, 0.0F, 0.0F, -10.0F);
+
+  float cam_transform[16];
+  bx::mtxMul(cam_transform, cam_translation, cam_rotation);
+
+  float view[16];
+  bx::mtxInverse(view, cam_transform);
+
+  float proj[16];
+  bx::mtxProj(proj, 60.0F,
+              static_cast<float>(width_) / static_cast<float>(height_), 0.1F,
+              100.0F, bgfx::getCaps()->homogeneousDepth);
+
+  bgfx::setViewTransform(0, view, proj);
 }
 
 void FastGL::MainLoop() {
@@ -120,23 +158,6 @@ void FastGL::MainLoop() {
     if (scene_set_) {
       scene_->Init();
       scene_set_ = false;
-    }
-    // フレームレート計測用
-    static Uint64 last_counter = SDL_GetPerformanceCounter();
-    static float fps = 0.0F;
-
-    // 現在のカウンターを取得
-    Uint64 current_counter = SDL_GetPerformanceCounter();
-
-    // デバッグ用にfpsを出力
-    static int fps_print_counter = 0;
-    if (++fps_print_counter % 1000 == 0) {
-      float delta_time = static_cast<float>(current_counter - last_counter) /
-                         SDL_GetPerformanceFrequency();
-      last_counter = current_counter;
-      fps = 1.0F / delta_time * 1000.0F;
-      printf("Current FPS: %.1f\n", fps);
-      fps_print_counter = 0;
     }
 
     SDL_Event event;
@@ -156,38 +177,7 @@ void FastGL::MainLoop() {
     // ImGui::Render();
     // ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
 
-    if (!ImGui::GetIO().WantCaptureMouse) {
-      float mouse_x;
-      float mouse_y;
-      const uint32_t buttons = SDL_GetMouseState(&mouse_x, &mouse_y);
-      if ((buttons & SDL_BUTTON_LMASK) != 0) {
-        float delta_x = mouse_x - prev_mouse_x_;
-        float delta_y = mouse_y - prev_mouse_y_;
-        cam_yaw_ -= (-delta_x) * rot_scale_;
-        cam_pitch_ += (-delta_y) * rot_scale_;
-      }
-      prev_mouse_x_ = mouse_x;
-      prev_mouse_y_ = mouse_y;
-    }
-
-    float cam_rotation[16];
-    bx::mtxRotateXYZ(cam_rotation, cam_pitch_, cam_yaw_, 0.0F);
-
-    float cam_translation[16];
-    bx::mtxTranslate(cam_translation, 0.0F, 0.0F, -5.0F);
-
-    float cam_transform[16];
-    bx::mtxMul(cam_transform, cam_translation, cam_rotation);
-
-    float view[16];
-    bx::mtxInverse(view, cam_transform);
-
-    float proj[16];
-    bx::mtxProj(proj, 60.0F,
-                static_cast<float>(width_) / static_cast<float>(height_), 0.1F,
-                100.0F, bgfx::getCaps()->homogeneousDepth);
-
-    bgfx::setViewTransform(0, view, proj);
+    MouseOperation();
 
     if (scene_) {
       scene_->Update();
@@ -195,6 +185,21 @@ void FastGL::MainLoop() {
     }
 
     bgfx::frame();
+
+    PrintFPS();
+  }
+}
+
+void FastGL::PrintFPS() {
+  static int fps_print_counter = 0;
+  if (++fps_print_counter % 1000 == 0) {
+    Uint64 current_counter = SDL_GetPerformanceCounter();
+    float delta_time = static_cast<float>(current_counter - last_counter_) /
+                       SDL_GetPerformanceFrequency();
+    last_counter_ = current_counter;
+    float fps = 1.0F / delta_time * 1000.0F;
+    printf("Current FPS: %.1f\n", fps);
+    fps_print_counter = 0;
   }
 }
 
