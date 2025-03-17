@@ -5,26 +5,28 @@ option(SUPERBUILD "Perform a superbuild (or not)" OFF)
 project(sdl-bgfx-imgui-starter LANGUAGES CXX)
 
 if (SUPERBUILD)
-  if (EMSCRIPTEN)
-    set(THIRD_PARTY_BUILD_DIR_NAME embuild)
-  else ()
-    set(THIRD_PARTY_BUILD_DIR_NAME build)
-  endif ()
+  set(THIRD_PARTY_BUILD_DIR_NAME build)
   include(third-party/CMakeLists.txt)
   include(cmake/superbuild.cmake)
   return()
 endif ()
 
+find_package(glm CONFIG REQUIRED)
 find_package(SDL3 REQUIRED CONFIG CMAKE_FIND_ROOT_PATH_BOTH)
 find_package(bgfx REQUIRED CONFIG CMAKE_FIND_ROOT_PATH_BOTH)
 find_package(imgui.cmake REQUIRED CONFIG CMAKE_FIND_ROOT_PATH_BOTH)
 
 add_executable(${PROJECT_NAME})
-target_sources(${PROJECT_NAME} PRIVATE main.cpp sdl-imgui/imgui_impl_sdl3.cpp
-                                       bgfx-imgui/imgui_impl_bgfx.cpp)
+
+file(GLOB SOURCES "src/*.cpp" "third-party/sdl-imgui/*.cpp" "third-party/bgfx-imgui/*.cpp")
+
+target_sources(${PROJECT_NAME} PRIVATE ${SOURCES})
+
+target_include_directories(${PROJECT_NAME} PRIVATE include third-party)
+
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_11)
 target_link_libraries(
-  ${PROJECT_NAME} PRIVATE SDL3::SDL3 bgfx::bgfx bgfx::bx
+  ${PROJECT_NAME} PRIVATE glm::glm SDL3::SDL3 bgfx::bgfx bgfx::bx
                           imgui.cmake::imgui.cmake)
 target_link_options(
   ${PROJECT_NAME} PRIVATE $<$<BOOL:${EMSCRIPTEN}>:-sMAX_WEBGL_VERSION=2
@@ -33,43 +35,14 @@ target_link_options(
 target_compile_definitions(
   ${PROJECT_NAME} PRIVATE $<$<BOOL:${EMSCRIPTEN}>:USE_SDL=3>)
 
-if (EMSCRIPTEN)
-  set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".html")
-  add_custom_command(
-    TARGET ${PROJECT_NAME}
-    PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory
-            $<TARGET_FILE_DIR:${PROJECT_NAME}>/shader/embuild
-    COMMAND
-      ${CMAKE_COMMAND} -E copy_if_different
-      ${CMAKE_CURRENT_SOURCE_DIR}/shader/embuild/v_simple.bin
-      $<TARGET_FILE_DIR:${PROJECT_NAME}>/shader/embuild
-    COMMAND
-      ${CMAKE_COMMAND} -E copy_if_different
-      ${CMAKE_CURRENT_SOURCE_DIR}/shader/embuild/f_simple.bin
-      $<TARGET_FILE_DIR:${PROJECT_NAME}>/shader/embuild
-    VERBATIM)
-else ()
-  add_custom_command(
-    TARGET ${PROJECT_NAME}
-    POST_BUILD
-    COMMAND
-      ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/shader/build
-      $<TARGET_FILE_DIR:${PROJECT_NAME}>/shader/build
-    VERBATIM)
-endif ()
+add_custom_command(
+  TARGET ${PROJECT_NAME}
+  POST_BUILD
+  COMMAND
+    ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/shader/build
+    $<TARGET_FILE_DIR:${PROJECT_NAME}>/shader/build
+  VERBATIM)
 
 set_target_properties(
   ${PROJECT_NAME}
-  # required for project when using visual studio generator
   PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIG>)
-
-if (WIN32)
-  # copy the SDL3.dll to the same folder as the executable
-  add_custom_command(
-    TARGET ${PROJECT_NAME}
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:SDL3::SDL3>
-            $<TARGET_FILE_DIR:${PROJECT_NAME}>
-    VERBATIM)
-endif ()
