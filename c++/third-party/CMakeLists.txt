@@ -34,11 +34,11 @@ endif ()
 
 if (NOT EMSCRIPTEN)
   ExternalProject_Add(
-    SDL2
+    SDL3
     GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-    GIT_TAG release-2.28.4
+    GIT_TAG release-3.2.8
     PREFIX ${PREFIX_DIR}
-    BINARY_DIR ${PREFIX_DIR}/src/SDL2-build/${build_type_dir}
+    BINARY_DIR ${PREFIX_DIR}/src/SDL3-build/${build_type_dir}
     CMAKE_COMMAND ${THIRD_PARTY_CMAKE_COMMAND}
     CMAKE_ARGS ${build_type_arg} -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
     BUILD_COMMAND cmake --build <BINARY_DIR> ${build_config_arg}
