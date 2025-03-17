@@ -49,7 +49,7 @@ endif ()
 ExternalProject_Add(
   bgfx
   GIT_REPOSITORY https://github.com/pr0g/bgfx.cmake.git
-  GIT_TAG bde3f94ce75ffd184e9a3bdfe947a3bec69233eb
+  GIT_TAG e12aba94c77317eac4b16623d7e04de87cd66166
   PREFIX ${PREFIX_DIR}
   BINARY_DIR ${PREFIX_DIR}/src/bgfx-build/${build_type_dir}
   CMAKE_COMMAND ${THIRD_PARTY_CMAKE_COMMAND}
@@ -65,7 +65,7 @@ ExternalProject_Add(
 ExternalProject_Add(
   imgui.cmake
   GIT_REPOSITORY https://github.com/pr0g/imgui.cmake.git
-  GIT_TAG 20e7d1a627690526c98b0b48c346e384ab87c5a6
+  GIT_TAG 886661da24e01ecfa601b5c3bd624ed2067c229f
   PREFIX ${PREFIX_DIR}
   BINARY_DIR ${PREFIX_DIR}/src/imgui.cmake-build/${build_type_dir}
   CMAKE_COMMAND ${THIRD_PARTY_CMAKE_COMMAND}
