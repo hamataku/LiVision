@@ -1,12 +1,11 @@
 #include "FastGL/FastGL.hpp"
 
-#include <iostream>
-
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_mouse.h>
 #include <bgfx/platform.h>
 #include <bx/math.h>
 
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_mouse.h>
+#include <iostream>
 
 #include "bgfx-imgui/imgui_impl_bgfx.h"
 #include "file-ops.h"
@@ -43,8 +42,7 @@ bool FastGL::Init() {
     return false;
   }
 
-  window_ = SDL_CreateWindow("Main view", width_, height_,
-                             SDL_WINDOW_OCCLUDED | SDL_WINDOW_VULKAN);
+  window_ = SDL_CreateWindow("Main view", width_, height_, SDL_WINDOW_OCCLUDED);
 
   if (window_ == nullptr) {
     printf("Window could not be created. SDL_Error: %s\n", SDL_GetError());
@@ -54,11 +52,12 @@ bool FastGL::Init() {
   bgfx::renderFrame();  // single threaded mode
   bgfx::PlatformData pd{};
 #if BX_PLATFORM_WINDOWS
-  pd.nwh = SDL_GetPointerProperty(SDL_GetWindowProperties(window),
-                                  SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
+  pd.nwh = SDL_GetPointerProperty(SDL_GetWindowProperties(window_),
+                                  SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr);
 #elif BX_PLATFORM_OSX
-  pd.nwh = SDL_GetPointerProperty(SDL_GetWindowProperties(window),
-                                  SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, NULL);
+  pd.nwh =
+      SDL_GetPointerProperty(SDL_GetWindowProperties(window_),
+                             SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, nullptr);
 #elif BX_PLATFORM_LINUX
   if (SDL_strcmp(SDL_GetCurrentVideoDriver(), "x11") == 0) {
     pd.ndt =
@@ -70,7 +69,7 @@ bool FastGL::Init() {
 #endif
 
   bgfx::Init bgfx_init;
-  bgfx_init.type = bgfx::RendererType::Vulkan;  // auto choose renderer
+  bgfx_init.type = bgfx::RendererType::Count;  // auto choose renderer
   bgfx_init.resolution.width = width_;
   bgfx_init.resolution.height = height_;
   bgfx_init.resolution.reset = BGFX_RESET_NONE;
@@ -85,9 +84,9 @@ bool FastGL::Init() {
 
   ImGui_Implbgfx_Init(255);
 #if BX_PLATFORM_WINDOWS
-  ImGui_ImplSDL3_InitForD3D(window);
+  ImGui_ImplSDL3_InitForD3D(window_);
 #elif BX_PLATFORM_OSX
-  ImGui_ImplSDL3_InitForMetal(window);
+  ImGui_ImplSDL3_InitForMetal(window_);
 #elif BX_PLATFORM_LINUX
   ImGui_ImplSDL3_InitForVulkan(window_);
 #endif

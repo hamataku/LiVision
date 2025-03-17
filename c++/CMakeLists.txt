@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.24)
 
 option(SUPERBUILD "Perform a superbuild (or not)" OFF)
 
-project(sdl-bgfx-imgui-starter LANGUAGES CXX)
+project(simulator LANGUAGES CXX)
 
 if (SUPERBUILD)
   set(THIRD_PARTY_BUILD_DIR_NAME build)
@@ -24,7 +24,7 @@ target_sources(${PROJECT_NAME} PRIVATE ${SOURCES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE include third-party)
 
-target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_11)
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 target_link_libraries(
   ${PROJECT_NAME} PRIVATE glm::glm SDL3::SDL3 bgfx::bgfx bgfx::bx
                           imgui.cmake::imgui.cmake)
