@@ -26,6 +26,8 @@ static constexpr uint16_t kCubeTriList[36] = {
 inline bgfx::VertexBufferHandle plane_vbh = BGFX_INVALID_HANDLE;
 inline bgfx::IndexBufferHandle plane_ibh = BGFX_INVALID_HANDLE;
 
+inline bgfx::VertexLayout pos_vert_layout;
+
 static constexpr utils::PosVertex kPlaneVertices[4] = {
     {-0.5F, 0.5F, 0.0F},   // top-left
     {0.5F, 0.5F, 0.0F},    // top-right
@@ -40,7 +42,6 @@ inline void Init() {
   // common
   u_color = bgfx::createUniform("u_color", bgfx::UniformType::Vec4);
 
-  bgfx::VertexLayout pos_vert_layout;
   pos_vert_layout.begin()
       .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
       .end();

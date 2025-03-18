@@ -11,7 +11,7 @@
 class SimScene : public fastgl::SceneBase {
  public:
   void Init() override {
-    std::array<float, 4> color{0.3F, 0.3F, 0.3F, 0.1F};
+    std::array<float, 4> color{0.8F, 0.7F, 0.3F, 0.1F};
 
     box0_.SetSize(glm::vec3(0.1F, 10.0F, 5.0F));
     box0_.SetPos(glm::vec3(5.0F, 0.0F, 2.5F));
@@ -38,8 +38,8 @@ class SimScene : public fastgl::SceneBase {
 
     AddObject(&point_cloud0_);
 
-    for (int i = 0; i < 360; i += 3) {
-      for (int j = 0; j < 60; j += 2) {
+    for (int i = 0; i < 360; i += 180) {
+      for (int j = 0; j < 60; j += 30) {
         float rad_yaw = glm::radians(static_cast<float>(i));
         float rad_pitch = glm::radians(static_cast<float>(j));
         direction_.emplace_back(std::cos(rad_yaw), std::sin(rad_yaw),

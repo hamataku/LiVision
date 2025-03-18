@@ -8,9 +8,10 @@
 
 #include <iostream>
 
+#include "FastGL/RayCast.hpp"
+#include "FastGL/file_ops.hpp"
 #include "FastGL/object/Utils.hpp"
 #include "bgfx-imgui/imgui_impl_bgfx.h"
-#include "file_ops.hpp"
 #include "imgui.h"
 #include "sdl-imgui/imgui_impl_sdl3.h"
 
@@ -82,7 +83,7 @@ bool FastGL::Init() {
   bgfx_init.type = bgfx::RendererType::Count;  // auto choose renderer
   bgfx_init.resolution.width = width_;
   bgfx_init.resolution.height = height_;
-  bgfx_init.resolution.reset = BGFX_RESET_NONE;
+  bgfx_init.resolution.reset = BGFX_RESET_VSYNC;
   bgfx_init.platformData = pd;
   bgfx::init(bgfx_init);
 
@@ -176,13 +177,14 @@ void FastGL::MouseOperation() {
 
 void FastGL::MainLoop() {
   bool quit = false;
-  while (!quit) {
-    if (scene_set_) {
-      scene_->Init();
-      scene_set_ = false;
-    }
-    scene_->AddMeshList();
 
+  if (scene_set_) {
+    scene_->Init();
+    scene_set_ = false;
+  }
+  scene_->AddMeshList();
+  ray_cast.Init();
+  while (!quit) {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
       ImGui_ImplSDL3_ProcessEvent(&event);
