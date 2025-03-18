@@ -10,7 +10,7 @@
 
 #include "FastGL/object/Utils.hpp"
 #include "bgfx-imgui/imgui_impl_bgfx.h"
-#include "file-ops.h"
+#include "file_ops.hpp"
 #include "imgui.h"
 #include "sdl-imgui/imgui_impl_sdl3.h"
 
@@ -104,13 +104,13 @@ bool FastGL::Init() {
   const std::string shader_root = "shader/build/";
 
   std::string vshader;
-  if (!fileops::read_file(shader_root + "v_simple.bin", vshader)) {
+  if (!fileops::ReadFile(shader_root + "v_simple.bin", vshader)) {
     printf("Could not find vertex shader");
     return false;
   }
 
   std::string fshader;
-  if (!fileops::read_file(shader_root + "f_simple.bin", fshader)) {
+  if (!fileops::ReadFile(shader_root + "f_simple.bin", fshader)) {
     printf("Could not find fragment shader");
     return false;
   }

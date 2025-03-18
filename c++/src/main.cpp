@@ -7,6 +7,6 @@ int main() {
   SimScene sim_scene;
   fast_gl.SetScene(&sim_scene);
 
-  fast_gl.Run(true);
+  fast_gl.Run(false);
   return 0;
 }
