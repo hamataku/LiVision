@@ -1,7 +1,8 @@
 #pragma once
 
-#include "object/ObjectBase.hpp"
 #include <vector>
+
+#include "object/ObjectBase.hpp"
 
 namespace fastgl {
 
@@ -12,14 +13,20 @@ class SceneBase {
     objects_.push_back(object);
   }
 
+  void AddMeshList() {
+    for (auto& object : objects_) {
+      object->AddMeshList();
+    }
+  }
+
   void Draw(bgfx::ProgramHandle& program) {
     for (auto& object : objects_) {
       object->Draw(program);
     }
   }
 
-  virtual void Update() {};
-  virtual void Init() {};
+  virtual void Update(){};
+  virtual void Init(){};
 
  private:
   std::vector<ObjectBase*> objects_;

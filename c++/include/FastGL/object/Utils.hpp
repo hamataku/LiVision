@@ -13,8 +13,28 @@ inline bgfx::UniformHandle u_color;
 inline bgfx::VertexBufferHandle cube_vbh = BGFX_INVALID_HANDLE;
 inline bgfx::IndexBufferHandle cube_ibh = BGFX_INVALID_HANDLE;
 
+static constexpr utils::PosVertex kCubeVertices[8] = {
+    {-0.5F, 0.5F, 0.5F},   {0.5F, 0.5F, 0.5F},   {-0.5F, -0.5F, 0.5F},
+    {0.5F, -0.5F, 0.5F},   {-0.5F, 0.5F, -0.5F}, {0.5F, 0.5F, -0.5F},
+    {-0.5F, -0.5F, -0.5F}, {0.5F, -0.5F, -0.5F},
+};
+static constexpr uint16_t kCubeTriList[36] = {
+    0, 1, 2, 1, 3, 2, 4, 6, 5, 5, 6, 7, 0, 2, 4, 4, 2, 6,
+    1, 5, 3, 5, 7, 3, 0, 4, 1, 4, 5, 1, 2, 3, 6, 6, 3, 7,
+};
+
 inline bgfx::VertexBufferHandle plane_vbh = BGFX_INVALID_HANDLE;
 inline bgfx::IndexBufferHandle plane_ibh = BGFX_INVALID_HANDLE;
+
+static constexpr utils::PosVertex kPlaneVertices[4] = {
+    {-0.5F, 0.5F, 0.0F},   // top-left
+    {0.5F, 0.5F, 0.0F},    // top-right
+    {-0.5F, -0.5F, 0.0F},  // bottom-left
+    {0.5F, -0.5F, 0.0F}    // bottom-right
+};
+
+static constexpr uint16_t kPlaneTriList[12] = {0, 1, 2, 1, 3, 2,
+                                               0, 2, 1, 1, 2, 3};
 
 inline void Init() {
   // common
@@ -26,32 +46,12 @@ inline void Init() {
       .end();
 
   // cube
-  static constexpr utils::PosVertex kCubeVertices[8] = {
-      {-0.5F, 0.5F, 0.5F},   {0.5F, 0.5F, 0.5F},   {-0.5F, -0.5F, 0.5F},
-      {0.5F, -0.5F, 0.5F},   {-0.5F, 0.5F, -0.5F}, {0.5F, 0.5F, -0.5F},
-      {-0.5F, -0.5F, -0.5F}, {0.5F, -0.5F, -0.5F},
-  };
-  static constexpr uint16_t kCubeTriList[36] = {
-      0, 1, 2, 1, 3, 2, 4, 6, 5, 5, 6, 7, 0, 2, 4, 4, 2, 6,
-      1, 5, 3, 5, 7, 3, 0, 4, 1, 4, 5, 1, 2, 3, 6, 6, 3, 7,
-  };
-
   cube_vbh = bgfx::createVertexBuffer(
       bgfx::makeRef(kCubeVertices, sizeof(kCubeVertices)), pos_vert_layout);
   cube_ibh = bgfx::createIndexBuffer(
       bgfx::makeRef(kCubeTriList, sizeof(kCubeTriList)));
 
   // line
-  static constexpr utils::PosVertex kPlaneVertices[4] = {
-      {-0.5F, 0.5F, 0.0F},   // top-left
-      {0.5F, 0.5F, 0.0F},    // top-right
-      {-0.5F, -0.5F, 0.0F},  // bottom-left
-      {0.5F, -0.5F, 0.0F}    // bottom-right
-  };
-
-  static constexpr uint16_t kPlaneTriList[12] = {0, 1, 2, 1, 3, 2,
-                                                 0, 2, 1, 1, 2, 3};
-
   plane_vbh = bgfx::createVertexBuffer(
       bgfx::makeRef(kPlaneVertices, sizeof(kPlaneVertices)), pos_vert_layout);
   plane_ibh = bgfx::createIndexBuffer(

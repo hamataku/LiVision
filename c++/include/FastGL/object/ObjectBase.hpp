@@ -9,7 +9,8 @@
 namespace fastgl {
 class ObjectBase {
  public:
-  virtual void Init() {};
+  virtual void AddMeshList(){};
+  virtual void Init(){};
   virtual void Draw(bgfx::ProgramHandle& program) = 0;
 
   void SetPos(const glm::vec3& pos) { pos_ = pos; }

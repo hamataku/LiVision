@@ -181,6 +181,7 @@ void FastGL::MainLoop() {
       scene_->Init();
       scene_set_ = false;
     }
+    scene_->AddMeshList();
 
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
