@@ -4,6 +4,14 @@ import numpy as np
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import TransformStamped
 
+# ROS2
+import rclpy
+from rclpy.node import Node as ROSNode
+import tf2_ros as tf2
+
+# ros messages
+from sensor_msgs.msg import PointCloud2, PointField
+
 class Drone:
     def __init__(self):
         gs.init(backend=gs.gpu)
@@ -72,34 +80,46 @@ class Drone:
         )
 
         self.scene.build()
+
+        self.ros_init()
     
-    # def ros_init(self):
-    #     self.odom_pub = ROS.ros_node.create_publisher(Odometry, 'odom', 10)
+    def ros_init(self):
+        rclpy.init()
+        self.ros_node = ROSNode("genesis_simulator")
+        ros2_tf_broadcaster = tf2.TransformBroadcaster(self.ros_node)
+        self.publisher = self.ros_node.create_publisher(PointCloud2, "lidar", 10)
+
+        self.msg = PointCloud2()
+        self.msg.height = 1
+        self.msg.fields = [
+            PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),
+            PointField(name='y', offset=4, datatype=PointField.FLOAT32, count=1),
+            PointField(name='z', offset=8, datatype=PointField.FLOAT32, count=1)]
+        self.msg.point_step = 12
+        self.msg.is_bigendian = False
+        self.msg.is_dense = False
+        self.msg.header.frame_id = 'map'
     
-    # def ros_publish(self, count):
-    #     if count % 10 == 0:
-    #         print(f"Drone position: {self.drone_pos}")
-            # odom_msg = Odometry()
-            # odom_msg.header.stamp = ROS.ros_node.get_clock().now().to_msg()
-            # odom_msg.header.frame_id = 'map'
-            # odom_msg.child_frame_id = 'drone0'
-            # odom_msg.pose.pose.position.x = self.drone_pos[0]
-            # odom_msg.pose.pose.position.y = self.drone_pos[1]
-            # odom_msg.pose.pose.position.z = self.drone_pos[2]
-            # odom_msg.pose.pose.orientation.x = 0.0
-            # odom_msg.pose.pose.orientation.y = 0.0
-            # odom_msg.pose.pose.orientation.z = 0.0
-            # odom_msg.pose.pose.orientation.w = 1.0
-            # self.odom_pub.publish(odom_msg)
+    def ros_publish(self, data):
+            self.msg.header.stamp = self.ros_node.get_clock().now().to_msg()
+            self.msg.width = data.shape[0]
+            self.msg.row_step = self.msg.point_step * self.msg.width
+            self.msg.data = np.float32(data).tostring()
+            self.publisher.publish(self.msg)
         
     def run(self):
         for i in range(100000):
-            self.scene.step()
-            self.drone_vel = [0.1, 0.1, 0.0]
+            if i % 2000 > 1000:
+                self.drone_vel = [0.1, 0.0, 0.0]
+            else:
+                self.drone_vel = [-0.1, 0.0, 0.0]
             self.drone.set_velocity(self.drone_vel)
             self.drone.update()
-            self.drone.render_sensors()
-            # self.ros_publish(i)
+            if i % 10 == 0:
+                data = self.drone.render_sensors()
+                self.ros_publish(data[0])
+            
+            self.scene.step()
 
 if __name__ == '__main__':
     drone = Drone()

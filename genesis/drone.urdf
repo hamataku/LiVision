@@ -30,15 +30,15 @@
 
   <!-- LiDARセンサー -->
   <sensor name="lidar">
-    <!-- <visual>
+    <visual>
       <geometry>
         <cylinder radius="0.01" length="0.02" />
       </geometry>
       <material name="gray" />
-    </visual> -->
-    <sensor_spec type="Lidar" topic="lidar" >
-      <resolution width="120" height="32" />
-      <fov hfov="360" vfov="100" />
+    </visual>
+    <sensor_spec type="Lidar" >
+      <resolution width="1200" height="32" />
+      <fov hfov="360" vfov="120" />
     </sensor_spec>
     <inertial>
       <mass value="0.1" />
@@ -51,7 +51,7 @@
   <joint name="lidar_joint" type="fixed">
     <parent link="base_link" />
     <child link="lidar" />
-    <origin xyz="0 0 0.03" rpy="0 0 0" />
+    <origin xyz="0 0 0.2" rpy="0 0 0" />
     <axis xyz="0 0 0" />
   </joint>
 
