@@ -38,7 +38,7 @@ bool intersectTriangle(vec3 orig, vec3 dir, vec3 v0, vec3 v1, vec3 v2, out float
     return t > 1e-6;
 }
 
-NUM_THREADS(1, 1, 1)
+NUM_THREADS(256, 1, 1)
 void main()
 {
     uint ray_idx = gl_GlobalInvocationID.x;
@@ -75,11 +75,6 @@ void main()
             }
         }
     }
-    vec4 result;
-    result.x = intersection_point.x;
-    result.y = intersection_point.y;
-    result.z = intersection_point.z;
-    result.w = has_hit ? 1.0 : 0.0;
 
-    imageStore(b_results, ivec2(ray_idx, 0), result);
+    imageStore(b_results, ivec2(ray_idx, 0), vec4(intersection_point.xyz, has_hit ? 1.0 : 0.0));
 }

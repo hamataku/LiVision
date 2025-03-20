@@ -33,6 +33,13 @@ class SimScene : public fastgl::SceneBase {
     box3_.SetColor(color);
     AddObject(&box3_);
 
+    // for (auto& box : boxs_) {
+    //   box.SetSize(glm::vec3(0.1F, 0.1F, 0.1F));
+    //   box.SetPos(glm::vec3(0.0F, 0.0F, 0.0F));
+    //   box.SetColor(color);
+    //   AddObject(&box);
+    // }
+
     plane0_.SetSize(glm::vec2(10.0F, 10.0F));
     AddObject(&plane0_);
 
@@ -40,10 +47,10 @@ class SimScene : public fastgl::SceneBase {
   }
   void Update() override {
     std::vector<glm::vec3> points;
-    const glm::vec3 origin{0.0F, 0.0F, 1.0F};
-
+    const glm::vec3 origin{0.0F, 4.0F, 1.0F};
     fastgl::ray_cast.GetPointCloud(points, origin);
-    point_cloud0_.SetPoints(points);
+    // point_cloud0_.SetPoints(points);
+    // std::cout << "Points: " << points.size() << std::endl;
   }
 
  private:
@@ -51,6 +58,7 @@ class SimScene : public fastgl::SceneBase {
   fastgl::Box box1_;
   fastgl::Box box2_;
   fastgl::Box box3_;
+  // std::array<fastgl::Box, 200> boxs_;
   fastgl::Plane plane0_;
   fastgl::PointCloud point_cloud0_;
 };

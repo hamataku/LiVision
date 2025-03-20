@@ -67,14 +67,10 @@ class RayCast {
         num_rays_, utils::vec4_layout, BGFX_BUFFER_COMPUTE_READ);
 
     // 結果バッファの初期化
-    for (int i = 0; i < kBufferCount; ++i) {
-      compute_texture_[i] = bgfx::createTexture2D(num_rays_, 1, false, 1,
-                                                  bgfx::TextureFormat::RGBA32F,
-                                                  BGFX_TEXTURE_COMPUTE_WRITE);
-
-      output_texture_[i] = bgfx::createTexture2D(
-          num_rays_, 1, false, 1, bgfx::TextureFormat::RGBA32F,
-          BGFX_TEXTURE_BLIT_DST | BGFX_TEXTURE_READ_BACK);
+    for (auto& i : compute_texture_) {
+      i = bgfx::createTexture2D(num_rays_, 1, false, 1,
+                                bgfx::TextureFormat::RGBA32F,
+                                BGFX_TEXTURE_COMPUTE_WRITE);
     }
 
     // 結果用メモリを確保
@@ -82,6 +78,21 @@ class RayCast {
         std::aligned_alloc(16, num_rays_ * sizeof(float) * 4));
 
     u_params_ = bgfx::createUniform("u_params", bgfx::UniformType::Vec4);
+
+    // メッシュデータのアップロード
+    const bgfx::Memory* vertex_mem =
+        bgfx::makeRef(mesh_vertices_.data(),
+                      mesh_vertices_.size() * sizeof(utils::Vec4Struct));
+    bgfx::update(vertex_buffer_, 0, vertex_mem);
+
+    const bgfx::Memory* index_mem = bgfx::makeRef(
+        mesh_indices_.data(), mesh_indices_.size() * sizeof(uint32_t));
+    bgfx::update(index_buffer_, 0, index_mem);
+
+    // レイデータのアップロード
+    const bgfx::Memory* ray_dir_mem = bgfx::makeRef(
+        ray_dirs_.data(), ray_dirs_.size() * sizeof(utils::Vec4Struct));
+    bgfx::update(ray_dir_buffer_, 0, ray_dir_mem);
   }
 
   void Destroy() {
@@ -101,14 +112,10 @@ class RayCast {
       bgfx::destroy(ray_dir_buffer_);
       ray_dir_buffer_ = BGFX_INVALID_HANDLE;
     }
-    for (int i = 0; i < kBufferCount; ++i) {
-      if (bgfx::isValid(compute_texture_[i])) {
-        bgfx::destroy(compute_texture_[i]);
-        compute_texture_[i] = BGFX_INVALID_HANDLE;
-      }
-      if (bgfx::isValid(output_texture_[i])) {
-        bgfx::destroy(output_texture_[i]);
-        output_texture_[i] = BGFX_INVALID_HANDLE;
+    for (auto& i : compute_texture_) {
+      if (bgfx::isValid(i)) {
+        bgfx::destroy(i);
+        i = BGFX_INVALID_HANDLE;
       }
     }
     if (output_buffer_) {
@@ -150,21 +157,6 @@ class RayCast {
   void GetPointCloud(std::vector<glm::vec3>& points, const glm::vec3& origin) {
     int prev_index = 1 - frame_index_;  // 前のフレームのインデックス
 
-    // メッシュデータのアップロード
-    const bgfx::Memory* vertex_mem =
-        bgfx::makeRef(mesh_vertices_.data(),
-                      mesh_vertices_.size() * sizeof(utils::Vec4Struct));
-    bgfx::update(vertex_buffer_, 0, vertex_mem);
-
-    const bgfx::Memory* index_mem = bgfx::makeRef(
-        mesh_indices_.data(), mesh_indices_.size() * sizeof(uint32_t));
-    bgfx::update(index_buffer_, 0, index_mem);
-
-    // レイデータのアップロード
-    const bgfx::Memory* ray_dir_mem = bgfx::makeRef(
-        ray_dirs_.data(), ray_dirs_.size() * sizeof(utils::Vec4Struct));
-    bgfx::update(ray_dir_buffer_, 0, ray_dir_mem);
-
     // コンピュートシェーダーのセットアップと実行
     bgfx::setBuffer(0, vertex_buffer_, bgfx::Access::Read);
     bgfx::setBuffer(1, index_buffer_, bgfx::Access::Read);
@@ -176,13 +168,13 @@ class RayCast {
                        origin.z};
     bgfx::setUniform(u_params_, params);
 
-    bgfx::dispatch(0, compute_program_, num_rays_, 1, 1);
+    constexpr uint32_t kThreadsX = 256;
+    uint32_t num_groups_x = (num_rays_ + kThreadsX - 1) / kThreadsX;
 
-    bgfx::blit(0, output_texture_[frame_index_], 0, 0,
-               compute_texture_[frame_index_], 0, 0);
+    bgfx::dispatch(0, compute_program_, num_groups_x, 1, 1);
 
     // テクスチャからデータを読み出し
-    bgfx::readTexture(output_texture_[prev_index], output_buffer_);
+    bgfx::readTexture(compute_texture_[prev_index], output_buffer_);
 
     // 結果の処理
     points.clear();
@@ -290,7 +282,6 @@ class RayCast {
   bgfx::DynamicIndexBufferHandle index_buffer_;
   bgfx::DynamicVertexBufferHandle ray_dir_buffer_;
   bgfx::TextureHandle compute_texture_[kBufferCount];
-  bgfx::TextureHandle output_texture_[kBufferCount];
 
   std::vector<utils::Vec4Struct> ray_dirs_;
   int num_rays_;

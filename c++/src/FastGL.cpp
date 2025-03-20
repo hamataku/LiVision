@@ -196,7 +196,9 @@ void FastGL::MainLoop() {
   while (!quit) {
     if (scene_) {
       scene_->Update();
-      scene_->Draw(program_);
+      if (!headless_) {
+        scene_->Draw(program_);
+      }
     }
 
     SDL_Event event;
