@@ -3,6 +3,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_mouse.h>
+#include <bgfx/defines.h>
 #include <bgfx/platform.h>
 #include <bx/math.h>
 
@@ -83,7 +84,7 @@ bool FastGL::Init() {
   bgfx_init.type = bgfx::RendererType::Count;  // auto choose renderer
   bgfx_init.resolution.width = width_;
   bgfx_init.resolution.height = height_;
-  bgfx_init.resolution.reset = BGFX_RESET_VSYNC;
+  bgfx_init.resolution.reset = BGFX_RESET_NONE;
   bgfx_init.platformData = pd;
   bgfx::init(bgfx_init);
 
@@ -101,6 +102,14 @@ bool FastGL::Init() {
 #elif BX_PLATFORM_LINUX
   ImGui_ImplSDL3_InitForVulkan(window_);
 #endif
+
+  bool supported = !!(bgfx::getCaps()->supported &
+                      (BGFX_CAPS_TEXTURE_2D_ARRAY |
+                       BGFX_CAPS_TEXTURE_READ_BACK | BGFX_CAPS_COMPUTE));
+  if (!supported) {
+    printf("Not supported machine\n");
+    return false;
+  }
 
   const std::string shader_root = "shader/build/";
 
@@ -185,6 +194,11 @@ void FastGL::MainLoop() {
   scene_->AddMeshList();
   ray_cast.Init();
   while (!quit) {
+    if (scene_) {
+      scene_->Update();
+      scene_->Draw(program_);
+    }
+
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
       ImGui_ImplSDL3_ProcessEvent(&event);
@@ -206,11 +220,6 @@ void FastGL::MainLoop() {
     // ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
 
     MouseOperation();
-
-    if (scene_) {
-      scene_->Update();
-      scene_->Draw(program_);
-    }
 
     bgfx::frame();
 

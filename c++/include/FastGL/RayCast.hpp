@@ -19,6 +19,21 @@ class RayCast {
 
   void Init() {
     std::cout << "RayCast Init" << std::endl;
+
+    for (int i = 0; i < 360; i += 3) {
+      for (int j = 0; j < 60; j += 2) {
+        float rad_yaw = glm::radians(static_cast<float>(i));
+        float rad_pitch = glm::radians(static_cast<float>(j));
+
+        glm::vec3 dir_normalized = glm::normalize(glm::vec3(
+            std::cos(rad_yaw), std::sin(rad_yaw), std::sin(rad_pitch)));
+        utils::Vec4Struct dir{dir_normalized.x, dir_normalized.y,
+                              dir_normalized.z, 0.0F};
+        ray_dirs_.push_back(dir);
+      }
+    }
+    num_rays_ = ray_dirs_.size();
+
     const std::string shader_root = "shader/build/";
 
     std::string shader;
@@ -42,32 +57,29 @@ class RayCast {
     std::cout << "index_count: " << index_count << std::endl;
 
     vertex_buffer_ = bgfx::createDynamicVertexBuffer(
-        vertex_count, utils::pos_vert_layout, BGFX_BUFFER_COMPUTE_READ);
-    index_buffer_ =
-        bgfx::createDynamicIndexBuffer(index_count, BGFX_BUFFER_COMPUTE_READ);
+        vertex_count, utils::vec4_layout, BGFX_BUFFER_COMPUTE_READ);
+    index_buffer_ = bgfx::createDynamicIndexBuffer(
+        index_count, BGFX_BUFFER_COMPUTE_READ | BGFX_BUFFER_INDEX32);
 
     // レイ情報用のバッファ
-    bgfx::VertexLayout layout;
-    layout.begin()
-        .add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
-        .end();
-
     // 十分な初期サイズでバッファを作成
-    constexpr uint32_t kInitialSize = 4096;
-    ray_origin_buffer_ = bgfx::createDynamicVertexBuffer(
-        kInitialSize, layout, BGFX_BUFFER_COMPUTE_READ);
-    ray_dir_buffer_ = bgfx::createDynamicVertexBuffer(kInitialSize, layout,
-                                                      BGFX_BUFFER_COMPUTE_READ);
+    ray_dir_buffer_ = bgfx::createDynamicVertexBuffer(
+        num_rays_, utils::vec4_layout, BGFX_BUFFER_COMPUTE_READ);
 
-    // 結果バッファの初期化（テクスチャとして作成）
-    result_texture_ = bgfx::createTexture2D(
-        kInitialSize, 1, false, 1, bgfx::TextureFormat::RGBA32F,
-        BGFX_TEXTURE_COMPUTE_WRITE | BGFX_TEXTURE_READ_BACK);
+    // 結果バッファの初期化
+    for (int i = 0; i < kBufferCount; ++i) {
+      compute_texture_[i] = bgfx::createTexture2D(num_rays_, 1, false, 1,
+                                                  bgfx::TextureFormat::RGBA32F,
+                                                  BGFX_TEXTURE_COMPUTE_WRITE);
 
-    // リザルトバッファの格納用メモリを確保
-    result_staging_ = static_cast<glm::vec4*>(
-        std::aligned_alloc(16, kInitialSize * sizeof(glm::vec4)));
-    result_staging_size_ = kInitialSize;
+      output_texture_[i] = bgfx::createTexture2D(
+          num_rays_, 1, false, 1, bgfx::TextureFormat::RGBA32F,
+          BGFX_TEXTURE_BLIT_DST | BGFX_TEXTURE_READ_BACK);
+    }
+
+    // 結果用メモリを確保
+    output_buffer_ = static_cast<float*>(
+        std::aligned_alloc(16, num_rays_ * sizeof(float) * 4));
 
     u_params_ = bgfx::createUniform("u_params", bgfx::UniformType::Vec4);
   }
@@ -85,21 +97,23 @@ class RayCast {
       bgfx::destroy(index_buffer_);
       index_buffer_ = BGFX_INVALID_HANDLE;
     }
-    if (bgfx::isValid(ray_origin_buffer_)) {
-      bgfx::destroy(ray_origin_buffer_);
-      ray_origin_buffer_ = BGFX_INVALID_HANDLE;
-    }
     if (bgfx::isValid(ray_dir_buffer_)) {
       bgfx::destroy(ray_dir_buffer_);
       ray_dir_buffer_ = BGFX_INVALID_HANDLE;
     }
-    if (bgfx::isValid(result_texture_)) {
-      bgfx::destroy(result_texture_);
-      result_texture_ = BGFX_INVALID_HANDLE;
+    for (int i = 0; i < kBufferCount; ++i) {
+      if (bgfx::isValid(compute_texture_[i])) {
+        bgfx::destroy(compute_texture_[i]);
+        compute_texture_[i] = BGFX_INVALID_HANDLE;
+      }
+      if (bgfx::isValid(output_texture_[i])) {
+        bgfx::destroy(output_texture_[i]);
+        output_texture_[i] = BGFX_INVALID_HANDLE;
+      }
     }
-    if (result_staging_) {
-      std::free(result_staging_);
-      result_staging_ = nullptr;
+    if (output_buffer_) {
+      std::free(output_buffer_);
+      output_buffer_ = nullptr;
     }
 
     if (bgfx::isValid(u_params_)) {
@@ -108,9 +122,9 @@ class RayCast {
     }
   }
 
-  static utils::PosVertex CalcMul(const utils::PosVertex* _vec,
-                                  const float* _mat) {
-    utils::PosVertex result;
+  static utils::Vec4Struct CalcMul(const utils::Vec3Struct* _vec,
+                                   const float* _mat) {
+    utils::Vec4Struct result;
     result.x =
         _vec->x * _mat[0] + _vec->y * _mat[4] + _vec->z * _mat[8] + _mat[12];
     result.y =
@@ -120,11 +134,11 @@ class RayCast {
     return result;
   }
 
-  void AddMeshLists(const utils::PosVertex* vertices, float* mtx,
+  void AddMeshLists(const utils::Vec3Struct* vertices, float* mtx,
                     const uint16_t* indices, uint32_t num_vertices,
                     uint32_t num_indices) {
     for (uint32_t i = 0; i < num_vertices; ++i) {
-      utils::PosVertex result = CalcMul(&vertices[i], mtx);
+      utils::Vec4Struct result = CalcMul(&vertices[i], mtx);
       mesh_vertices_.push_back(result);
     }
     for (uint32_t i = 0; i < num_indices; ++i) {
@@ -133,117 +147,157 @@ class RayCast {
     mesh_index_ += num_vertices;
   }
 
-  void GetPointCloud(std::vector<glm::vec3>& points, const glm::vec3& origin,
-                     const std::vector<glm::vec3>& direction) {
-    auto num_rays = static_cast<uint32_t>(direction.size());
-
-    // バッファのリサイズが必要かチェック
-    if (num_rays > result_staging_size_) {
-      std::free(result_staging_);
-      result_staging_size_ = num_rays;
-      result_staging_ = static_cast<glm::vec4*>(
-          std::aligned_alloc(16, result_staging_size_ * sizeof(glm::vec4)));
-
-      // バッファとテクスチャの再作成
-      if (bgfx::isValid(ray_origin_buffer_)) {
-        bgfx::destroy(ray_origin_buffer_);
-      }
-      if (bgfx::isValid(ray_dir_buffer_)) {
-        bgfx::destroy(ray_dir_buffer_);
-      }
-      if (bgfx::isValid(result_texture_)) {
-        bgfx::destroy(result_texture_);
-      }
-
-      bgfx::VertexLayout layout;
-      layout.begin()
-          .add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
-          .end();
-
-      ray_origin_buffer_ = bgfx::createDynamicVertexBuffer(
-          num_rays, layout, BGFX_BUFFER_COMPUTE_READ);
-      ray_dir_buffer_ = bgfx::createDynamicVertexBuffer(
-          num_rays, layout, BGFX_BUFFER_COMPUTE_READ);
-      result_texture_ = bgfx::createTexture2D(
-          num_rays, 1, false, 1, bgfx::TextureFormat::RGBA32F,
-          BGFX_TEXTURE_COMPUTE_WRITE | BGFX_TEXTURE_READ_BACK);
-    }
+  void GetPointCloud(std::vector<glm::vec3>& points, const glm::vec3& origin) {
+    int prev_index = 1 - frame_index_;  // 前のフレームのインデックス
 
     // メッシュデータのアップロード
     const bgfx::Memory* vertex_mem =
         bgfx::makeRef(mesh_vertices_.data(),
-                      mesh_vertices_.size() * sizeof(utils::PosVertex));
+                      mesh_vertices_.size() * sizeof(utils::Vec4Struct));
     bgfx::update(vertex_buffer_, 0, vertex_mem);
 
     const bgfx::Memory* index_mem = bgfx::makeRef(
-        mesh_indices_.data(), mesh_indices_.size() * sizeof(uint16_t));
+        mesh_indices_.data(), mesh_indices_.size() * sizeof(uint32_t));
     bgfx::update(index_buffer_, 0, index_mem);
 
-    // レイ情報の準備
-    std::vector<glm::vec4> ray_origins(num_rays, glm::vec4(origin, 0.0F));
-    std::vector<glm::vec4> ray_dirs;
-    ray_dirs.reserve(num_rays);
-    for (const auto& dir : direction) {
-      ray_dirs.emplace_back(glm::normalize(dir), 0.0F);
-    }
-
     // レイデータのアップロード
-    const bgfx::Memory* ray_origin_mem = bgfx::makeRef(
-        ray_origins.data(), ray_origins.size() * sizeof(glm::vec4));
-    const bgfx::Memory* ray_dir_mem =
-        bgfx::makeRef(ray_dirs.data(), ray_dirs.size() * sizeof(glm::vec4));
-
-    bgfx::update(ray_origin_buffer_, 0, ray_origin_mem);
+    const bgfx::Memory* ray_dir_mem = bgfx::makeRef(
+        ray_dirs_.data(), ray_dirs_.size() * sizeof(utils::Vec4Struct));
     bgfx::update(ray_dir_buffer_, 0, ray_dir_mem);
 
     // コンピュートシェーダーのセットアップと実行
     bgfx::setBuffer(0, vertex_buffer_, bgfx::Access::Read);
     bgfx::setBuffer(1, index_buffer_, bgfx::Access::Read);
-    bgfx::setBuffer(2, ray_origin_buffer_, bgfx::Access::Read);
-    bgfx::setBuffer(3, ray_dir_buffer_, bgfx::Access::Read);
-    bgfx::setImage(4, result_texture_, 0, bgfx::Access::Write,
+    bgfx::setBuffer(2, ray_dir_buffer_, bgfx::Access::Read);
+    bgfx::setImage(3, compute_texture_[frame_index_], 0, bgfx::Access::Write,
                    bgfx::TextureFormat::RGBA32F);
 
-    float params[4] = {static_cast<float>(mesh_indices_.size()), 0.0F, 0.0F,
-                       0.0F};
+    float params[4] = {mesh_indices_.size() / 3.0F, origin.x, origin.y,
+                       origin.z};
     bgfx::setUniform(u_params_, params);
 
-    uint32_t num_threads_x = (num_rays + 255) & ~255;
-    bgfx::dispatch(0, compute_program_, num_threads_x / 256, 1, 1);
+    bgfx::dispatch(0, compute_program_, num_rays_, 1, 1);
 
-    // 結果の読み取り
-    bgfx::frame();  // フレームを進めて計算完了を待つ
+    bgfx::blit(0, output_texture_[frame_index_], 0, 0,
+               compute_texture_[frame_index_], 0, 0);
 
     // テクスチャからデータを読み出し
-    bgfx::readTexture(result_texture_, result_staging_);
-    bgfx::frame();  // データ転送完了を待つ
+    bgfx::readTexture(output_texture_[prev_index], output_buffer_);
 
     // 結果の処理
     points.clear();
-    for (size_t i = 0; i < num_rays; ++i) {
-      if (result_staging_[i].w > 0.0F) {  // 交差があった場合
-        points.emplace_back(result_staging_[i].x, result_staging_[i].y,
-                            result_staging_[i].z);
+    for (size_t i = 0; i < num_rays_; ++i) {
+      if (output_buffer_[i * 4 + 3] > 0.0F) {  // 交差があった場合
+        points.emplace_back(output_buffer_[i * 4], output_buffer_[i * 4 + 1],
+                            output_buffer_[i * 4 + 2]);
+      }
+    }
+
+    // バッファインデックスを切り替える
+    frame_index_ = 1 - frame_index_;
+  }
+
+  // CPU-based ray casting implementation with the same interface
+  void GetPointCloudCPU(std::vector<glm::vec3>& points,
+                        const glm::vec3& origin) {
+    points.clear();
+
+    // For each ray direction
+    for (size_t ray_idx = 0; ray_idx < num_rays_; ++ray_idx) {
+      glm::vec3 ray_dir(ray_dirs_[ray_idx].x, ray_dirs_[ray_idx].y,
+                        ray_dirs_[ray_idx].z);
+
+      float closest_t = std::numeric_limits<float>::max();
+      bool hit = false;
+      glm::vec3 intersection_point;
+
+      // Loop through all triangles in the mesh
+      for (size_t tri_idx = 0; tri_idx < mesh_indices_.size() / 3; ++tri_idx) {
+        uint16_t idx0 = mesh_indices_[tri_idx * 3];
+        uint16_t idx1 = mesh_indices_[tri_idx * 3 + 1];
+        uint16_t idx2 = mesh_indices_[tri_idx * 3 + 2];
+
+        glm::vec3 v0(mesh_vertices_[idx0].x, mesh_vertices_[idx0].y,
+                     mesh_vertices_[idx0].z);
+        glm::vec3 v1(mesh_vertices_[idx1].x, mesh_vertices_[idx1].y,
+                     mesh_vertices_[idx1].z);
+        glm::vec3 v2(mesh_vertices_[idx2].x, mesh_vertices_[idx2].y,
+                     mesh_vertices_[idx2].z);
+
+        float t;
+        if (RayTriangleIntersection(origin, ray_dir, v0, v1, v2, t)) {
+          // Find closest intersection
+          if (t < closest_t) {
+            closest_t = t;
+            hit = true;
+            intersection_point = origin + ray_dir * t;
+          }
+        }
+      }
+
+      // Add intersection point if hit
+      if (hit) {
+        points.push_back(intersection_point);
       }
     }
   }
 
+  // Ray-triangle intersection algorithm (Möller–Trumbore algorithm)
+  bool RayTriangleIntersection(const glm::vec3& ray_origin,
+                               const glm::vec3& ray_dir, const glm::vec3& v0,
+                               const glm::vec3& v1, const glm::vec3& v2,
+                               float& t) const {
+    constexpr float kEpsilon = 0.0000001F;
+
+    glm::vec3 edge1 = v1 - v0;
+    glm::vec3 edge2 = v2 - v0;
+    glm::vec3 h = glm::cross(ray_dir, edge2);
+    float a = glm::dot(edge1, h);
+
+    // Ray parallel to triangle
+    if (a > -kEpsilon && a < kEpsilon) return false;
+
+    float f = 1.0F / a;
+    glm::vec3 s = ray_origin - v0;
+    float u = f * glm::dot(s, h);
+
+    // Intersection outside triangle
+    if (u < 0.0F || u > 1.0F) return false;
+
+    glm::vec3 q = glm::cross(s, edge1);
+    float v = f * glm::dot(ray_dir, q);
+
+    // Intersection outside triangle
+    if (v < 0.0F || u + v > 1.0F) return false;
+
+    // Calculate distance along ray
+    t = f * glm::dot(edge2, q);
+
+    // Only accept intersections in front of the ray
+    return t > kEpsilon;
+  }
+
  private:
-  std::vector<utils::PosVertex> mesh_vertices_;
-  std::vector<uint16_t> mesh_indices_;
+  static constexpr int kBufferCount = 2;
+  int frame_index_ = 0;  // バッファ切り替え用
+
+  std::vector<utils::Vec4Struct> mesh_vertices_;
+  std::vector<uint32_t> mesh_indices_;
   uint16_t mesh_index_ = 0;
 
   bgfx::ProgramHandle compute_program_;
   bgfx::DynamicVertexBufferHandle vertex_buffer_;
   bgfx::DynamicIndexBufferHandle index_buffer_;
-  bgfx::DynamicVertexBufferHandle ray_origin_buffer_;
   bgfx::DynamicVertexBufferHandle ray_dir_buffer_;
-  bgfx::TextureHandle result_texture_;
+  bgfx::TextureHandle compute_texture_[kBufferCount];
+  bgfx::TextureHandle output_texture_[kBufferCount];
+
+  std::vector<utils::Vec4Struct> ray_dirs_;
+  int num_rays_;
 
   bgfx::UniformHandle u_params_;
 
-  glm::vec4* result_staging_ = nullptr;
-  size_t result_staging_size_ = 0;
+  float* output_buffer_ = nullptr;
 };
 
 inline RayCast ray_cast;

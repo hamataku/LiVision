@@ -37,21 +37,12 @@ class SimScene : public fastgl::SceneBase {
     AddObject(&plane0_);
 
     AddObject(&point_cloud0_);
-
-    for (int i = 0; i < 360; i += 180) {
-      for (int j = 0; j < 60; j += 30) {
-        float rad_yaw = glm::radians(static_cast<float>(i));
-        float rad_pitch = glm::radians(static_cast<float>(j));
-        direction_.emplace_back(std::cos(rad_yaw), std::sin(rad_yaw),
-                                std::sin(rad_pitch));
-      }
-    }
   }
   void Update() override {
     std::vector<glm::vec3> points;
-    const glm::vec3 origin{0.0F, 4.0F, 0.3F};
+    const glm::vec3 origin{0.0F, 0.0F, 1.0F};
 
-    fastgl::ray_cast.GetPointCloud(points, origin, direction_);
+    fastgl::ray_cast.GetPointCloud(points, origin);
     point_cloud0_.SetPoints(points);
   }
 
@@ -62,5 +53,4 @@ class SimScene : public fastgl::SceneBase {
   fastgl::Box box3_;
   fastgl::Plane plane0_;
   fastgl::PointCloud point_cloud0_;
-  std::vector<glm::vec3> direction_;
 };
