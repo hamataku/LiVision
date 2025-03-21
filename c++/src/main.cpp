@@ -1,12 +1,12 @@
-#include "FastGL/FastGL.hpp"
+#include "FastLS/FastLS.hpp"
 #include "SimScene.hpp"
 
 int main() {
-  fastgl::FastGL fast_gl;
+  fastls::FastLS fast_ls{false, true};
 
-  SimScene sim_scene;
-  fast_gl.SetScene(&sim_scene);
+  fastls::SimScene sim_scene;
+  fast_ls.SetScene(&sim_scene);
 
-  fast_gl.Run(true);
+  fast_ls.Run();
   return 0;
 }

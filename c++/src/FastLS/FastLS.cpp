@@ -1,4 +1,4 @@
-#include "FastGL/FastGL.hpp"
+#include "FastLS/FastLS.hpp"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_events.h>
@@ -9,17 +9,15 @@
 
 #include <iostream>
 
-#include "FastGL/RayCast.hpp"
-#include "FastGL/file_ops.hpp"
-#include "FastGL/object/Utils.hpp"
+#include "FastLS/SimLidar.hpp"
+#include "FastLS/utils.hpp"
 #include "bgfx-imgui/imgui_impl_bgfx.h"
 #include "imgui.h"
 #include "sdl-imgui/imgui_impl_sdl3.h"
 
-namespace fastgl {
+namespace fastls {
 
-bool FastGL::Run(bool headless) {
-  headless_ = headless;
+bool FastLS::Run() {
   if (!Init()) {
     return false;
   }
@@ -42,7 +40,7 @@ bool FastGL::Run(bool headless) {
   return true;
 }
 
-bool FastGL::Init() {
+bool FastLS::Init() {
   if (!SDL_Init(SDL_INIT_VIDEO)) {
     printf("SDL could not initialize. SDL_Error: %s\n", SDL_GetError());
     return false;
@@ -75,8 +73,9 @@ bool FastGL::Init() {
     pd.ndt =
         SDL_GetPointerProperty(SDL_GetWindowProperties(window_),
                                SDL_PROP_WINDOW_X11_DISPLAY_POINTER, nullptr);
-    pd.nwh = (void*)(uintptr_t)SDL_GetNumberProperty(
-        SDL_GetWindowProperties(window_), SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
+    pd.nwh = (void*)static_cast<uintptr_t>(
+        SDL_GetNumberProperty(SDL_GetWindowProperties(window_),
+                              SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0));
   }
 #endif
 
@@ -84,7 +83,11 @@ bool FastGL::Init() {
   bgfx_init.type = bgfx::RendererType::Count;  // auto choose renderer
   bgfx_init.resolution.width = width_;
   bgfx_init.resolution.height = height_;
-  bgfx_init.resolution.reset = BGFX_RESET_NONE;
+  if (vsync_) {
+    bgfx_init.resolution.reset = BGFX_RESET_VSYNC;
+  } else {
+    bgfx_init.resolution.reset = BGFX_RESET_NONE;
+  }
   bgfx_init.platformData = pd;
   bgfx::init(bgfx_init);
 
@@ -107,26 +110,15 @@ bool FastGL::Init() {
                       (BGFX_CAPS_TEXTURE_2D_ARRAY |
                        BGFX_CAPS_TEXTURE_READ_BACK | BGFX_CAPS_COMPUTE));
   if (!supported) {
-    printf("Not supported machine\n");
+    std::cerr << "Not supported machine" << std::endl;
     return false;
   }
 
   const std::string shader_root = "shader/build/";
-
-  std::string vshader;
-  if (!fileops::ReadFile(shader_root + "v_simple.bin", vshader)) {
-    printf("Could not find vertex shader");
-    return false;
-  }
-
-  std::string fshader;
-  if (!fileops::ReadFile(shader_root + "f_simple.bin", fshader)) {
-    printf("Could not find fragment shader");
-    return false;
-  }
-
-  bgfx::ShaderHandle vsh = CreateShader(vshader, "vshader");
-  bgfx::ShaderHandle fsh = CreateShader(fshader, "fshader");
+  bgfx::ShaderHandle vsh =
+      utils::CreateShader(shader_root + "v_simple.bin", "vshader");
+  bgfx::ShaderHandle fsh =
+      utils::CreateShader(shader_root + "f_simple.bin", "fshader");
   program_ = bgfx::createProgram(vsh, fsh, true);
 
   PrintBackend();
@@ -135,7 +127,7 @@ bool FastGL::Init() {
   return true;
 }
 
-void FastGL::MouseOperation() {
+void FastLS::MouseOperation() {
   if (!ImGui::GetIO().WantCaptureMouse) {
     float mouse_x;
     float mouse_y;
@@ -184,73 +176,77 @@ void FastGL::MouseOperation() {
   bgfx::setViewTransform(0, view, proj);
 }
 
-void FastGL::MainLoop() {
+void FastLS::MainLoop() {
   bool quit = false;
+
+  if (scene_ == nullptr) {
+    return;
+  }
 
   if (scene_set_) {
     scene_->Init();
     scene_set_ = false;
   }
   scene_->AddMeshList();
-  ray_cast.Init();
+  sim_lidar.Init();
+
+  // FPS計測開始時間の初期化
+  last_fps_time_ = SDL_GetTicks();
+
   while (!quit) {
-    if (scene_) {
-      scene_->Update();
-      if (!headless_) {
-        scene_->Draw(program_);
+    scene_->Update();
+    if (!headless_) {
+      scene_->Draw(program_);
+
+      SDL_Event event;
+      while (SDL_PollEvent(&event)) {
+        ImGui_ImplSDL3_ProcessEvent(&event);
+        if (event.type == SDL_EVENT_QUIT) {
+          quit = true;
+          break;
+        }
+        if (event.type == SDL_EVENT_MOUSE_WHEEL) {
+          zoom_distance_ += event.wheel.y * zoom_scale_;
+        }
       }
+
+      ImGui_Implbgfx_NewFrame();
+      ImGui_ImplSDL3_NewFrame();
+
+      // ImGui::NewFrame();
+      // ImGui::ShowDemoWindow();  // your drawing here
+      // ImGui::Render();
+      // ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
+
+      MouseOperation();
     }
-
-    SDL_Event event;
-    while (SDL_PollEvent(&event)) {
-      ImGui_ImplSDL3_ProcessEvent(&event);
-      if (event.type == SDL_EVENT_QUIT) {
-        quit = true;
-        break;
-      }
-      if (event.type == SDL_EVENT_MOUSE_WHEEL) {
-        zoom_distance_ += event.wheel.y * zoom_scale_;
-      }
-    }
-
-    ImGui_Implbgfx_NewFrame();
-    ImGui_ImplSDL3_NewFrame();
-
-    // ImGui::NewFrame();
-    // ImGui::ShowDemoWindow();  // your drawing here
-    // ImGui::Render();
-    // ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
-
-    MouseOperation();
 
     bgfx::frame();
 
-    PrintFPS();
+    // フレームカウントを増やす
+    frame_count_++;
+
+    // 1秒ごとにFPSを表示
+    uint64_t current_time = SDL_GetTicks();
+    if (current_time - last_fps_time_ >= 1000) {
+      PrintFPS();
+      // フレームカウントリセット
+      frame_count_ = 0;
+      last_fps_time_ = current_time;
+    }
   }
 }
 
-void FastGL::PrintFPS() {
-  static int fps_print_counter = 0;
-  if (++fps_print_counter % 1000 == 0) {
-    Uint64 current_counter = SDL_GetPerformanceCounter();
-    float delta_time = static_cast<float>(current_counter - last_counter_) /
-                       SDL_GetPerformanceFrequency();
-    last_counter_ = current_counter;
-    float fps = 1.0F / delta_time * 1000.0F;
-    printf("Current FPS: %.1f\n", fps);
-    fps_print_counter = 0;
+void FastLS::PrintFPS() {
+  float elapsed_seconds = (SDL_GetTicks() - last_fps_time_) / 1000.0F;
+
+  if (elapsed_seconds > 0) {
+    current_fps_ = frame_count_ / elapsed_seconds;
+    std::cout << "FPS: " << current_fps_ << std::endl;
   }
 }
 
-bgfx::ShaderHandle FastGL::CreateShader(const std::string& shader,
-                                        const char* name) {
-  const bgfx::Memory* mem = bgfx::copy(shader.data(), shader.size());
-  const bgfx::ShaderHandle handle = bgfx::createShader(mem);
-  bgfx::setName(handle, name);
-  return handle;
-}
-
-void FastGL::PrintBackend() {
+void FastLS::PrintBackend() {
   bgfx::RendererType::Enum renderer = bgfx::getRendererType();
   std::cout << "Graphic Backend: ";
   if (renderer == bgfx::RendererType::Vulkan) {
@@ -264,4 +260,4 @@ void FastGL::PrintBackend() {
   }
 }
 
-}  // namespace fastgl
+}  // namespace fastls

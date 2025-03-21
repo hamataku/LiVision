@@ -4,7 +4,7 @@
 
 #include "object/ObjectBase.hpp"
 
-namespace fastgl {
+namespace fastls {
 
 class SceneBase {
  public:
@@ -25,11 +25,11 @@ class SceneBase {
     }
   }
 
-  virtual void Update(){};
-  virtual void Init(){};
+  virtual void Update() {};
+  virtual void Init() {};
 
  private:
   std::vector<ObjectBase*> objects_;
 };
 
-}  // namespace fastgl
+}  // namespace fastls

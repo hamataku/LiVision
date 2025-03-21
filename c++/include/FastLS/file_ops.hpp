@@ -3,11 +3,7 @@
 #include <fstream>
 #include <iostream>
 
-// stream string operations derived from:
-// Optimized C++ by Kurt Guntheroth (O’Reilly).
-// Copyright 2016 Kurt Guntheroth, 978-1-491-92206-4
-
-namespace fileops {
+namespace file_ops {
 
 inline std::streamoff StreamSize(std::istream& file) {
   std::istream::pos_type current_pos = file.tellg();
@@ -26,10 +22,13 @@ inline bool StreamReadString(std::istream& file, std::string& file_contents) {
     return false;
   }
 
-  file_contents.resize(static_cast<std::string::size_type>(len));
-
-  file.read(&file_contents[0], file_contents.length());
-  return true;
+  try {
+    file_contents.resize(static_cast<std::string::size_type>(len));
+    file.read(file_contents.data(), file_contents.length());
+    return !file.fail();
+  } catch (const std::exception&) {
+    return false;
+  }
 }
 
 inline bool ReadFile(const std::string& filename, std::string& file_contents) {
@@ -46,4 +45,4 @@ inline bool ReadFile(const std::string& filename, std::string& file_contents) {
   return success;
 }
 
-}  // namespace fileops
+}  // namespace file_ops

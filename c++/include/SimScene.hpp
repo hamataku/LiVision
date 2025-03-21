@@ -1,17 +1,17 @@
 #pragma once
 
-#include <array>
+#include "FastLS/PointCloud.hpp"
+#include "FastLS/SceneBase.hpp"
+#include "FastLS/SimLidar.hpp"
+#include "FastLS/object/Box.hpp"
+#include "FastLS/object/Plane.hpp"
 
-#include "FastGL/RayCast.hpp"
-#include "FastGL/SceneBase.hpp"
-#include "FastGL/object/Box.hpp"
-#include "FastGL/object/Plane.hpp"
-#include "FastGL/object/PointCloud.hpp"
+namespace fastls {
 
-class SimScene : public fastgl::SceneBase {
+class SimScene : public SceneBase {
  public:
   void Init() override {
-    std::array<float, 4> color{0.8F, 0.7F, 0.3F, 0.1F};
+    utils::Color color{0.8F, 0.7F, 0.3F, 0.1F};
 
     box0_.SetSize(glm::vec3(0.1F, 10.0F, 5.0F));
     box0_.SetPos(glm::vec3(5.0F, 0.0F, 2.5F));
@@ -48,17 +48,18 @@ class SimScene : public fastgl::SceneBase {
   void Update() override {
     std::vector<glm::vec3> points;
     const glm::vec3 origin{0.0F, 4.0F, 1.0F};
-    fastgl::ray_cast.GetPointCloud(points, origin);
+    fastls::sim_lidar.GetPointCloud(points, origin);
     // point_cloud0_.SetPoints(points);
     // std::cout << "Points: " << points.size() << std::endl;
   }
 
  private:
-  fastgl::Box box0_;
-  fastgl::Box box1_;
-  fastgl::Box box2_;
-  fastgl::Box box3_;
-  // std::array<fastgl::Box, 200> boxs_;
-  fastgl::Plane plane0_;
-  fastgl::PointCloud point_cloud0_;
+  fastls::Box box0_;
+  fastls::Box box1_;
+  fastls::Box box2_;
+  fastls::Box box3_;
+  // std::array<fastls::Box, 200> boxs_;
+  fastls::Plane plane0_;
+  fastls::PointCloud point_cloud0_;
 };
+}  // namespace fastls

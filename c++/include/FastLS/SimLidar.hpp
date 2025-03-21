@@ -1,24 +1,23 @@
 #pragma once
 
 #include <bgfx/bgfx.h>
-#include <bgfx/embedded_shader.h>
 
 #include <glm/glm.hpp>
 #include <iostream>
 #include <vector>
 
 #include "file_ops.hpp"
-#include "object/Utils.hpp"
+#include "utils.hpp"
 
-namespace fastgl {
+namespace fastls {
 
-class RayCast {
+class SimLidar {
  public:
-  RayCast() : compute_program_(BGFX_INVALID_HANDLE) {}
-  ~RayCast() { Destroy(); }
+  SimLidar() : compute_program_(BGFX_INVALID_HANDLE) {}
+  ~SimLidar() { Destroy(); }
 
   void Init() {
-    std::cout << "RayCast Init" << std::endl;
+    std::cout << "SimLidar Init" << std::endl;
 
     for (int i = 0; i < 360; i += 3) {
       for (int j = 0; j < 60; j += 2) {
@@ -37,7 +36,7 @@ class RayCast {
     const std::string shader_root = "shader/build/";
 
     std::string shader;
-    if (!fileops::ReadFile(shader_root + "compute_ray_cast.bin", shader)) {
+    if (!file_ops::ReadFile(shader_root + "compute_ray_cast.bin", shader)) {
       printf("Could not find compute shader");
       return;
     }
@@ -57,14 +56,14 @@ class RayCast {
     std::cout << "index_count: " << index_count << std::endl;
 
     vertex_buffer_ = bgfx::createDynamicVertexBuffer(
-        vertex_count, utils::vec4_layout, BGFX_BUFFER_COMPUTE_READ);
+        vertex_count, utils::vec4_vlayout, BGFX_BUFFER_COMPUTE_READ);
     index_buffer_ = bgfx::createDynamicIndexBuffer(
         index_count, BGFX_BUFFER_COMPUTE_READ | BGFX_BUFFER_INDEX32);
 
     // レイ情報用のバッファ
     // 十分な初期サイズでバッファを作成
     ray_dir_buffer_ = bgfx::createDynamicVertexBuffer(
-        num_rays_, utils::vec4_layout, BGFX_BUFFER_COMPUTE_READ);
+        num_rays_, utils::vec4_vlayout, BGFX_BUFFER_COMPUTE_READ);
 
     // 結果バッファの初期化
     for (auto& i : compute_texture_) {
@@ -129,29 +128,28 @@ class RayCast {
     }
   }
 
-  static utils::Vec4Struct CalcMul(const utils::Vec3Struct* _vec,
-                                   const float* _mat) {
+  static utils::Vec4Struct CalcMul(const utils::Vec3Struct& _vec,
+                                   const utils::Mat _mat) {
     utils::Vec4Struct result;
     result.x =
-        _vec->x * _mat[0] + _vec->y * _mat[4] + _vec->z * _mat[8] + _mat[12];
+        _vec.x * _mat[0] + _vec.y * _mat[4] + _vec.z * _mat[8] + _mat[12];
     result.y =
-        _vec->x * _mat[1] + _vec->y * _mat[5] + _vec->z * _mat[9] + _mat[13];
+        _vec.x * _mat[1] + _vec.y * _mat[5] + _vec.z * _mat[9] + _mat[13];
     result.z =
-        _vec->x * _mat[2] + _vec->y * _mat[6] + _vec->z * _mat[10] + _mat[14];
+        _vec.x * _mat[2] + _vec.y * _mat[6] + _vec.z * _mat[10] + _mat[14];
     return result;
   }
 
-  void AddMeshLists(const utils::Vec3Struct* vertices, float* mtx,
-                    const uint16_t* indices, uint32_t num_vertices,
-                    uint32_t num_indices) {
-    for (uint32_t i = 0; i < num_vertices; ++i) {
-      utils::Vec4Struct result = CalcMul(&vertices[i], mtx);
+  void AddMeshLists(const std::vector<utils::Vec3Struct>& vertex,
+                    const std::vector<uint16_t>& index, const utils::Mat mtx) {
+    for (const auto& v : vertex) {
+      utils::Vec4Struct result = CalcMul(v, mtx);
       mesh_vertices_.push_back(result);
     }
-    for (uint32_t i = 0; i < num_indices; ++i) {
-      mesh_indices_.push_back(mesh_index_ + indices[i]);
+    for (const auto& i : index) {
+      mesh_indices_.push_back(mesh_index_ + i);
     }
-    mesh_index_ += num_vertices;
+    mesh_index_ += static_cast<uint16_t>(vertex.size());
   }
 
   void GetPointCloud(std::vector<glm::vec3>& points, const glm::vec3& origin) {
@@ -179,9 +177,9 @@ class RayCast {
     // 結果の処理
     points.clear();
     for (size_t i = 0; i < num_rays_; ++i) {
-      if (output_buffer_[i * 4 + 3] > 0.0F) {  // 交差があった場合
-        points.emplace_back(output_buffer_[i * 4], output_buffer_[i * 4 + 1],
-                            output_buffer_[i * 4 + 2]);
+      if (output_buffer_[(i * 4) + 3] > 0.0F) {  // 交差があった場合
+        points.emplace_back(output_buffer_[i * 4], output_buffer_[(i * 4) + 1],
+                            output_buffer_[(i * 4) + 2]);
       }
     }
 
@@ -206,8 +204,8 @@ class RayCast {
       // Loop through all triangles in the mesh
       for (size_t tri_idx = 0; tri_idx < mesh_indices_.size() / 3; ++tri_idx) {
         uint16_t idx0 = mesh_indices_[tri_idx * 3];
-        uint16_t idx1 = mesh_indices_[tri_idx * 3 + 1];
-        uint16_t idx2 = mesh_indices_[tri_idx * 3 + 2];
+        uint16_t idx1 = mesh_indices_[(tri_idx * 3) + 1];
+        uint16_t idx2 = mesh_indices_[(tri_idx * 3) + 2];
 
         glm::vec3 v0(mesh_vertices_[idx0].x, mesh_vertices_[idx0].y,
                      mesh_vertices_[idx0].z);
@@ -291,5 +289,5 @@ class RayCast {
   float* output_buffer_ = nullptr;
 };
 
-inline RayCast ray_cast;
-}  // namespace fastgl
+inline SimLidar sim_lidar;
+}  // namespace fastls

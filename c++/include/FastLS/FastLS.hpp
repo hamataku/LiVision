@@ -2,15 +2,16 @@
 #include <SDL3/SDL.h>
 #include <bgfx/bgfx.h>
 
-#include <string>
-
 #include "SceneBase.hpp"
 
-namespace fastgl {
+namespace fastls {
 
-class FastGL {
+class FastLS {
  public:
-  bool Run(bool headless = false);
+  explicit FastLS(bool headless, bool vsync)
+      : headless_(headless), vsync_(vsync) {}
+
+  bool Run();
   void SetScene(SceneBase* scene) {
     scene_ = scene;
     scene_set_ = true;
@@ -22,8 +23,6 @@ class FastGL {
   void MainLoop();
   void PrintFPS();
   static void PrintBackend();
-  static bgfx::ShaderHandle CreateShader(const std::string& shader,
-                                         const char* name);
 
   SDL_Window* window_ = nullptr;
   bgfx::ProgramHandle program_ = BGFX_INVALID_HANDLE;
@@ -46,11 +45,14 @@ class FastGL {
   int height_ = 600;
 
   bool headless_ = false;
+  bool vsync_ = true;
 
   SceneBase* scene_ = nullptr;
   bool scene_set_ = false;
 
-  Uint64 last_counter_ = 0;
-  int fps_print_counter_ = 0;
+  // FPS計算用の変数
+  uint32_t frame_count_ = 0;
+  uint64_t last_fps_time_ = 0;
+  float current_fps_ = 0.0F;
 };
-}  // namespace fastgl
+}  // namespace fastls

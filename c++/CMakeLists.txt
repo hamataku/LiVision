@@ -18,7 +18,7 @@ find_package(imgui.cmake REQUIRED CONFIG CMAKE_FIND_ROOT_PATH_BOTH)
 
 add_executable(${PROJECT_NAME})
 
-file(GLOB SOURCES "src/*.cpp" "third-party/sdl-imgui/*.cpp" "third-party/bgfx-imgui/*.cpp")
+file(GLOB SOURCES "src/*.cpp" "src/FastLS/*.cpp" "third-party/sdl-imgui/*.cpp" "third-party/bgfx-imgui/*.cpp")
 
 target_sources(${PROJECT_NAME} PRIVATE ${SOURCES})
 
