@@ -12,6 +12,10 @@ struct Vec3Struct {
   float x;
   float y;
   float z;
+
+  bool operator==(const Vec3Struct& v) const {
+    return x == v.x && y == v.y && z == v.z;
+  }
 };
 
 struct Vec4Struct {
@@ -19,6 +23,10 @@ struct Vec4Struct {
   float y;
   float z;
   float w;
+
+  bool operator==(const Vec4Struct& v) const {
+    return x == v.x && y == v.y && z == v.z && w == v.w;
+  }
 };
 
 using Mat = std::array<float, 16>;
@@ -28,6 +36,10 @@ struct Color {
   float g;
   float b;
   float a;
+
+  bool operator==(const Color& c) const {
+    return r == c.r && g == c.g && b == c.b && a == c.a;
+  }
 };
 
 // Uniforms
@@ -41,7 +53,7 @@ inline std::vector<utils::Vec3Struct> cube_vertices{
     {0.5F, -0.5F, 0.5F},   {-0.5F, 0.5F, -0.5F}, {0.5F, 0.5F, -0.5F},
     {-0.5F, -0.5F, -0.5F}, {0.5F, -0.5F, -0.5F},
 };
-inline std::vector<uint16_t> cube_index{
+inline std::vector<uint32_t> cube_indices{
     0, 1, 2, 1, 3, 2, 4, 6, 5, 5, 6, 7, 0, 2, 4, 4, 2, 6,
     1, 5, 3, 5, 7, 3, 0, 4, 1, 4, 5, 1, 2, 3, 6, 6, 3, 7,
 };
@@ -55,7 +67,7 @@ inline std::vector<utils::Vec3Struct> plane_vertices{
     {-0.5F, -0.5F, 0.0F},  // bottom-left
     {0.5F, -0.5F, 0.0F}    // bottom-right
 };
-inline std::vector<uint16_t> plane_index{0, 1, 2, 1, 3, 2, 0, 2, 1, 1, 2, 3};
+inline std::vector<uint32_t> plane_indices{0, 1, 2, 1, 3, 2, 0, 2, 1, 1, 2, 3};
 
 // Vertex Layout
 inline bgfx::VertexLayout vec2_vlayout;

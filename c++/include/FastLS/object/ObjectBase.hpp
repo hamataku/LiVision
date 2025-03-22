@@ -11,19 +11,37 @@
 namespace fastls {
 class ObjectBase {
  public:
-  virtual void AddMeshList() {};
-  virtual void Init() {};
+  virtual void AddMeshList(){};
+  virtual void Init(){};
   virtual void Draw(bgfx::ProgramHandle& program) = 0;
 
-  void SetColor(const utils::Color& color) { color_ = color; }
+  ObjectBase& SetColor(const utils::Color& color) {
+    color_ = color;
+    return *this;
+  }
 
-  void SetPos(const glm::vec3& pos) { pos_ = pos; }
+  ObjectBase& SetPos(const glm::vec3& pos) {
+    pos_ = pos;
+    return *this;
+  }
 
-  void SetSize(const glm::vec2& size) { size_ = glm::vec3(size, 1.0F); }
-  void SetSize(const glm::vec3& size) { size_ = size; }
+  ObjectBase& SetSize(const glm::vec2& size) {
+    size_ = glm::vec3(size, 1.0F);
+    return *this;
+  }
+  ObjectBase& SetSize(const glm::vec3& size) {
+    size_ = size;
+    return *this;
+  }
 
-  void SetRotation(const glm::quat& rotation) { rotation_ = rotation; }
-  void SetRotation(const glm::vec3& euler) { rotation_ = glm::quat(euler); }
+  ObjectBase& SetRotation(const glm::quat& rotation) {
+    rotation_ = rotation;
+    return *this;
+  }
+  ObjectBase& SetRotation(const glm::vec3& euler) {
+    rotation_ = glm::quat(euler);
+    return *this;
+  }
 
  protected:
   void CalcMtx(utils::Mat& mtx) const {
@@ -33,7 +51,7 @@ class ObjectBase {
     mtx[14] = pos_.z;
   }
 
-  utils::Color color_{1.0F, 0.0F, 0.0F, 0.0F};
+  utils::Color color_{0.0F, 0.0F, 0.0F, 1.0F};
   glm::vec3 pos_ = glm::vec3(0.0F, 0.0F, 0.0F);
   glm::vec3 size_ = glm::vec3(1.0F, 1.0F, 1.0F);
   glm::quat rotation_ = glm::quat(1.0F, 0.0F, 0.0F, 0.0F);

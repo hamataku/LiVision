@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "file_ops.hpp"
+#include "object/Box.hpp"
 #include "utils.hpp"
 
 namespace fastls {
@@ -141,7 +142,7 @@ class SimLidar {
   }
 
   void AddMeshLists(const std::vector<utils::Vec3Struct>& vertex,
-                    const std::vector<uint16_t>& index, const utils::Mat mtx) {
+                    const std::vector<uint32_t>& index, const utils::Mat mtx) {
     for (const auto& v : vertex) {
       utils::Vec4Struct result = CalcMul(v, mtx);
       mesh_vertices_.push_back(result);
@@ -149,7 +150,7 @@ class SimLidar {
     for (const auto& i : index) {
       mesh_indices_.push_back(mesh_index_ + i);
     }
-    mesh_index_ += static_cast<uint16_t>(vertex.size());
+    mesh_index_ += static_cast<uint32_t>(vertex.size());
   }
 
   void GetPointCloud(std::vector<glm::vec3>& points, const glm::vec3& origin) {
@@ -203,9 +204,9 @@ class SimLidar {
 
       // Loop through all triangles in the mesh
       for (size_t tri_idx = 0; tri_idx < mesh_indices_.size() / 3; ++tri_idx) {
-        uint16_t idx0 = mesh_indices_[tri_idx * 3];
-        uint16_t idx1 = mesh_indices_[(tri_idx * 3) + 1];
-        uint16_t idx2 = mesh_indices_[(tri_idx * 3) + 2];
+        uint32_t idx0 = mesh_indices_[tri_idx * 3];
+        uint32_t idx1 = mesh_indices_[(tri_idx * 3) + 1];
+        uint32_t idx2 = mesh_indices_[(tri_idx * 3) + 2];
 
         glm::vec3 v0(mesh_vertices_[idx0].x, mesh_vertices_[idx0].y,
                      mesh_vertices_[idx0].z);
@@ -273,7 +274,7 @@ class SimLidar {
 
   std::vector<utils::Vec4Struct> mesh_vertices_;
   std::vector<uint32_t> mesh_indices_;
-  uint16_t mesh_index_ = 0;
+  uint32_t mesh_index_ = 0;
 
   bgfx::ProgramHandle compute_program_;
   bgfx::DynamicVertexBufferHandle vertex_buffer_;

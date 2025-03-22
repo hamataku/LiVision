@@ -11,7 +11,10 @@ namespace fastls {
 
 class PointCloud : public ObjectBase {
  public:
-  PointCloud() { box_.SetSize(glm::vec3(0.1F, 0.1F, 0.1F)); }
+  PointCloud() {
+    box_.SetSize(glm::vec3(0.05F, 0.05F, 0.05F));
+    color_ = utils::Color{1.0F, 0.0F, 0.0F, 1.0F};
+  }
   void Draw(bgfx::ProgramHandle& program) final {
     box_.SetColor(color_);
     for (const auto& point : points_) {

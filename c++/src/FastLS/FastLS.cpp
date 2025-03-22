@@ -197,6 +197,7 @@ void FastLS::MainLoop() {
     scene_->Update();
     if (!headless_) {
       scene_->Draw(program_);
+      sim_lidar.Draw(program_);
 
       SDL_Event event;
       while (SDL_PollEvent(&event)) {

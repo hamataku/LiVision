@@ -1,5 +1,7 @@
 #include "FastLS/utils.hpp"
 
+#include <bgfx/defines.h>
+
 #include <iostream>
 
 #include "FastLS/file_ops.hpp"
@@ -27,7 +29,9 @@ void Init() {
                     cube_vertices.size() * sizeof(utils::Vec3Struct)),
       vec3_vlayout);
   cube_ibh = bgfx::createIndexBuffer(
-      bgfx::makeRef(cube_index.data(), cube_index.size() * sizeof(uint16_t)));
+      bgfx::makeRef(cube_indices.data(),
+                    cube_indices.size() * sizeof(uint32_t)),
+      BGFX_BUFFER_INDEX32);
 
   // line
   plane_vbh = bgfx::createVertexBuffer(
@@ -35,7 +39,9 @@ void Init() {
                     plane_vertices.size() * sizeof(utils::Vec3Struct)),
       vec3_vlayout);
   plane_ibh = bgfx::createIndexBuffer(
-      bgfx::makeRef(plane_index.data(), plane_index.size() * sizeof(uint16_t)));
+      bgfx::makeRef(plane_indices.data(),
+                    plane_indices.size() * sizeof(uint32_t)),
+      BGFX_BUFFER_INDEX32);
 }
 
 void DeInit() {

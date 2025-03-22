@@ -10,7 +10,7 @@ class Box : public ObjectBase {
   void AddMeshList() override {
     utils::Mat mtx;
     CalcMtx(mtx);
-    sim_lidar.AddMeshLists(utils::cube_vertices, utils::cube_index, mtx);
+    sim_lidar.AddMeshLists(utils::cube_vertices, utils::cube_indices, mtx);
   }
 
   void Draw(bgfx::ProgramHandle& program) final {

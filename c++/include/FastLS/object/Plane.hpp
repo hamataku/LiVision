@@ -10,7 +10,7 @@ class Plane : public ObjectBase {
   void AddMeshList() override {
     utils::Mat mtx;
     CalcMtx(mtx);
-    sim_lidar.AddMeshLists(utils::plane_vertices, utils::plane_index, mtx);
+    sim_lidar.AddMeshLists(utils::plane_vertices, utils::plane_indices, mtx);
   }
 
   void Draw(bgfx::ProgramHandle& program) final {
