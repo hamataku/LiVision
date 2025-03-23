@@ -91,7 +91,7 @@ bool FastLS::Init() {
   bgfx_init.platformData = pd;
   bgfx::init(bgfx_init);
 
-  bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x6495EDFF, 1.0F,
+  bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x00000000, 1.0F,
                      0);
   bgfx::setViewRect(0, 0, 0, width_, height_);
 
@@ -106,9 +106,9 @@ bool FastLS::Init() {
   ImGui_ImplSDL3_InitForVulkan(window_);
 #endif
 
-  bool supported = !!(bgfx::getCaps()->supported &
+  bool supported = !((bgfx::getCaps()->supported &
                       (BGFX_CAPS_TEXTURE_2D_ARRAY |
-                       BGFX_CAPS_TEXTURE_READ_BACK | BGFX_CAPS_COMPUTE));
+                       BGFX_CAPS_TEXTURE_READ_BACK | BGFX_CAPS_COMPUTE)) == 0U);
   if (!supported) {
     std::cerr << "Not supported machine" << std::endl;
     return false;
@@ -139,8 +139,8 @@ void FastLS::MouseOperation() {
 
     // 左ボタンドラッグで回転
     if ((buttons & SDL_BUTTON_LMASK) != 0) {
-      cam_yaw_ += (-delta_x) * rot_scale_;
-      cam_pitch_ += (-delta_y) * rot_scale_;
+      cam_yaw_ += (delta_x)*rot_scale_;
+      cam_pitch_ += (delta_y)*rot_scale_;
     }
 
     // 中ボタンドラッグでパン
@@ -171,7 +171,7 @@ void FastLS::MouseOperation() {
   float proj[16];
   bx::mtxProj(proj, 60.0F,
               static_cast<float>(width_) / static_cast<float>(height_), 0.1F,
-              100.0F, bgfx::getCaps()->homogeneousDepth);
+              100.0F, bgfx::getCaps()->homogeneousDepth, bx::Handedness::Right);
 
   bgfx::setViewTransform(0, view, proj);
 }
@@ -195,21 +195,21 @@ void FastLS::MainLoop() {
 
   while (!quit) {
     scene_->Update();
+
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+      ImGui_ImplSDL3_ProcessEvent(&event);
+      if (event.type == SDL_EVENT_QUIT) {
+        quit = true;
+        break;
+      }
+      if (event.type == SDL_EVENT_MOUSE_WHEEL) {
+        zoom_distance_ += event.wheel.y * zoom_scale_;
+      }
+    }
+
     if (!headless_) {
       scene_->Draw(program_);
-      sim_lidar.Draw(program_);
-
-      SDL_Event event;
-      while (SDL_PollEvent(&event)) {
-        ImGui_ImplSDL3_ProcessEvent(&event);
-        if (event.type == SDL_EVENT_QUIT) {
-          quit = true;
-          break;
-        }
-        if (event.type == SDL_EVENT_MOUSE_WHEEL) {
-          zoom_distance_ += event.wheel.y * zoom_scale_;
-        }
-      }
 
       ImGui_Implbgfx_NewFrame();
       ImGui_ImplSDL3_NewFrame();

@@ -1,36 +1,13 @@
 #pragma once
 #include <bgfx/bgfx.h>
 
-#include <array>
+#include <glm/glm.hpp>
 #include <string>
 #include <vector>
 
 namespace fastls::utils {
 
 // Declare types
-struct Vec3Struct {
-  float x;
-  float y;
-  float z;
-
-  bool operator==(const Vec3Struct& v) const {
-    return x == v.x && y == v.y && z == v.z;
-  }
-};
-
-struct Vec4Struct {
-  float x;
-  float y;
-  float z;
-  float w;
-
-  bool operator==(const Vec4Struct& v) const {
-    return x == v.x && y == v.y && z == v.z && w == v.w;
-  }
-};
-
-using Mat = std::array<float, 16>;
-
 struct Color {
   float r;
   float g;
@@ -42,13 +19,28 @@ struct Color {
   }
 };
 
+// colors
+// NOLINTBEGIN
+inline constexpr Color white{1.0F, 1.0F, 1.0F, 1.0F};
+inline constexpr Color black{0.0F, 0.0F, 0.0F, 1.0F};
+inline constexpr Color red{1.0F, 0.0F, 0.0F, 1.0F};
+inline constexpr Color green{0.0F, 1.0F, 0.0F, 1.0F};
+inline constexpr Color blue{0.0F, 0.0F, 1.0F, 1.0F};
+inline constexpr Color yellow{1.0F, 1.0F, 0.0F, 1.0F};
+inline constexpr Color cyan{0.0F, 1.0F, 1.0F, 1.0F};
+inline constexpr Color magenta{1.0F, 0.0F, 1.0F, 1.0F};
+inline constexpr Color gray{0.5F, 0.5F, 0.5F, 1.0F};
+inline constexpr Color light_gray{0.75F, 0.75F, 0.75F, 1.0F};
+inline constexpr Color dark_gray{0.25F, 0.25F, 0.25F, 1.0F};
+// NOLINTEND
+
 // Uniforms
 inline bgfx::UniformHandle u_color;
 
 // Cube
 inline bgfx::VertexBufferHandle cube_vbh = BGFX_INVALID_HANDLE;
 inline bgfx::IndexBufferHandle cube_ibh = BGFX_INVALID_HANDLE;
-inline std::vector<utils::Vec3Struct> cube_vertices{
+inline std::vector<glm::vec3> cube_vertices{
     {-0.5F, 0.5F, 0.5F},   {0.5F, 0.5F, 0.5F},   {-0.5F, -0.5F, 0.5F},
     {0.5F, -0.5F, 0.5F},   {-0.5F, 0.5F, -0.5F}, {0.5F, 0.5F, -0.5F},
     {-0.5F, -0.5F, -0.5F}, {0.5F, -0.5F, -0.5F},
@@ -61,7 +53,7 @@ inline std::vector<uint32_t> cube_indices{
 // Plane
 inline bgfx::VertexBufferHandle plane_vbh = BGFX_INVALID_HANDLE;
 inline bgfx::IndexBufferHandle plane_ibh = BGFX_INVALID_HANDLE;
-inline std::vector<utils::Vec3Struct> plane_vertices{
+inline std::vector<glm::vec3> plane_vertices{
     {-0.5F, 0.5F, 0.0F},   // top-left
     {0.5F, 0.5F, 0.0F},    // top-right
     {-0.5F, -0.5F, 0.0F},  // bottom-left

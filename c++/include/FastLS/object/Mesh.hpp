@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../SimLidar.hpp"
-#include "FastLS/STLParser.hpp"
+#include "FastLS/MeshParser.hpp"
 #include "ObjectBase.hpp"
 
 namespace fastls {
@@ -9,13 +9,12 @@ namespace fastls {
 class Mesh : public ObjectBase {
  public:
   explicit Mesh(const std::string& path) {
-    ParseBinarySTL(path, vertices_, indices_);
+    mesh_parser::ParseMeshFile(path, vertices_, indices_);
   }
 
   void Init() override {
     vbh_ = bgfx::createVertexBuffer(
-        bgfx::makeRef(vertices_.data(),
-                      vertices_.size() * sizeof(utils::Vec3Struct)),
+        bgfx::makeRef(vertices_.data(), vertices_.size() * sizeof(glm::vec3)),
         utils::vec3_vlayout);
     ibh_ = bgfx::createIndexBuffer(
         bgfx::makeRef(indices_.data(), indices_.size() * sizeof(uint32_t)),
@@ -23,17 +22,15 @@ class Mesh : public ObjectBase {
   }
 
   void AddMeshList() override {
-    utils::Mat mtx;
-    CalcMtx(mtx);
-    sim_lidar.AddMeshLists(vertices_, indices_, mtx);
+    CalcMtx();
+    sim_lidar.AddMeshLists(vertices_, indices_, mtx_);
   }
 
   void Draw(bgfx::ProgramHandle& program) final {
     bgfx::setUniform(utils::u_color, &color_);
 
-    utils::Mat mtx;
-    CalcMtx(mtx);
-    bgfx::setTransform(mtx.data());
+    CalcMtx();
+    bgfx::setTransform(glm::value_ptr(mtx_));
 
     bgfx::setVertexBuffer(0, vbh_);
     bgfx::setIndexBuffer(ibh_);
@@ -43,7 +40,7 @@ class Mesh : public ObjectBase {
  private:
   bgfx::VertexBufferHandle vbh_ = BGFX_INVALID_HANDLE;
   bgfx::IndexBufferHandle ibh_ = BGFX_INVALID_HANDLE;
-  std::vector<utils::Vec3Struct> vertices_;
+  std::vector<glm::vec3> vertices_;
   std::vector<uint32_t> indices_;
 };
 }  // namespace fastls

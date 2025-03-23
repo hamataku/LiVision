@@ -8,17 +8,15 @@ namespace fastls {
 class Plane : public ObjectBase {
  public:
   void AddMeshList() override {
-    utils::Mat mtx;
-    CalcMtx(mtx);
-    sim_lidar.AddMeshLists(utils::plane_vertices, utils::plane_indices, mtx);
+    CalcMtx();
+    sim_lidar.AddMeshLists(utils::plane_vertices, utils::plane_indices, mtx_);
   }
 
   void Draw(bgfx::ProgramHandle& program) final {
     bgfx::setUniform(utils::u_color, &color_);
 
-    utils::Mat mtx;
-    CalcMtx(mtx);
-    bgfx::setTransform(mtx.data());
+    CalcMtx();
+    bgfx::setTransform(glm::value_ptr(mtx_));
 
     bgfx::setVertexBuffer(0, utils::plane_vbh);
     bgfx::setIndexBuffer(utils::plane_ibh);

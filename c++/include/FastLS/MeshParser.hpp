@@ -1,29 +1,27 @@
 #include <array>
 #include <fstream>
+#include <glm/glm.hpp>
 #include <iostream>
-#include <tuple>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
-#include "FastLS/utils.hpp"
-
 // Vec3用のハッシュ関数
 namespace std {
 template <>
-struct hash<fastls::utils::Vec3Struct> {
-  size_t operator()(const fastls::utils::Vec3Struct& v) const {
+struct hash<glm::vec3> {
+  size_t operator()(const glm::vec3& v) const {
     return hash<float>()(v.x) ^ hash<float>()(v.y) ^ hash<float>()(v.z);
   }
 };
 }  // namespace std
 
-namespace fastls {
+namespace fastls::mesh_parser {
 
 // 頂点バッファとインデックスバッファを構築する関数
-inline void ParseBinarySTL(const std::string& filename,
-                           std::vector<utils::Vec3Struct>& vertices,
-                           std::vector<uint32_t>& indices) {
+inline void ParseMeshFile(const std::string& filename,
+                          std::vector<glm::vec3>& vertices,
+                          std::vector<uint32_t>& indices) {
   std::ifstream file(filename, std::ios::binary);
   if (!file) {
     std::cerr << "Failed to open file: " << filename << std::endl;
@@ -35,7 +33,7 @@ inline void ParseBinarySTL(const std::string& filename,
   uint32_t num_triangles;
   file.read(reinterpret_cast<char*>(&num_triangles), sizeof(num_triangles));
 
-  std::unordered_map<utils::Vec3Struct, uint32_t> unique_vertices;
+  std::unordered_map<glm::vec3, uint32_t> unique_vertices;
   vertices.clear();
   indices.clear();
 
@@ -43,22 +41,16 @@ inline void ParseBinarySTL(const std::string& filename,
     float normal[3];  // 法線
     file.read(reinterpret_cast<char*>(normal), sizeof(normal));
 
-    std::array<utils::Vec3Struct, 3> triangle;
     for (int j = 0; j < 3; j++) {
-      file.read(reinterpret_cast<char*>(&triangle[j]),
-                sizeof(utils::Vec3Struct));
-      std::swap(triangle[j].x,
-                triangle[j].z);  // STLとFastLSの座標系の違いを吸収
-
+      glm::vec3 triangle;
+      file.read(reinterpret_cast<char*>(&triangle), sizeof(glm::vec3));
       // 頂点が既に登録されているか確認
-      auto it = unique_vertices.find(triangle[j]);
+      auto it = unique_vertices.find(triangle);
       if (it == unique_vertices.end()) {
         auto index = static_cast<uint32_t>(vertices.size());
-        unique_vertices[triangle[j]] = index;
-        vertices.push_back(triangle[j]);
+        unique_vertices[triangle] = index;
+        vertices.push_back(triangle);
         indices.push_back(index);
-        std::cout << triangle[j].x << " " << triangle[j].y << " "
-                  << triangle[j].z << std::endl;
       } else {
         indices.push_back(it->second);
       }
@@ -70,8 +62,8 @@ inline void ParseBinarySTL(const std::string& filename,
         sizeof(attribute_byte_count));  // 2バイトのアトリビュートをスキップ
   }
 
-  std::cout << "STL file: " << filename << std::endl;
+  std::cout << "file: " << filename << std::endl;
   std::cout << "Vertices: " << vertices.size() << std::endl;
   std::cout << "Indices: " << indices.size() << std::endl;
 }
-}  // namespace fastls
+}  // namespace fastls::mesh_parser

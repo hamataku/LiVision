@@ -7,7 +7,6 @@
 #include <vector>
 
 #include "file_ops.hpp"
-#include "object/Box.hpp"
 #include "utils.hpp"
 
 namespace fastls {
@@ -20,15 +19,14 @@ class SimLidar {
   void Init() {
     std::cout << "SimLidar Init" << std::endl;
 
-    for (int i = 0; i < 360; i += 3) {
-      for (int j = 0; j < 60; j += 2) {
+    for (float i = 0.0F; i < 360.0F; i += 1.0F) {
+      for (float j = 0.0F; j < 60.0F; j += 1.5F) {
         float rad_yaw = glm::radians(static_cast<float>(i));
         float rad_pitch = glm::radians(static_cast<float>(j));
 
         glm::vec3 dir_normalized = glm::normalize(glm::vec3(
             std::cos(rad_yaw), std::sin(rad_yaw), std::sin(rad_pitch)));
-        utils::Vec4Struct dir{dir_normalized.x, dir_normalized.y,
-                              dir_normalized.z, 0.0F};
+        glm::vec4 dir = glm::vec4(dir_normalized, 0.0F);
         ray_dirs_.push_back(dir);
       }
     }
@@ -80,9 +78,8 @@ class SimLidar {
     u_params_ = bgfx::createUniform("u_params", bgfx::UniformType::Vec4);
 
     // メッシュデータのアップロード
-    const bgfx::Memory* vertex_mem =
-        bgfx::makeRef(mesh_vertices_.data(),
-                      mesh_vertices_.size() * sizeof(utils::Vec4Struct));
+    const bgfx::Memory* vertex_mem = bgfx::makeRef(
+        mesh_vertices_.data(), mesh_vertices_.size() * sizeof(glm::vec4));
     bgfx::update(vertex_buffer_, 0, vertex_mem);
 
     const bgfx::Memory* index_mem = bgfx::makeRef(
@@ -90,8 +87,8 @@ class SimLidar {
     bgfx::update(index_buffer_, 0, index_mem);
 
     // レイデータのアップロード
-    const bgfx::Memory* ray_dir_mem = bgfx::makeRef(
-        ray_dirs_.data(), ray_dirs_.size() * sizeof(utils::Vec4Struct));
+    const bgfx::Memory* ray_dir_mem =
+        bgfx::makeRef(ray_dirs_.data(), ray_dirs_.size() * sizeof(glm::vec4));
     bgfx::update(ray_dir_buffer_, 0, ray_dir_mem);
   }
 
@@ -129,22 +126,10 @@ class SimLidar {
     }
   }
 
-  static utils::Vec4Struct CalcMul(const utils::Vec3Struct& _vec,
-                                   const utils::Mat _mat) {
-    utils::Vec4Struct result;
-    result.x =
-        _vec.x * _mat[0] + _vec.y * _mat[4] + _vec.z * _mat[8] + _mat[12];
-    result.y =
-        _vec.x * _mat[1] + _vec.y * _mat[5] + _vec.z * _mat[9] + _mat[13];
-    result.z =
-        _vec.x * _mat[2] + _vec.y * _mat[6] + _vec.z * _mat[10] + _mat[14];
-    return result;
-  }
-
-  void AddMeshLists(const std::vector<utils::Vec3Struct>& vertex,
-                    const std::vector<uint32_t>& index, const utils::Mat mtx) {
+  void AddMeshLists(const std::vector<glm::vec3>& vertex,
+                    const std::vector<uint32_t>& index, const glm::mat4 mtx) {
     for (const auto& v : vertex) {
-      utils::Vec4Struct result = CalcMul(v, mtx);
+      glm::vec4 result = mtx * glm::vec4(v, 1.0F);
       mesh_vertices_.push_back(result);
     }
     for (const auto& i : index) {
@@ -234,7 +219,7 @@ class SimLidar {
   }
 
   // Ray-triangle intersection algorithm (Möller–Trumbore algorithm)
-  bool RayTriangleIntersection(const glm::vec3& ray_origin,
+  bool RayTriangleIntersection(const glm::vec3& ray_origin,  // NOLINT
                                const glm::vec3& ray_dir, const glm::vec3& v0,
                                const glm::vec3& v1, const glm::vec3& v2,
                                float& t) const {
@@ -272,7 +257,7 @@ class SimLidar {
   static constexpr int kBufferCount = 2;
   int frame_index_ = 0;  // バッファ切り替え用
 
-  std::vector<utils::Vec4Struct> mesh_vertices_;
+  std::vector<glm::vec4> mesh_vertices_;
   std::vector<uint32_t> mesh_indices_;
   uint32_t mesh_index_ = 0;
 
@@ -282,7 +267,7 @@ class SimLidar {
   bgfx::DynamicVertexBufferHandle ray_dir_buffer_;
   bgfx::TextureHandle compute_texture_[kBufferCount];
 
-  std::vector<utils::Vec4Struct> ray_dirs_;
+  std::vector<glm::vec4> ray_dirs_;
   int num_rays_;
 
   bgfx::UniformHandle u_params_;

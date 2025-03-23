@@ -26,7 +26,7 @@ void Init() {
   // cube
   cube_vbh = bgfx::createVertexBuffer(
       bgfx::makeRef(cube_vertices.data(),
-                    cube_vertices.size() * sizeof(utils::Vec3Struct)),
+                    cube_vertices.size() * sizeof(glm::vec3)),
       vec3_vlayout);
   cube_ibh = bgfx::createIndexBuffer(
       bgfx::makeRef(cube_indices.data(),
@@ -36,7 +36,7 @@ void Init() {
   // line
   plane_vbh = bgfx::createVertexBuffer(
       bgfx::makeRef(plane_vertices.data(),
-                    plane_vertices.size() * sizeof(utils::Vec3Struct)),
+                    plane_vertices.size() * sizeof(glm::vec3)),
       vec3_vlayout);
   plane_ibh = bgfx::createIndexBuffer(
       bgfx::makeRef(plane_indices.data(),

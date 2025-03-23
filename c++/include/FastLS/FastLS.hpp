@@ -30,13 +30,13 @@ class FastLS {
   // Camera control parameters
   float cam_pitch_ = 0.0F;
   float cam_yaw_ = 0.0F;
-  float cam_pan_x_ = 3.0F;
-  float cam_pan_y_ = 3.0F;
-  float zoom_distance_ = -6.0F;
+  float cam_pan_x_ = 0.0F;
+  float cam_pan_y_ = 0.0F;
+  float zoom_distance_ = 15.0F;
 
   // Mouse operation parameters
   float rot_scale_ = 0.01F;
-  float pan_scale_ = 0.01F;
+  float pan_scale_ = 0.02F;
   float zoom_scale_ = 0.5F;
   float prev_mouse_x_ = 0;
   float prev_mouse_y_ = 0;
