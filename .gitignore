@@ -1,6 +1,7 @@
 build*/
 embuild*/
 install/
+generated/
 imgui.ini
 *.bin
 .vscode/
