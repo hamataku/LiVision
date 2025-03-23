@@ -7,7 +7,7 @@ namespace fastls {
 
 class Plane : public ObjectBase {
  public:
-  void AddMeshList() override {
+  void AddMeshList() final {
     CalcMtx();
     sim_lidar.AddMeshLists(utils::plane_vertices, utils::plane_indices, mtx_);
   }

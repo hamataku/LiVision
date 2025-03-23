@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <iostream>
 
 #include "FastLS/utils.hpp"
 
@@ -14,7 +15,7 @@ class ObjectBase {
  public:
   virtual void AddMeshList(){};
   virtual void Init(){};
-  virtual void Draw(bgfx::ProgramHandle& program) = 0;
+  virtual void Draw(bgfx::ProgramHandle& program){};
 
   ObjectBase& SetColor(const utils::Color& color) {
     color_ = color;
@@ -60,6 +61,37 @@ class ObjectBase {
   }
   glm::quat GetRotation() const { return quat_; }
 
+  ObjectBase& SetVisible(bool visible) {
+    visible_ = visible;
+    return *this;
+  }
+  bool IsVisible() const { return visible_; }
+
+  ObjectBase& SetLidarVisible(bool visible) {
+    lidar_visible_ = visible;
+    return *this;
+  }
+  bool IsLidarVisible() const { return lidar_visible_; }
+
+  // ローカル変換行列の取得
+  glm::mat4 GetLocalMatrix() {
+    CalcMtx();
+    return mtx_;
+  }
+
+  glm::mat4 GetGlobalMatrix() { return global_mtx_; }
+
+  // ワールド変換行列の直接設定（一時的な変換用）
+  void SetWorldMatrix(const glm::mat4& matrix, bool set_global = false) {
+    mtx_ = matrix;
+
+    if (set_global) {
+      global_mtx_ = matrix;
+    }
+
+    mtx_changed_ = false;
+  }
+
  protected:
   void CalcMtx() {
     if (!mtx_changed_) {
@@ -78,7 +110,11 @@ class ObjectBase {
   glm::vec3 size_ = glm::vec3(1.0F, 1.0F, 1.0F);
   glm::quat quat_ = glm::quat(1.0F, 0.0F, 0.0F, 0.0F);
 
+  glm::mat4 global_mtx_;
+
  private:
   bool mtx_changed_ = true;
+  bool visible_ = true;
+  bool lidar_visible_ = true;
 };
 }  // namespace fastls

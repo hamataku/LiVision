@@ -194,8 +194,6 @@ void FastLS::MainLoop() {
   last_fps_time_ = SDL_GetTicks();
 
   while (!quit) {
-    scene_->Update();
-
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
       ImGui_ImplSDL3_ProcessEvent(&event);
@@ -221,6 +219,8 @@ void FastLS::MainLoop() {
 
       MouseOperation();
     }
+
+    scene_->Update();
 
     bgfx::frame();
 

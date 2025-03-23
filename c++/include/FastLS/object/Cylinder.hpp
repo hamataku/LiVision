@@ -5,11 +5,12 @@
 
 namespace fastls {
 
-class Box : public ObjectBase {
+class Cylinder : public ObjectBase {
  public:
   void AddMeshList() final {
     CalcMtx();
-    sim_lidar.AddMeshLists(utils::cube_vertices, utils::cube_indices, mtx_);
+    sim_lidar.AddMeshLists(utils::cylinder_vertices, utils::cylinder_indices,
+                           mtx_);
   }
 
   void Draw(bgfx::ProgramHandle& program) final {
@@ -18,8 +19,8 @@ class Box : public ObjectBase {
     CalcMtx();
     bgfx::setTransform(glm::value_ptr(mtx_));
 
-    bgfx::setVertexBuffer(0, utils::cube_vbh);
-    bgfx::setIndexBuffer(utils::cube_ibh);
+    bgfx::setVertexBuffer(0, utils::cylinder_vbh);
+    bgfx::setIndexBuffer(utils::cylinder_ibh);
     bgfx::submit(0, program);
   }
 };

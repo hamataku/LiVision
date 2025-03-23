@@ -15,18 +15,18 @@ class SceneBase {
 
   void AddMeshList() {
     for (auto& object : objects_) {
-      object->AddMeshList();
+      if (object->IsLidarVisible()) object->AddMeshList();
     }
   }
 
   void Draw(bgfx::ProgramHandle& program) {
     for (auto& object : objects_) {
-      object->Draw(program);
+      if (object->IsVisible()) object->Draw(program);
     }
   }
 
-  virtual void Update() {};
-  virtual void Init() {};
+  virtual void Update(){};
+  virtual void Init(){};
 
  private:
   std::vector<ObjectBase*> objects_;

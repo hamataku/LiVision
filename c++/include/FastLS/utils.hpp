@@ -46,8 +46,8 @@ inline std::vector<glm::vec3> cube_vertices{
     {-0.5F, -0.5F, -0.5F}, {0.5F, -0.5F, -0.5F},
 };
 inline std::vector<uint32_t> cube_indices{
-    0, 1, 2, 1, 3, 2, 4, 6, 5, 5, 6, 7, 0, 2, 4, 4, 2, 6,
-    1, 5, 3, 5, 7, 3, 0, 4, 1, 4, 5, 1, 2, 3, 6, 6, 3, 7,
+    0, 2, 1, 1, 2, 3, 4, 5, 6, 5, 7, 6, 0, 4, 2, 4, 6, 2,
+    1, 3, 5, 5, 3, 7, 0, 1, 4, 4, 1, 5, 2, 6, 3, 6, 7, 3,
 };
 
 // Plane
@@ -61,6 +61,12 @@ inline std::vector<glm::vec3> plane_vertices{
 };
 inline std::vector<uint32_t> plane_indices{0, 1, 2, 1, 3, 2, 0, 2, 1, 1, 2, 3};
 
+// Cylinder
+inline bgfx::VertexBufferHandle cylinder_vbh = BGFX_INVALID_HANDLE;
+inline bgfx::IndexBufferHandle cylinder_ibh = BGFX_INVALID_HANDLE;
+inline std::vector<glm::vec3> cylinder_vertices{};
+inline std::vector<uint32_t> cylinder_indices{};
+
 // Vertex Layout
 inline bgfx::VertexLayout vec2_vlayout;
 inline bgfx::VertexLayout vec3_vlayout;
@@ -69,5 +75,6 @@ inline bgfx::VertexLayout vec4_vlayout;
 // Functions
 void Init();
 void DeInit();
+void CreateCylinderBuffer();
 bgfx::ShaderHandle CreateShader(const std::string& path, const char* name);
 }  // namespace fastls::utils

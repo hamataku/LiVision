@@ -8,6 +8,8 @@ BUFFER_RO(b_ray_dirs, vec4, 1);
 IMAGE2D_WR(b_results, rgba32f, 2);
 
 uniform vec4 u_params;
+uniform mat4 u_mtx;
+
 #define num_indices u_params.x
 #define origin_x u_params.y
 #define origin_y u_params.z
@@ -39,7 +41,7 @@ void main() {
   uint ray_idx = gl_GlobalInvocationID.x;
 
   vec3 ray_origin = vec3(origin_x, origin_y, origin_z);
-  vec3 ray_dir = b_ray_dirs[ray_idx].xyz;
+  vec3 ray_dir = (u_mtx * b_ray_dirs[ray_idx]).xyz;
 
   float min_t = 3.0e+37;
   vec3 intersection_point = vec3(0.0, 0.0, 0.0);

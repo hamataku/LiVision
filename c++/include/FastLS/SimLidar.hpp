@@ -6,10 +6,13 @@
 #include <iostream>
 #include <vector>
 
+#include "FastLS/object/ObjectBase.hpp"
 #include "file_ops.hpp"
 #include "utils.hpp"
 
 namespace fastls {
+
+class ObjectBase;
 
 class SimLidar {
  public:
@@ -19,14 +22,14 @@ class SimLidar {
   void Init() {
     std::cout << "SimLidar Init" << std::endl;
 
-    for (float i = 0.0F; i < 360.0F; i += 1.0F) {
-      for (float j = 0.0F; j < 60.0F; j += 1.5F) {
+    for (float i = 0.0F; i < 360.0F; i += 3.0F) {
+      for (float j = 0.0F; j < 60.0F; j += 2.0F) {
         float rad_yaw = glm::radians(static_cast<float>(i));
         float rad_pitch = glm::radians(static_cast<float>(j));
 
         glm::vec3 dir_normalized = glm::normalize(glm::vec3(
             std::cos(rad_yaw), std::sin(rad_yaw), std::sin(rad_pitch)));
-        glm::vec4 dir = glm::vec4(dir_normalized, 0.0F);
+        glm::vec4 dir = glm::vec4(dir_normalized, 1.0F);
         ray_dirs_.push_back(dir);
       }
     }
@@ -36,7 +39,7 @@ class SimLidar {
 
     std::string shader;
     if (!file_ops::ReadFile(shader_root + "compute_ray_cast.bin", shader)) {
-      printf("Could not find compute shader");
+      std::cout << "Could not find compute shader" << std::endl;
       return;
     }
 
@@ -71,7 +74,9 @@ class SimLidar {
     output_buffer_ = static_cast<float*>(
         std::aligned_alloc(16, num_rays_ * sizeof(float) * 4));
 
+    // ユニフォームの初期化
     u_params_ = bgfx::createUniform("u_params", bgfx::UniformType::Vec4);
+    u_mtx_ = bgfx::createUniform("u_mtx", bgfx::UniformType::Mat4);
 
     // メッシュデータのアップロード
     const bgfx::Memory* vertex_mem = bgfx::makeRef(
@@ -84,35 +89,7 @@ class SimLidar {
     bgfx::update(ray_dir_buffer_, 0, ray_dir_mem);
   }
 
-  void Destroy() {
-    if (bgfx::isValid(compute_program_)) {
-      bgfx::destroy(compute_program_);
-      compute_program_ = BGFX_INVALID_HANDLE;
-    }
-    if (bgfx::isValid(mesh_buffer_)) {
-      bgfx::destroy(mesh_buffer_);
-      mesh_buffer_ = BGFX_INVALID_HANDLE;
-    }
-    if (bgfx::isValid(ray_dir_buffer_)) {
-      bgfx::destroy(ray_dir_buffer_);
-      ray_dir_buffer_ = BGFX_INVALID_HANDLE;
-    }
-    for (auto& i : compute_texture_) {
-      if (bgfx::isValid(i)) {
-        bgfx::destroy(i);
-        i = BGFX_INVALID_HANDLE;
-      }
-    }
-    if (output_buffer_) {
-      std::free(output_buffer_);
-      output_buffer_ = nullptr;
-    }
-
-    if (bgfx::isValid(u_params_)) {
-      bgfx::destroy(u_params_);
-      u_params_ = BGFX_INVALID_HANDLE;
-    }
-  }
+  void RegisterLidar(ObjectBase* lidar) { lidars_.push_back(lidar); }
 
   void AddMeshLists(const std::vector<glm::vec3>& vertex,
                     const std::vector<uint32_t>& index, const glm::mat4 mtx) {
@@ -123,7 +100,13 @@ class SimLidar {
     }
   }
 
-  void GetPointCloud(std::vector<glm::vec3>& points, const glm::vec3& origin) {
+  void GetPointCloud(std::vector<glm::vec3>& points) {
+    points.clear();
+    if (lidars_.empty()) return;
+    glm::mat4 mtx = lidars_[0]->GetGlobalMatrix();
+    glm::vec3 origin = glm::vec3(mtx[3][0], mtx[3][1], mtx[3][2]);
+    glm::mat4 mtx_inv = glm::inverse(mtx);
+
     int prev_index = 1 - frame_index_;  // 前のフレームのインデックス
 
     // コンピュートシェーダーのセットアップと実行
@@ -135,6 +118,7 @@ class SimLidar {
     float params[4] = {mesh_vertices_.size() / 3.0F, origin.x, origin.y,
                        origin.z};
     bgfx::setUniform(u_params_, params);
+    bgfx::setUniform(u_mtx_, glm::value_ptr(mtx_inv));
 
     constexpr uint32_t kThreadsX = 256;
     uint32_t num_groups_x = (num_rays_ + kThreadsX - 1) / kThreadsX;
@@ -158,14 +142,16 @@ class SimLidar {
   }
 
   // CPU-based ray casting implementation with the same interface
-  void GetPointCloudCPU(std::vector<glm::vec3>& points,
-                        const glm::vec3& origin) {
+  void GetPointCloudCPU(std::vector<glm::vec3>& points) {
     points.clear();
+    if (lidars_.empty()) return;
+    glm::mat4 mtx = lidars_[0]->GetGlobalMatrix();
+    glm::vec3 origin = glm::vec3(mtx[3][0], mtx[3][1], mtx[3][2]);
+    glm::mat4 mtx_inv = glm::inverse(mtx);
 
     // For each ray direction
     for (size_t ray_idx = 0; ray_idx < num_rays_; ++ray_idx) {
-      glm::vec3 ray_dir(ray_dirs_[ray_idx].x, ray_dirs_[ray_idx].y,
-                        ray_dirs_[ray_idx].z);
+      glm::vec3 ray_dir = ray_dirs_[ray_idx] * mtx_inv;
 
       float closest_t = std::numeric_limits<float>::max();
       bool hit = false;
@@ -194,6 +180,27 @@ class SimLidar {
       }
     }
   }
+
+ private:
+  static constexpr int kBufferCount = 2;
+  int frame_index_ = 0;  // バッファ切り替え用
+
+  std::vector<glm::vec4> mesh_vertices_;
+
+  bgfx::ProgramHandle compute_program_;
+  bgfx::DynamicVertexBufferHandle mesh_buffer_;
+  bgfx::DynamicVertexBufferHandle ray_dir_buffer_;
+  bgfx::TextureHandle compute_texture_[kBufferCount];
+
+  std::vector<glm::vec4> ray_dirs_;
+  int num_rays_;
+
+  bgfx::UniformHandle u_params_;
+  bgfx::UniformHandle u_mtx_;
+
+  float* output_buffer_ = nullptr;
+
+  std::vector<ObjectBase*> lidars_;
 
   // Ray-triangle intersection algorithm (Möller–Trumbore algorithm)
   bool RayTriangleIntersection(const glm::vec3& ray_origin,  // NOLINT
@@ -230,23 +237,35 @@ class SimLidar {
     return t > kEpsilon;
   }
 
- private:
-  static constexpr int kBufferCount = 2;
-  int frame_index_ = 0;  // バッファ切り替え用
+  void Destroy() {
+    if (bgfx::isValid(compute_program_)) {
+      bgfx::destroy(compute_program_);
+      compute_program_ = BGFX_INVALID_HANDLE;
+    }
+    if (bgfx::isValid(mesh_buffer_)) {
+      bgfx::destroy(mesh_buffer_);
+      mesh_buffer_ = BGFX_INVALID_HANDLE;
+    }
+    if (bgfx::isValid(ray_dir_buffer_)) {
+      bgfx::destroy(ray_dir_buffer_);
+      ray_dir_buffer_ = BGFX_INVALID_HANDLE;
+    }
+    for (auto& i : compute_texture_) {
+      if (bgfx::isValid(i)) {
+        bgfx::destroy(i);
+        i = BGFX_INVALID_HANDLE;
+      }
+    }
+    if (output_buffer_) {
+      std::free(output_buffer_);
+      output_buffer_ = nullptr;
+    }
 
-  std::vector<glm::vec4> mesh_vertices_;
-
-  bgfx::ProgramHandle compute_program_;
-  bgfx::DynamicVertexBufferHandle mesh_buffer_;
-  bgfx::DynamicVertexBufferHandle ray_dir_buffer_;
-  bgfx::TextureHandle compute_texture_[kBufferCount];
-
-  std::vector<glm::vec4> ray_dirs_;
-  int num_rays_;
-
-  bgfx::UniformHandle u_params_;
-
-  float* output_buffer_ = nullptr;
+    if (bgfx::isValid(u_params_)) {
+      bgfx::destroy(u_params_);
+      u_params_ = BGFX_INVALID_HANDLE;
+    }
+  }
 };
 
 inline SimLidar sim_lidar;
