@@ -1,0 +1,7 @@
+build*/
+embuild*/
+install/
+imgui.ini
+*.bin
+.vscode/
+.cache
