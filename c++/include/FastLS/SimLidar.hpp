@@ -48,16 +48,12 @@ class SimLidar {
         bgfx::createProgram(handle, true /* destroy shader on completion */);
 
     // GPUバッファの初期化（meshのサイズに合わせた固定バッファ）
-    auto vertex_count = static_cast<uint32_t>(mesh_vertices_.size());
-    auto index_count = static_cast<uint32_t>(mesh_indices_.size());
+    auto mesh_count = static_cast<uint32_t>(mesh_vertices_.size());
 
-    std::cout << "vertex_count: " << vertex_count << std::endl;
-    std::cout << "index_count: " << index_count << std::endl;
+    std::cout << "mesh_count: " << mesh_count / 3 << std::endl;
 
-    vertex_buffer_ = bgfx::createDynamicVertexBuffer(
-        vertex_count, utils::vec4_vlayout, BGFX_BUFFER_COMPUTE_READ);
-    index_buffer_ = bgfx::createDynamicIndexBuffer(
-        index_count, BGFX_BUFFER_COMPUTE_READ | BGFX_BUFFER_INDEX32);
+    mesh_buffer_ = bgfx::createDynamicVertexBuffer(
+        mesh_count, utils::vec4_vlayout, BGFX_BUFFER_COMPUTE_READ);
 
     // レイ情報用のバッファ
     // 十分な初期サイズでバッファを作成
@@ -80,11 +76,7 @@ class SimLidar {
     // メッシュデータのアップロード
     const bgfx::Memory* vertex_mem = bgfx::makeRef(
         mesh_vertices_.data(), mesh_vertices_.size() * sizeof(glm::vec4));
-    bgfx::update(vertex_buffer_, 0, vertex_mem);
-
-    const bgfx::Memory* index_mem = bgfx::makeRef(
-        mesh_indices_.data(), mesh_indices_.size() * sizeof(uint32_t));
-    bgfx::update(index_buffer_, 0, index_mem);
+    bgfx::update(mesh_buffer_, 0, vertex_mem);
 
     // レイデータのアップロード
     const bgfx::Memory* ray_dir_mem =
@@ -97,13 +89,9 @@ class SimLidar {
       bgfx::destroy(compute_program_);
       compute_program_ = BGFX_INVALID_HANDLE;
     }
-    if (bgfx::isValid(vertex_buffer_)) {
-      bgfx::destroy(vertex_buffer_);
-      vertex_buffer_ = BGFX_INVALID_HANDLE;
-    }
-    if (bgfx::isValid(index_buffer_)) {
-      bgfx::destroy(index_buffer_);
-      index_buffer_ = BGFX_INVALID_HANDLE;
+    if (bgfx::isValid(mesh_buffer_)) {
+      bgfx::destroy(mesh_buffer_);
+      mesh_buffer_ = BGFX_INVALID_HANDLE;
     }
     if (bgfx::isValid(ray_dir_buffer_)) {
       bgfx::destroy(ray_dir_buffer_);
@@ -128,27 +116,23 @@ class SimLidar {
 
   void AddMeshLists(const std::vector<glm::vec3>& vertex,
                     const std::vector<uint32_t>& index, const glm::mat4 mtx) {
-    for (const auto& v : vertex) {
+    for (const auto& i : index) {
+      glm::vec3 v = vertex[i];
       glm::vec4 result = mtx * glm::vec4(v, 1.0F);
       mesh_vertices_.push_back(result);
     }
-    for (const auto& i : index) {
-      mesh_indices_.push_back(mesh_index_ + i);
-    }
-    mesh_index_ += static_cast<uint32_t>(vertex.size());
   }
 
   void GetPointCloud(std::vector<glm::vec3>& points, const glm::vec3& origin) {
     int prev_index = 1 - frame_index_;  // 前のフレームのインデックス
 
     // コンピュートシェーダーのセットアップと実行
-    bgfx::setBuffer(0, vertex_buffer_, bgfx::Access::Read);
-    bgfx::setBuffer(1, index_buffer_, bgfx::Access::Read);
-    bgfx::setBuffer(2, ray_dir_buffer_, bgfx::Access::Read);
-    bgfx::setImage(3, compute_texture_[frame_index_], 0, bgfx::Access::Write,
+    bgfx::setBuffer(0, mesh_buffer_, bgfx::Access::Read);
+    bgfx::setBuffer(1, ray_dir_buffer_, bgfx::Access::Read);
+    bgfx::setImage(2, compute_texture_[frame_index_], 0, bgfx::Access::Write,
                    bgfx::TextureFormat::RGBA32F);
 
-    float params[4] = {mesh_indices_.size() / 3.0F, origin.x, origin.y,
+    float params[4] = {mesh_vertices_.size() / 3.0F, origin.x, origin.y,
                        origin.z};
     bgfx::setUniform(u_params_, params);
 
@@ -188,17 +172,10 @@ class SimLidar {
       glm::vec3 intersection_point;
 
       // Loop through all triangles in the mesh
-      for (size_t tri_idx = 0; tri_idx < mesh_indices_.size() / 3; ++tri_idx) {
-        uint32_t idx0 = mesh_indices_[tri_idx * 3];
-        uint32_t idx1 = mesh_indices_[(tri_idx * 3) + 1];
-        uint32_t idx2 = mesh_indices_[(tri_idx * 3) + 2];
-
-        glm::vec3 v0(mesh_vertices_[idx0].x, mesh_vertices_[idx0].y,
-                     mesh_vertices_[idx0].z);
-        glm::vec3 v1(mesh_vertices_[idx1].x, mesh_vertices_[idx1].y,
-                     mesh_vertices_[idx1].z);
-        glm::vec3 v2(mesh_vertices_[idx2].x, mesh_vertices_[idx2].y,
-                     mesh_vertices_[idx2].z);
+      for (size_t tri_idx = 0; tri_idx < mesh_vertices_.size() / 3; ++tri_idx) {
+        glm::vec3 v0 = mesh_vertices_[tri_idx * 3];
+        glm::vec3 v1 = mesh_vertices_[tri_idx * 3 + 1];
+        glm::vec3 v2 = mesh_vertices_[tri_idx * 3 + 2];
 
         float t;
         if (RayTriangleIntersection(origin, ray_dir, v0, v1, v2, t)) {
@@ -258,12 +235,9 @@ class SimLidar {
   int frame_index_ = 0;  // バッファ切り替え用
 
   std::vector<glm::vec4> mesh_vertices_;
-  std::vector<uint32_t> mesh_indices_;
-  uint32_t mesh_index_ = 0;
 
   bgfx::ProgramHandle compute_program_;
-  bgfx::DynamicVertexBufferHandle vertex_buffer_;
-  bgfx::DynamicIndexBufferHandle index_buffer_;
+  bgfx::DynamicVertexBufferHandle mesh_buffer_;
   bgfx::DynamicVertexBufferHandle ray_dir_buffer_;
   bgfx::TextureHandle compute_texture_[kBufferCount];
 

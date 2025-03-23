@@ -1,9 +1,11 @@
 #include <bgfx_compute.sh>
 
+#define CHUNK_TRIANGLES 64
+#define LOCAL_SIZE 256
+
 BUFFER_RO(b_vertices, vec4, 0);
-BUFFER_RO(b_indices, uint, 1);
-BUFFER_RO(b_ray_dirs, vec4, 2);
-IMAGE2D_WR(b_results, rgba32f, 3);
+BUFFER_RO(b_ray_dirs, vec4, 1);
+IMAGE2D_WR(b_results, rgba32f, 2);
 
 uniform vec4 u_params;
 #define num_indices u_params.x
@@ -11,70 +13,75 @@ uniform vec4 u_params;
 #define origin_y u_params.z
 #define origin_z u_params.w
 
-bool intersectTriangle(vec3 orig, vec3 dir, vec3 v0, vec3 v1, vec3 v2, out float t, out float u, out float v)
-{
-    vec3 e1 = v1 - v0;
-    vec3 e2 = v2 - v0;
-    vec3 h = cross(dir, e2);
-    float a = dot(e1, h);
+SHARED vec4 s_vertices[CHUNK_TRIANGLES * 3];
 
-    if (abs(a) < 1e-6)
-        return false;
+bool intersectTriangle(vec3 orig, vec3 dir, vec3 v0, vec3 v1, vec3 v2,
+                       out float t, out float u, out float v) {
+  vec3 e1 = v1 - v0;
+  vec3 e2 = v2 - v0;
+  vec3 h = cross(dir, e2);
+  float a = dot(e1, h);
 
-    float f = 1.0 / a;
-    vec3 s = orig - v0;
-    u = f * dot(s, h);
-
-    if (u < 0.0 || u > 1.0)
-        return false;
-
-    vec3 q = cross(s, e1);
-    v = f * dot(dir, q);
-
-    if (v < 0.0 || u + v > 1.0)
-        return false;
-
-    t = f * dot(e2, q);
-    return t > 1e-6;
+  if (abs(a) < 1e-6) return false;
+  float f = 1.0 / a;
+  vec3 s = orig - v0;
+  u = f * dot(s, h);
+  if (u < 0.0 || u > 1.0) return false;
+  vec3 q = cross(s, e1);
+  v = f * dot(dir, q);
+  if (v < 0.0 || u + v > 1.0) return false;
+  t = f * dot(e2, q);
+  return t > 1e-6;
 }
 
-NUM_THREADS(256, 1, 1)
-void main()
-{
-    uint ray_idx = gl_GlobalInvocationID.x;
-    
-    vec3 ray_origin;
-    ray_origin.x = origin_x;
-    ray_origin.y = origin_y;
-    ray_origin.z = origin_z;
-    vec3 ray_dir = b_ray_dirs[ray_idx].xyz;
-    
-    float min_t = 3.0e+37;
-    vec3 intersection_point = vec3(0.0, 0.0, 0.0);
-    bool has_hit = false;
+NUM_THREADS(LOCAL_SIZE, 1, 1)
+void main() {
+  uint ray_idx = gl_GlobalInvocationID.x;
 
-    uint num_triangles = uint(num_indices);
-    for (uint tri_idx = 0; tri_idx < num_triangles; ++tri_idx)
-    {
-        uint i0 = b_indices[tri_idx * 3 + 0];
-        uint i1 = b_indices[tri_idx * 3 + 1];
-        uint i2 = b_indices[tri_idx * 3 + 2];
+  vec3 ray_origin = vec3(origin_x, origin_y, origin_z);
+  vec3 ray_dir = b_ray_dirs[ray_idx].xyz;
 
-        vec3 v0 = b_vertices[i0].xyz;
-        vec3 v1 = b_vertices[i1].xyz;
-        vec3 v2 = b_vertices[i2].xyz;
+  float min_t = 3.0e+37;
+  vec3 intersection_point = vec3(0.0, 0.0, 0.0);
+  bool has_hit = false;
 
-        float t, u, v;
-        if (intersectTriangle(ray_origin, ray_dir, v0, v1, v2, t, u, v))
-        {
-            if (t < min_t)
-            {
-                min_t = t;
-                intersection_point = ray_origin + ray_dir * t;
-                has_hit = true;
-            }
-        }
+  uint num_triangles = uint(num_indices);
+
+  // チャンク単位で頂点データを共有メモリにロードして処理
+  for (uint chunk_start = 0; chunk_start < num_triangles;
+       chunk_start += CHUNK_TRIANGLES) {
+    uint chunk_size = min(CHUNK_TRIANGLES, num_triangles - chunk_start);
+
+    // 各スレッドが共有メモリに頂点データを読み込む
+    for (uint i = gl_LocalInvocationID.x; i < chunk_size * 3; i += LOCAL_SIZE) {
+      uint triangle_idx = chunk_start + (i / 3);  // 三角形のインデックス
+      uint vertex_offset = i % 3;  // 三角形内の頂点オフセット
+      uint global_idx =
+          triangle_idx * 3 + vertex_offset;  // グローバルな頂点インデックス
+      s_vertices[i] = b_vertices[global_idx];
     }
 
-    imageStore(b_results, ivec2(ray_idx, 0), vec4(intersection_point.xyz, has_hit ? 1.0 : 0.0));
+    barrier();  // 共有メモリの読み込み完了を待機
+
+    // チャンク内の各三角形に対して交差判定を実施
+    for (uint tri_local = 0; tri_local < chunk_size; tri_local++) {
+      vec3 v0 = s_vertices[tri_local * 3].xyz;
+      vec3 v1 = s_vertices[tri_local * 3 + 1].xyz;
+      vec3 v2 = s_vertices[tri_local * 3 + 2].xyz;
+
+      float t, u, v;
+      if (intersectTriangle(ray_origin, ray_dir, v0, v1, v2, t, u, v)) {
+        if (t < min_t) {
+          min_t = t;
+          intersection_point = ray_origin + ray_dir * t;
+          has_hit = true;
+        }
+      }
+    }
+
+    barrier();  // チャンク処理の完了を待機
+  }
+
+  imageStore(b_results, ivec2(ray_idx, 0),
+             vec4(intersection_point.xyz, has_hit ? 1.0 : 0.0));
 }
