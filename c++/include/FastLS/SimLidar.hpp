@@ -12,6 +12,44 @@
 namespace fastls {
 
 class SimLidar {
+ private:
+  struct AABB {
+    glm::vec3 min;
+    glm::vec3 max;
+
+    void Expand(const glm::vec3& point) {
+      min = glm::min(min, point);
+      max = glm::max(max, point);
+    }
+
+    void Expand(const AABB& other) {
+      min = glm::min(min, other.min);
+      max = glm::max(max, other.max);
+    }
+
+    AABB()
+        : min(std::numeric_limits<float>::max()),
+          max(-std::numeric_limits<float>::max()) {}
+  };
+
+  struct BVHNode {
+    AABB bounds;
+    uint32_t left_child;   // 左子ノードのインデックス
+    uint32_t right_child;  // 右子ノードのインデックス
+    uint32_t first_tri;    // 最初の三角形インデックス
+    uint32_t tri_count;    // 三角形の数
+  };
+
+  std::vector<BVHNode> bvh_nodes_;
+  bgfx::DynamicVertexBufferHandle bvh_buffer_ = BGFX_INVALID_HANDLE;
+
+  void BuildBVH();
+  uint32_t CreateNode();
+  void SplitNode(uint32_t node_idx, uint32_t start, uint32_t count,
+                 const AABB& bounds, int depth);
+  AABB ComputeSceneBounds() const;
+  void CreateBVHBuffer();
+
  public:
   SimLidar() : compute_program_(BGFX_INVALID_HANDLE) {}
   ~SimLidar() { Destroy(); }
@@ -27,7 +65,7 @@ class SimLidar {
         glm::vec3 dir_normalized = glm::normalize(glm::vec3(
             std::cos(rad_yaw), std::sin(rad_yaw), std::sin(rad_pitch)));
         glm::vec4 dir = glm::vec4(dir_normalized, 0.0F);
-        ray_dirs_.push_back(dir);
+        ray_dirs_.emplace_back(dir);
       }
     }
     num_rays_ = ray_dirs_.size();
@@ -74,9 +112,14 @@ class SimLidar {
     u_params_ = bgfx::createUniform("u_params", bgfx::UniformType::Vec4);
 
     // メッシュデータのアップロード
+    // メッシュデータのアップロード後にBVHを構築
     const bgfx::Memory* vertex_mem = bgfx::makeRef(
         mesh_vertices_.data(), mesh_vertices_.size() * sizeof(glm::vec4));
     bgfx::update(mesh_buffer_, 0, vertex_mem);
+
+    // BVHの構築とGPUバッファの作成
+    BuildBVH();
+    CreateBVHBuffer();
 
     // レイデータのアップロード
     const bgfx::Memory* ray_dir_mem =
@@ -96,6 +139,10 @@ class SimLidar {
     if (bgfx::isValid(ray_dir_buffer_)) {
       bgfx::destroy(ray_dir_buffer_);
       ray_dir_buffer_ = BGFX_INVALID_HANDLE;
+    }
+    if (bgfx::isValid(bvh_buffer_)) {
+      bgfx::destroy(bvh_buffer_);
+      bvh_buffer_ = BGFX_INVALID_HANDLE;
     }
     for (auto& i : compute_texture_) {
       if (bgfx::isValid(i)) {
@@ -119,7 +166,7 @@ class SimLidar {
     for (const auto& i : index) {
       glm::vec3 v = vertex[i];
       glm::vec4 result = mtx * glm::vec4(v, 1.0F);
-      mesh_vertices_.push_back(result);
+      mesh_vertices_.emplace_back(result);
     }
   }
 
@@ -129,7 +176,8 @@ class SimLidar {
     // コンピュートシェーダーのセットアップと実行
     bgfx::setBuffer(0, mesh_buffer_, bgfx::Access::Read);
     bgfx::setBuffer(1, ray_dir_buffer_, bgfx::Access::Read);
-    bgfx::setImage(2, compute_texture_[frame_index_], 0, bgfx::Access::Write,
+    bgfx::setBuffer(2, bvh_buffer_, bgfx::Access::Read);
+    bgfx::setImage(3, compute_texture_[frame_index_], 0, bgfx::Access::Write,
                    bgfx::TextureFormat::RGBA32F);
 
     float params[4] = {mesh_vertices_.size() / 3.0F, origin.x, origin.y,
@@ -162,7 +210,18 @@ class SimLidar {
                         const glm::vec3& origin) {
     points.clear();
 
-    // For each ray direction
+    // デバッグカウンター
+    size_t total_aabb_tests = 0;
+    size_t total_tri_tests = 0;
+    size_t total_hits = 0;
+
+    if (bvh_nodes_.empty()) {
+      std::cout << "Warning: BVH is empty, no points will be generated"
+                << std::endl;
+      return;
+    }
+
+    // レイ方向ごとのループ
     for (size_t ray_idx = 0; ray_idx < num_rays_; ++ray_idx) {
       glm::vec3 ray_dir(ray_dirs_[ray_idx].x, ray_dirs_[ray_idx].y,
                         ray_dirs_[ray_idx].z);
@@ -171,28 +230,70 @@ class SimLidar {
       bool hit = false;
       glm::vec3 intersection_point;
 
-      // Loop through all triangles in the mesh
-      for (size_t tri_idx = 0; tri_idx < mesh_vertices_.size() / 3; ++tri_idx) {
-        glm::vec3 v0 = mesh_vertices_[tri_idx * 3];
-        glm::vec3 v1 = mesh_vertices_[tri_idx * 3 + 1];
-        glm::vec3 v2 = mesh_vertices_[tri_idx * 3 + 2];
+      // BVHトラバーサル用のスタック
+      std::vector<uint32_t> stack;
+      stack.reserve(64);   // スタックの初期サイズを確保
+      stack.push_back(0);  // ルートノードから開始
 
-        float t;
-        if (RayTriangleIntersection(origin, ray_dir, v0, v1, v2, t)) {
-          // Find closest intersection
-          if (t < closest_t) {
-            closest_t = t;
-            hit = true;
-            intersection_point = origin + ray_dir * t;
+      while (!stack.empty()) {
+        uint32_t node_idx = stack.back();
+        stack.pop_back();
+
+        const BVHNode& node = bvh_nodes_[node_idx];
+
+        total_aabb_tests++;
+        // AABBとの交差判定
+        bool hit_box =
+            IntersectAABB(origin, ray_dir, node.bounds.min, node.bounds.max);
+        if (!hit_box) {
+          continue;
+        }
+
+        if (node.tri_count > 0) {
+          // 葉ノード: 三角形との交差判定
+          for (uint32_t i = 0; i < node.tri_count; ++i) {
+            total_tri_tests++;
+            uint32_t tri_idx = node.first_tri + i;
+            glm::vec3 v0 = mesh_vertices_[tri_idx * 3];
+            glm::vec3 v1 = mesh_vertices_[tri_idx * 3 + 1];
+            glm::vec3 v2 = mesh_vertices_[tri_idx * 3 + 2];
+
+            float t;
+            if (RayTriangleIntersection(origin, ray_dir, v0, v1, v2, t)) {
+              if (t < closest_t) {
+                closest_t = t;
+                hit = true;
+                intersection_point = origin + ray_dir * t;
+              }
+            }
           }
+        } else {
+          // 内部ノード: 子ノードをスタックに追加
+          stack.push_back(node.right_child);
+          stack.push_back(node.left_child);
         }
       }
 
-      // Add intersection point if hit
+      // 交差点が見つかった場合、追加
       if (hit) {
-        points.push_back(intersection_point);
+        points.emplace_back(intersection_point);
+        total_hits++;
       }
     }
+  }
+
+  // Ray-AABB intersection test
+  static bool IntersectAABB(const glm::vec3& origin, const glm::vec3& dir,
+                            const glm::vec3& box_min,
+                            const glm::vec3& box_max) {
+    glm::vec3 inv_dir = 1.0F / dir;
+    glm::vec3 t0 = (box_min - origin) * inv_dir;
+    glm::vec3 t1 = (box_max - origin) * inv_dir;
+    glm::vec3 tmin = glm::min(t0, t1);
+    glm::vec3 tmax = glm::max(t0, t1);
+    float tenter = glm::max(tmin.x, glm::max(tmin.y, tmin.z));
+    float texit = glm::min(tmax.x, glm::min(tmax.y, tmax.z));
+    return tenter <= texit && texit > 0.0F;
   }
 
   // Ray-triangle intersection algorithm (Möller–Trumbore algorithm)
@@ -240,6 +341,8 @@ class SimLidar {
   bgfx::DynamicVertexBufferHandle mesh_buffer_;
   bgfx::DynamicVertexBufferHandle ray_dir_buffer_;
   bgfx::TextureHandle compute_texture_[kBufferCount];
+
+  std::vector<glm::vec4> gpu_nodes_;
 
   std::vector<glm::vec4> ray_dirs_;
   int num_rays_;

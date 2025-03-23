@@ -1,87 +1,156 @@
 #include <bgfx_compute.sh>
 
-#define CHUNK_TRIANGLES 64
-#define LOCAL_SIZE 256
+// Input buffers
+BUFFER_RO(b_mesh, vec4, 0);     // Mesh vertices
+BUFFER_RO(b_rays, vec4, 1);     // Ray directions
+BUFFER_RO(b_bvh, vec4, 2);      // BVH nodes
 
-BUFFER_RO(b_vertices, vec4, 0);
-BUFFER_RO(b_ray_dirs, vec4, 1);
-IMAGE2D_WR(b_results, rgba32f, 2);
+// Output image
+IMAGE2D_WR(img_output, rgba32f, 3);
 
+// Uniforms
 uniform vec4 u_params;
-#define num_indices u_params.x
-#define origin_x u_params.y
-#define origin_y u_params.z
-#define origin_z u_params.w
+// u_params.x = triangle count
+// u_params.yzw = ray origin (x,y,z)
 
-SHARED vec4 s_vertices[CHUNK_TRIANGLES * 3];
+// Constants
+#define MAX_STACK 512
+#define EPSILON 0.0000001
 
-bool intersectTriangle(vec3 orig, vec3 dir, vec3 v0, vec3 v1, vec3 v2,
-                       out float t, out float u, out float v) {
-  vec3 e1 = v1 - v0;
-  vec3 e2 = v2 - v0;
-  vec3 h = cross(dir, e2);
-  float a = dot(e1, h);
-
-  if (abs(a) < 1e-6) return false;
-  float f = 1.0 / a;
-  vec3 s = orig - v0;
-  u = f * dot(s, h);
-  if (u < 0.0 || u > 1.0) return false;
-  vec3 q = cross(s, e1);
-  v = f * dot(dir, q);
-  if (v < 0.0 || u + v > 1.0) return false;
-  t = f * dot(e2, q);
-  return t > 1e-6;
+bool intersectAABB(vec3 origin, vec3 dir, vec3 boxMin, vec3 boxMax)
+{
+    vec3 invDir = 1.0 / dir;
+    vec3 t0 = (boxMin - origin) * invDir;
+    vec3 t1 = (boxMax - origin) * invDir;
+    vec3 tmin = min(t0, t1);
+    vec3 tmax = max(t0, t1);
+    float tenter = max(tmin.x, max(tmin.y, tmin.z));
+    float texit = min(tmax.x, min(tmax.y, tmax.z));
+    return tenter <= texit && texit > 0.0;
 }
 
-NUM_THREADS(LOCAL_SIZE, 1, 1)
-void main() {
-  uint ray_idx = gl_GlobalInvocationID.x;
+bool rayTriangleIntersection(vec3 rayOrigin, vec3 rayDir, vec3 v0, vec3 v1, vec3 v2, inout float t)
+{
+    vec3 edge1 = v1 - v0;
+    vec3 edge2 = v2 - v0;
+    vec3 h = cross(rayDir, edge2);
+    float a = dot(edge1, h);
 
-  vec3 ray_origin = vec3(origin_x, origin_y, origin_z);
-  vec3 ray_dir = b_ray_dirs[ray_idx].xyz;
+    // Ray parallel to triangle
+    if (a > -EPSILON && a < EPSILON) return false;
 
-  float min_t = 3.0e+37;
-  vec3 intersection_point = vec3(0.0, 0.0, 0.0);
-  bool has_hit = false;
+    float f = 1.0 / a;
+    vec3 s = rayOrigin - v0;
+    float u = f * dot(s, h);
 
-  uint num_triangles = uint(num_indices);
+    // Intersection outside triangle
+    if (u < 0.0 || u > 1.0) return false;
 
-  // チャンク単位で頂点データを共有メモリにロードして処理
-  for (uint chunk_start = 0; chunk_start < num_triangles;
-       chunk_start += CHUNK_TRIANGLES) {
-    uint chunk_size = min(CHUNK_TRIANGLES, num_triangles - chunk_start);
+    vec3 q = cross(s, edge1);
+    float v = f * dot(rayDir, q);
 
-    // 各スレッドが共有メモリに頂点データを読み込む
-    for (uint i = gl_LocalInvocationID.x; i < chunk_size * 3; i += LOCAL_SIZE) {
-      uint triangle_idx = chunk_start + (i / 3);  // 三角形のインデックス
-      uint vertex_offset = i % 3;  // 三角形内の頂点オフセット
-      uint global_idx =
-          triangle_idx * 3 + vertex_offset;  // グローバルな頂点インデックス
-      s_vertices[i] = b_vertices[global_idx];
-    }
+    // Intersection outside triangle
+    if (v < 0.0 || u + v > 1.0) return false;
 
-    barrier();  // 共有メモリの読み込み完了を待機
+    // Calculate distance along ray
+    t = f * dot(edge2, q);
 
-    // チャンク内の各三角形に対して交差判定を実施
-    for (uint tri_local = 0; tri_local < chunk_size; tri_local++) {
-      vec3 v0 = s_vertices[tri_local * 3].xyz;
-      vec3 v1 = s_vertices[tri_local * 3 + 1].xyz;
-      vec3 v2 = s_vertices[tri_local * 3 + 2].xyz;
+    // Only accept intersections in front of the ray
+    return t > EPSILON;
+}
 
-      float t, u, v;
-      if (intersectTriangle(ray_origin, ray_dir, v0, v1, v2, t, u, v)) {
-        if (t < min_t) {
-          min_t = t;
-          intersection_point = ray_origin + ray_dir * t;
-          has_hit = true;
+NUM_THREADS(256, 1, 1)
+void main()
+{
+    // Get global thread ID
+    uint ray_idx = gl_GlobalInvocationID.x;
+    
+    // Skip if outside bounds
+    if (ray_idx >= imageSize(img_output).x)
+        return;
+        
+    // Origin and ray direction
+    vec3 origin = u_params.yzw;
+    vec3 rayDir = b_rays[ray_idx].xyz;
+    
+    float closestT = 1.0e30; // Very large value
+    bool hit = false;
+    vec3 hitPoint = vec3(0.0, 0.0, 0.0);
+    
+    // BVH traversal stack (implemented as a fixed-size array)
+    uint stack[MAX_STACK];
+    int stackPtr = 0;
+    
+    // Start with root node
+    stack[stackPtr++] = 0;
+    
+    while (stackPtr > 0)
+    {
+        // Pop node from stack
+        uint nodeIdx = stack[--stackPtr];
+        
+        // Get BVH node data (stored as pairs of vec4)
+        vec4 nodeData1 = b_bvh[nodeIdx * 3]; // min.xyz, max.x
+        vec4 nodeData2 = b_bvh[nodeIdx * 3 + 1]; // max.yz, left_child, right_child
+        vec4 nodeData3 = b_bvh[nodeIdx * 3 + 2]; // first_tri, tri_count, 0, 0
+        
+        // Extract AABB bounds
+        vec3 boxMin = nodeData1.xyz;
+        vec3 boxMax = vec3(nodeData1.w, nodeData2.xy);
+        
+        // Test ray against AABB
+        if (!intersectAABB(origin, rayDir, boxMin, boxMax))
+            continue;
+            
+        // Get children or triangles info
+        uint triCount = uint(nodeData3.y);
+        
+        // Check if leaf node (triangle count > 0)
+        if (triCount > 0)
+        {
+            // Leaf node: test triangles
+            uint firstTri = uint(nodeData3.x);
+            
+            for (uint i = 0; i < triCount; i++)
+            {
+                uint triIdx = firstTri + i;
+                vec3 v0 = b_mesh[triIdx * 3].xyz;
+                vec3 v1 = b_mesh[triIdx * 3 + 1].xyz;
+                vec3 v2 = b_mesh[triIdx * 3 + 2].xyz;
+                
+                float t;
+                if (rayTriangleIntersection(origin, rayDir, v0, v1, v2, t))
+                {
+                    if (t < closestT)
+                    {
+                        closestT = t;
+                        hit = true;
+                        hitPoint = origin + rayDir * t;
+                    }
+                }
+            }
+        } else {
+            // Internal node: push children to stack
+            // Push right child first so left child is processed first
+            uint rightChild = uint(nodeData2.z);
+            uint leftChild = uint(nodeData2.w);
+            
+            // Check for stack overflow
+            if (stackPtr < MAX_STACK - 1)
+            {
+                stack[stackPtr++] = rightChild;
+                stack[stackPtr++] = leftChild;
+            }
         }
-      }
     }
-
-    barrier();  // チャンク処理の完了を待機
-  }
-
-  imageStore(b_results, ivec2(ray_idx, 0),
-             vec4(intersection_point.xyz, has_hit ? 1.0 : 0.0));
+    
+    // Write output
+    vec4 result;
+    if (hit) {
+        result = vec4(hitPoint, 1.0); // w = 1.0 indicates a hit
+    } else {
+        result = vec4(0.0, 0.0, 0.0, 0.0); // w = 0.0 indicates no hit
+    }
+    
+    imageStore(img_output, ivec2(ray_idx, 0), result);
 }

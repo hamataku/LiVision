@@ -38,6 +38,6 @@ class SimScene : public SceneBase {
   fastls::Box box3_;
   fastls::Plane plane0_;
   fastls::PointCloud point_cloud0_;
-  fastls::Mesh mesh0_{"data/bunny/bun_zipper_res2.stl"};
+  fastls::Mesh mesh0_{"data/bunny/bun_zipper_res3.stl"};
 };
 }  // namespace fastls
