@@ -8,6 +8,11 @@ int main() {
   fastls::SimScene sim_scene;
   fast_ls.SetScene(&sim_scene);
 
-  fast_ls.Run();
+  fast_ls.Init();
+
+  while (!(fast_ls.IsQuit())) {
+    fast_ls.MainLoop();
+  }
+
   return 0;
 }

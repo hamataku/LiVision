@@ -41,7 +41,8 @@ void main() {
   uint ray_idx = gl_GlobalInvocationID.x;
 
   vec3 ray_origin = vec3(origin_x, origin_y, origin_z);
-  vec3 ray_dir = (u_mtx * b_ray_dirs[ray_idx]).xyz;
+  vec4 b_ray_dir = b_ray_dirs[ray_idx];
+  vec3 ray_dir = (u_mtx * b_ray_dir).xyz;
 
   float min_t = 3.0e+37;
   vec3 intersection_point = vec3(0.0, 0.0, 0.0);
@@ -75,7 +76,7 @@ void main() {
       if (intersectTriangle(ray_origin, ray_dir, v0, v1, v2, t, u, v)) {
         if (t < min_t) {
           min_t = t;
-          intersection_point = ray_origin + ray_dir * t;
+          intersection_point = b_ray_dir.xyz * t;
           has_hit = true;
         }
       }

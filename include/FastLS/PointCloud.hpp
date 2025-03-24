@@ -16,14 +16,13 @@ class PointCloud : public ObjectBase {
     color_ = utils::Color{1.0F, 0.0F, 0.0F, 1.0F};
   }
   void Draw(bgfx::ProgramHandle& program) final {
-    box_.SetColor(color_);
+    box_.SetColor(GetColor());
     for (const auto& point : points_) {
       box_.SetPos(point);
       box_.Draw(program);
     }
   }
 
-  void SetColor(utils::Color& color) { box_.SetColor(color); }
   void SetPoints(const std::vector<glm::vec3>& points) { points_ = points; }
 
  private:

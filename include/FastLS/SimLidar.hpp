@@ -22,8 +22,8 @@ class SimLidar {
   void Init() {
     std::cout << "SimLidar Init" << std::endl;
 
-    for (float i = 0.0F; i < 360.0F; i += 3.0F) {
-      for (float j = 0.0F; j < 60.0F; j += 3.0F) {
+    for (float i = 0.0F; i < 360.0F; i += kLidarStep) {
+      for (float j = 0.0F; j < 80.0F; j += 3.0F) {
         float rad_yaw = glm::radians(static_cast<float>(i));
         float rad_pitch = glm::radians(static_cast<float>(j));
 
@@ -77,6 +77,8 @@ class SimLidar {
     // ユニフォームの初期化
     u_params_ = bgfx::createUniform("u_params", bgfx::UniformType::Vec4);
     u_mtx_ = bgfx::createUniform("u_mtx", bgfx::UniformType::Mat4);
+    u_mtx_inv_ = bgfx::createUniform("u_mtx_inv", bgfx::UniformType::Mat4);
+    u_mtx_lidar_ = bgfx::createUniform("u_mtx_lidar", bgfx::UniformType::Mat4);
 
     // メッシュデータのアップロード
     const bgfx::Memory* vertex_mem = bgfx::makeRef(
@@ -101,11 +103,19 @@ class SimLidar {
   }
 
   void GetPointCloud(std::vector<glm::vec3>& points) {
-    points.clear();
     if (lidars_.empty()) return;
     glm::mat4 mtx = lidars_[0]->GetGlobalMatrix();
     glm::vec3 origin = glm::vec3(mtx[3][0], mtx[3][1], mtx[3][2]);
     glm::mat4 mtx_inv = glm::inverse(mtx);
+    glm::mat4 mtx_lidar;
+
+    lidar_angle_ += kLidarStep / 0.3F;
+    if (lidar_angle_ >= 360.0F) {
+      lidar_angle_ -= 360.0F;
+    }
+    // z軸方向のlidar_angle度回転させる変換行列
+    mtx_lidar = glm::rotate(glm::mat4(1.0F), glm::radians(lidar_angle_),
+                            glm::vec3(0.0F, 0.0F, 1.0F));
 
     int prev_index = 1 - frame_index_;  // 前のフレームのインデックス
 
@@ -119,6 +129,8 @@ class SimLidar {
                        origin.z};
     bgfx::setUniform(u_params_, params);
     bgfx::setUniform(u_mtx_, glm::value_ptr(mtx_inv));
+    bgfx::setUniform(u_mtx_inv_, glm::value_ptr(mtx));
+    bgfx::setUniform(u_mtx_lidar_, glm::value_ptr(mtx_lidar));
 
     constexpr uint32_t kThreadsX = 256;
     uint32_t num_groups_x = (num_rays_ + kThreadsX - 1) / kThreadsX;
@@ -129,7 +141,6 @@ class SimLidar {
     bgfx::readTexture(compute_texture_[prev_index], output_buffer_);
 
     // 結果の処理
-    points.clear();
     for (size_t i = 0; i < num_rays_; ++i) {
       if (output_buffer_[(i * 4) + 3] > 0.0F) {  // 交差があった場合
         points.emplace_back(output_buffer_[i * 4], output_buffer_[(i * 4) + 1],
@@ -185,6 +196,9 @@ class SimLidar {
   static constexpr int kBufferCount = 2;
   int frame_index_ = 0;  // バッファ切り替え用
 
+  static constexpr float kLidarStep = 3.0F;
+  float lidar_angle_ = 0.0F;
+
   std::vector<glm::vec4> mesh_vertices_;
 
   bgfx::ProgramHandle compute_program_;
@@ -197,6 +211,8 @@ class SimLidar {
 
   bgfx::UniformHandle u_params_;
   bgfx::UniformHandle u_mtx_;
+  bgfx::UniformHandle u_mtx_inv_;
+  bgfx::UniformHandle u_mtx_lidar_;
 
   float* output_buffer_ = nullptr;
 
@@ -264,6 +280,21 @@ class SimLidar {
     if (bgfx::isValid(u_params_)) {
       bgfx::destroy(u_params_);
       u_params_ = BGFX_INVALID_HANDLE;
+    }
+
+    if (bgfx::isValid(u_mtx_)) {
+      bgfx::destroy(u_mtx_);
+      u_mtx_ = BGFX_INVALID_HANDLE;
+    }
+
+    if (bgfx::isValid(u_mtx_inv_)) {
+      bgfx::destroy(u_mtx_inv_);
+      u_mtx_inv_ = BGFX_INVALID_HANDLE;
+    }
+
+    if (bgfx::isValid(u_mtx_lidar_)) {
+      bgfx::destroy(u_mtx_lidar_);
+      u_mtx_lidar_ = BGFX_INVALID_HANDLE;
     }
   }
 };
