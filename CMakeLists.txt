@@ -14,7 +14,7 @@ add_subdirectory(third-party/imgui.cmake)
 find_package(bgfx CONFIG REQUIRED)
 find_package(glm REQUIRED)
 
-# ライブラリターゲットを作成
+# Make library target
 if(FASTLS_BUILD_SHARED)
   add_library(${PROJECT_NAME} SHARED)
 else()
@@ -52,5 +52,5 @@ if(FASTLS_BUILD_EXAMPLE)
     add_subdirectory(example)
 endif()
 
-# エイリアスターゲットの作成（名前空間付き）
+# Alias target
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})

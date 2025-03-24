@@ -39,7 +39,7 @@ class Drone : public Container {
         .SetLidarVisible(false);
     AddObject(&cyl_lidar_);
 
-    body_.SetSize(glm::vec3(0.5F, 0.5F, 0.1F)).SetColor(utils::light_gray);
+    body_.SetSize(glm::vec3(0.5F, 0.5F, 0.1F)).SetColor(utils::dark_gray);
     AddObject(&body_);
   }
 
