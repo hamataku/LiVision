@@ -17,13 +17,7 @@
 
 namespace fastls {
 
-bool FastLS::Run() {
-  if (!Init()) {
-    return false;
-  }
-
-  MainLoop();
-
+FastLS::~FastLS() {
   // Cleanup
   utils::DeInit();
   bgfx::destroy(program_);
@@ -36,8 +30,6 @@ bool FastLS::Run() {
 
   SDL_DestroyWindow(window_);
   SDL_Quit();
-
-  return true;
 }
 
 bool FastLS::Init() {
@@ -124,6 +116,21 @@ bool FastLS::Init() {
   PrintBackend();
   utils::Init();
 
+  if (scene_ == nullptr) {
+    std::cerr << "Scene is not set" << std::endl;
+    return false;
+  }
+
+  if (scene_set_) {
+    scene_->Init();
+    scene_set_ = false;
+  }
+  scene_->AddMeshList();
+  sim_lidar.Init();
+
+  // FPS計測開始時間の初期化
+  last_fps_time_ = SDL_GetTicks();
+
   return true;
 }
 
@@ -177,64 +184,46 @@ void FastLS::MouseOperation() {
 }
 
 void FastLS::MainLoop() {
-  bool quit = false;
-
-  if (scene_ == nullptr) {
-    return;
+  SDL_Event event;
+  while (SDL_PollEvent(&event)) {
+    ImGui_ImplSDL3_ProcessEvent(&event);
+    if (event.type == SDL_EVENT_QUIT) {
+      quit_ = true;
+      break;
+    }
+    if (event.type == SDL_EVENT_MOUSE_WHEEL) {
+      zoom_distance_ += event.wheel.y * zoom_scale_;
+    }
   }
 
-  if (scene_set_) {
-    scene_->Init();
-    scene_set_ = false;
+  if (!headless_) {
+    scene_->Draw(program_);
+
+    ImGui_Implbgfx_NewFrame();
+    ImGui_ImplSDL3_NewFrame();
+
+    // ImGui::NewFrame();
+    // ImGui::ShowDemoWindow();  // your drawing here
+    // ImGui::Render();
+    // ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
+
+    MouseOperation();
   }
-  scene_->AddMeshList();
-  sim_lidar.Init();
 
-  // FPS計測開始時間の初期化
-  last_fps_time_ = SDL_GetTicks();
+  scene_->Update();
 
-  while (!quit) {
-    SDL_Event event;
-    while (SDL_PollEvent(&event)) {
-      ImGui_ImplSDL3_ProcessEvent(&event);
-      if (event.type == SDL_EVENT_QUIT) {
-        quit = true;
-        break;
-      }
-      if (event.type == SDL_EVENT_MOUSE_WHEEL) {
-        zoom_distance_ += event.wheel.y * zoom_scale_;
-      }
-    }
+  bgfx::frame();
 
-    if (!headless_) {
-      scene_->Draw(program_);
+  // フレームカウントを増やす
+  frame_count_++;
 
-      ImGui_Implbgfx_NewFrame();
-      ImGui_ImplSDL3_NewFrame();
-
-      // ImGui::NewFrame();
-      // ImGui::ShowDemoWindow();  // your drawing here
-      // ImGui::Render();
-      // ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
-
-      MouseOperation();
-    }
-
-    scene_->Update();
-
-    bgfx::frame();
-
-    // フレームカウントを増やす
-    frame_count_++;
-
-    // 1秒ごとにFPSを表示
-    uint64_t current_time = SDL_GetTicks();
-    if (current_time - last_fps_time_ >= 1000) {
-      PrintFPS();
-      // フレームカウントリセット
-      frame_count_ = 0;
-      last_fps_time_ = current_time;
-    }
+  // 1秒ごとにFPSを表示
+  uint64_t current_time = SDL_GetTicks();
+  if (current_time - last_fps_time_ >= 1000) {
+    PrintFPS();
+    // フレームカウントリセット
+    frame_count_ = 0;
+    last_fps_time_ = current_time;
   }
 }
 

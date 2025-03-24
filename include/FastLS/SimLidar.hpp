@@ -23,7 +23,7 @@ class SimLidar {
     std::cout << "SimLidar Init" << std::endl;
 
     for (float i = 0.0F; i < 360.0F; i += 3.0F) {
-      for (float j = 0.0F; j < 60.0F; j += 2.0F) {
+      for (float j = 0.0F; j < 60.0F; j += 3.0F) {
         float rad_yaw = glm::radians(static_cast<float>(i));
         float rad_pitch = glm::radians(static_cast<float>(j));
 

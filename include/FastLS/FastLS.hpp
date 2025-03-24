@@ -11,16 +11,19 @@ class FastLS {
   explicit FastLS(bool headless, bool vsync)
       : headless_(headless), vsync_(vsync) {}
 
-  bool Run();
+  ~FastLS();
+
+  bool Init();
+  void MainLoop();
   void SetScene(SceneBase* scene) {
     scene_ = scene;
     scene_set_ = true;
   }
 
+  bool IsQuit() const { return quit_; }
+
  private:
-  bool Init();
   void MouseOperation();
-  void MainLoop();
   void PrintFPS();
   static void PrintBackend();
 
@@ -32,7 +35,7 @@ class FastLS {
   float cam_yaw_ = 0.0F;
   float cam_pan_x_ = 0.0F;
   float cam_pan_y_ = 0.0F;
-  float zoom_distance_ = 15.0F;
+  float zoom_distance_ = 30.0F;
 
   // Mouse operation parameters
   float rot_scale_ = 0.01F;
@@ -54,5 +57,7 @@ class FastLS {
   uint32_t frame_count_ = 0;
   uint64_t last_fps_time_ = 0;
   float current_fps_ = 0.0F;
+
+  bool quit_ = false;
 };
 }  // namespace fastls
