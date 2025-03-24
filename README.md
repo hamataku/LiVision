@@ -2,4 +2,5 @@
 
 # dependencies
 - glm
+- bgfx
 - SDL3

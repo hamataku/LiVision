@@ -1,6 +1,6 @@
-[submodule "third-party/bgfx.cmake"]
-	path = third-party/bgfx.cmake
-	url = https://github.com/pr0g/bgfx.cmake.git
 [submodule "third-party/imgui.cmake"]
 	path = third-party/imgui.cmake
 	url = https://github.com/pr0g/imgui.cmake.git
+[submodule "third-party/SDL"]
+	path = third-party/SDL
+	url = https://github.com/libsdl-org/SDL.git

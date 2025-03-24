@@ -1,24 +1,21 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(simulator LANGUAGES CXX)
+project(fastls LANGUAGES CXX)
 
-# オプション：外部からインクルードされた場合の挙動制御
-option(SIMULATOR_BUILD_STANDALONE "Build as standalone project" ON)
-option(SIMULATOR_BUILD_SHARED "Build as shared library" OFF)
-option(BGFX_BUILD_EXAMPLES OFF)
+# Options
+set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
+option(FASTLS_BUILD_SHARED "Build as shared library" OFF)
 option(FASTLS_BUILD_EXAMPLE "Build example if enabled" ON)
 
-# BGFX
-set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/generated CACHE PATH "Install path prefix, prepended onto install directories.")
-add_subdirectory(third-party/bgfx.cmake)
+add_subdirectory(third-party/SDL)
 add_subdirectory(third-party/imgui.cmake)
 
-# glm, SDL3
-find_package(glm CONFIG REQUIRED)
-find_package(SDL3 REQUIRED)
+# bgfx, glm
+find_package(bgfx CONFIG REQUIRED)
+find_package(glm REQUIRED)
 
 # ライブラリターゲットを作成
-if(SIMULATOR_BUILD_SHARED)
+if(FASTLS_BUILD_SHARED)
   add_library(${PROJECT_NAME} SHARED)
 else()
   add_library(${PROJECT_NAME} STATIC)
@@ -34,12 +31,7 @@ file(GLOB SOURCES
 target_sources(${PROJECT_NAME} PRIVATE ${SOURCES})
 
 # Include directories
-target_include_directories(${PROJECT_NAME} 
-    PUBLIC 
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    PRIVATE
-        "${CMAKE_CURRENT_SOURCE_DIR}/third-party"
-)
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/third-party)
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
@@ -47,10 +39,10 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 target_link_libraries(
   ${PROJECT_NAME} 
   PUBLIC 
+    bgfx::bx
+    bgfx::bgfx
     glm::glm 
     SDL3::SDL3
-    bgfx
-    bx 
     imgui.cmake
 )
 
