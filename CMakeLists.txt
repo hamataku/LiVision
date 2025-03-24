@@ -35,7 +35,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/i
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
-# 依存ライブラリをPUBLICとしてリンク（必要なものだけ）
+# PUBLIC link
 target_link_libraries(
   ${PROJECT_NAME} 
   PUBLIC 
@@ -46,7 +46,7 @@ target_link_libraries(
     imgui.cmake
 )
 
-# サンプルプログラムのビルド
+# sample program
 if(FASTLS_BUILD_EXAMPLE)
     add_subdirectory(example)
 endif()
