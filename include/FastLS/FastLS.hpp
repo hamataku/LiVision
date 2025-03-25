@@ -9,7 +9,12 @@ namespace fastls {
 class FastLS {
  public:
   explicit FastLS(bool headless, bool vsync)
-      : headless_(headless), vsync_(vsync) {}
+      : headless_(headless), vsync_(vsync) {
+    if (headless) {
+      width_ = 1;
+      height_ = 1;
+    }
+  }
 
   ~FastLS();
 
