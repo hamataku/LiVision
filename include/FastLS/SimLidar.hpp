@@ -24,7 +24,7 @@ class SimLidar {
     std::cout << "SimLidar Init" << std::endl;
 
     for (float i = 0.0F; i < 360.0F; i += kLidarStep) {
-      for (float j = 0.0F; j < 60.0F; j += 3.0F) {
+      for (float j = 0.0F; j < 60.0F; j += 6.0F) {
         float rad_yaw = glm::radians(i);
         float rad_pitch = glm::radians(j);
 
@@ -60,7 +60,6 @@ class SimLidar {
         mesh_count, utils::vec4_vlayout, BGFX_BUFFER_COMPUTE_READ);
 
     // レイ情報用のバッファ
-    // 十分な初期サイズでバッファを作成
     ray_dir_buffer_ = bgfx::createDynamicVertexBuffer(
         num_rays_, utils::vec4_vlayout, BGFX_BUFFER_COMPUTE_READ);
 
@@ -201,7 +200,7 @@ class SimLidar {
   static constexpr int kBufferCount = 2;
   int frame_index_ = 0;  // バッファ切り替え用
 
-  static constexpr float kLidarStep = 3.0F;
+  static constexpr float kLidarStep = 6.0F;
 
   std::vector<glm::vec4> mesh_vertices_;
 

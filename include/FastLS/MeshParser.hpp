@@ -64,6 +64,6 @@ inline void ParseMeshFile(const std::string& filename,
 
   std::cout << "file: " << filename << std::endl;
   std::cout << "Vertices: " << vertices.size() << std::endl;
-  std::cout << "Indices: " << indices.size() << std::endl;
+  std::cout << "Meshes: " << indices.size() / 3 << std::endl;
 }
 }  // namespace fastls::mesh_parser
