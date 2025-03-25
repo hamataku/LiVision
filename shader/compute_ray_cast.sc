@@ -9,6 +9,8 @@ IMAGE2D_WR(b_results, rgba32f, 2);
 
 uniform vec4 u_params;
 uniform mat4 u_mtx;
+uniform mat4 u_mtx_inv;
+uniform mat4 u_mtx_lidar;
 
 #define num_indices u_params.x
 #define origin_x u_params.y
@@ -42,10 +44,10 @@ void main() {
 
   vec3 ray_origin = vec3(origin_x, origin_y, origin_z);
   vec4 b_ray_dir = b_ray_dirs[ray_idx];
-  vec3 ray_dir = (u_mtx * b_ray_dir).xyz;
+  vec3 ray_dir = (u_mtx_inv * u_mtx_lidar * b_ray_dir).xyz;
 
   float min_t = 3.0e+37;
-  vec3 intersection_point = vec3(0.0, 0.0, 0.0);
+  vec3 intersection_point_abs = vec3(0.0, 0.0, 0.0);
   bool has_hit = false;
 
   uint num_triangles = uint(num_indices);
@@ -76,7 +78,7 @@ void main() {
       if (intersectTriangle(ray_origin, ray_dir, v0, v1, v2, t, u, v)) {
         if (t < min_t) {
           min_t = t;
-          intersection_point = b_ray_dir.xyz * t;
+          intersection_point_abs = ray_origin + ray_dir.xyz * t;
           has_hit = true;
         }
       }
@@ -85,6 +87,8 @@ void main() {
     barrier();  // チャンク処理の完了を待機
   }
 
+  vec4 intersection = u_mtx_inv * vec4(intersection_point_abs, 1.0) - vec4(ray_origin, 0.0);
+
   imageStore(b_results, ivec2(ray_idx, 0),
-             vec4(intersection_point.xyz, has_hit ? 1.0 : 0.0));
+             vec4(intersection.xyz, has_hit ? 1.0 : 0.0));
 }

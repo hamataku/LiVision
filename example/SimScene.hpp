@@ -14,7 +14,7 @@ namespace fastls {
 class SimScene : public SceneBase {
  public:
   void Init() override {
-    AddObject(&drone_);
+    AddContainer(&drone_);
 
     plane0_.SetSize(glm::vec2(40.0F, 40.0F));
     AddObject(&plane0_);
@@ -30,10 +30,10 @@ class SimScene : public SceneBase {
   }
 
   void Update() override {
-    drone_.SetRadRotation(glm::vec3(container_theta_, container_theta_, 0.0F))
-        .SetPos(glm::vec3(std::cos(container_theta_) * 6.0F,
-                          std::sin(container_theta_) * 6.0F, 2.0F));
-    container_theta_ += 0.02F;
+    // .SetRadRotation(glm::vec3(container_theta_, container_theta_, 0.0F))
+    drone_.SetPos(glm::vec3(std::cos(container_theta_) * 6.0F,
+                            std::sin(container_theta_) * 6.0F, 2.0F));
+    container_theta_ += 0.005F;
 
     std::vector<glm::vec3> points;
     sim_lidar.GetPointCloud(points);

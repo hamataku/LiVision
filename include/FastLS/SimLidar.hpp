@@ -4,6 +4,7 @@
 
 #include <glm/glm.hpp>
 #include <iostream>
+#include <random>
 #include <vector>
 
 #include "FastLS/object/ObjectBase.hpp"
@@ -23,13 +24,13 @@ class SimLidar {
     std::cout << "SimLidar Init" << std::endl;
 
     for (float i = 0.0F; i < 360.0F; i += kLidarStep) {
-      for (float j = 0.0F; j < 80.0F; j += 3.0F) {
-        float rad_yaw = glm::radians(static_cast<float>(i));
-        float rad_pitch = glm::radians(static_cast<float>(j));
+      for (float j = 0.0F; j < 60.0F; j += 3.0F) {
+        float rad_yaw = glm::radians(i);
+        float rad_pitch = glm::radians(j);
 
-        glm::vec3 dir_normalized = glm::normalize(glm::vec3(
-            std::cos(rad_yaw), std::sin(rad_yaw), std::sin(rad_pitch)));
-        glm::vec4 dir = glm::vec4(dir_normalized, 1.0F);
+        glm::vec4 dir = glm::vec4(std::cos(rad_yaw) * std::cos(rad_pitch),
+                                  std::sin(rad_yaw) * std::cos(rad_pitch),
+                                  std::sin(rad_pitch), 1.0F);
         ray_dirs_.push_back(dir);
       }
     }
@@ -109,12 +110,16 @@ class SimLidar {
     glm::mat4 mtx_inv = glm::inverse(mtx);
     glm::mat4 mtx_lidar;
 
-    lidar_angle_ += kLidarStep / 0.3F;
-    if (lidar_angle_ >= 360.0F) {
-      lidar_angle_ -= 360.0F;
-    }
-    // z軸方向のlidar_angle度回転させる変換行列
-    mtx_lidar = glm::rotate(glm::mat4(1.0F), glm::radians(lidar_angle_),
+    float x_angle = random_vfov_(gen_);
+    float y_angle = random_vfov_(gen_);
+    float z_angle = random_hfov_(gen_);
+
+    // lidarをランダムに回転させる変換行列
+    mtx_lidar = glm::rotate(glm::mat4(1.0F), glm::radians(x_angle),
+                            glm::vec3(1.0F, 0.0F, 0.0F));
+    mtx_lidar = glm::rotate(mtx_lidar, glm::radians(y_angle),
+                            glm::vec3(0.0F, 1.0F, 0.0F));
+    mtx_lidar = glm::rotate(mtx_lidar, glm::radians(z_angle),
                             glm::vec3(0.0F, 0.0F, 1.0F));
 
     int prev_index = 1 - frame_index_;  // 前のフレームのインデックス
@@ -128,8 +133,8 @@ class SimLidar {
     float params[4] = {mesh_vertices_.size() / 3.0F, origin.x, origin.y,
                        origin.z};
     bgfx::setUniform(u_params_, params);
-    bgfx::setUniform(u_mtx_, glm::value_ptr(mtx_inv));
-    bgfx::setUniform(u_mtx_inv_, glm::value_ptr(mtx));
+    bgfx::setUniform(u_mtx_, glm::value_ptr(mtx));
+    bgfx::setUniform(u_mtx_inv_, glm::value_ptr(mtx_inv));
     bgfx::setUniform(u_mtx_lidar_, glm::value_ptr(mtx_lidar));
 
     constexpr uint32_t kThreadsX = 256;
@@ -171,8 +176,8 @@ class SimLidar {
       // Loop through all triangles in the mesh
       for (size_t tri_idx = 0; tri_idx < mesh_vertices_.size() / 3; ++tri_idx) {
         glm::vec3 v0 = mesh_vertices_[tri_idx * 3];
-        glm::vec3 v1 = mesh_vertices_[tri_idx * 3 + 1];
-        glm::vec3 v2 = mesh_vertices_[tri_idx * 3 + 2];
+        glm::vec3 v1 = mesh_vertices_[(tri_idx * 3) + 1];
+        glm::vec3 v2 = mesh_vertices_[(tri_idx * 3) + 2];
 
         float t;
         if (RayTriangleIntersection(origin, ray_dir, v0, v1, v2, t)) {
@@ -197,7 +202,6 @@ class SimLidar {
   int frame_index_ = 0;  // バッファ切り替え用
 
   static constexpr float kLidarStep = 3.0F;
-  float lidar_angle_ = 0.0F;
 
   std::vector<glm::vec4> mesh_vertices_;
 
@@ -213,6 +217,11 @@ class SimLidar {
   bgfx::UniformHandle u_mtx_;
   bgfx::UniformHandle u_mtx_inv_;
   bgfx::UniformHandle u_mtx_lidar_;
+
+  std::random_device rd_;
+  std::mt19937 gen_{rd_()};
+  std::uniform_real_distribution<double> random_hfov_{0, 360};
+  std::uniform_real_distribution<double> random_vfov_{-1, 1};
 
   float* output_buffer_ = nullptr;
 

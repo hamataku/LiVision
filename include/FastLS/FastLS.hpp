@@ -40,12 +40,12 @@ class FastLS {
   // Mouse operation parameters
   float rot_scale_ = 0.01F;
   float pan_scale_ = 0.02F;
-  float zoom_scale_ = 0.5F;
+  float zoom_scale_ = 1.5F;
   float prev_mouse_x_ = 0;
   float prev_mouse_y_ = 0;
 
-  int width_ = 800;
-  int height_ = 600;
+  int width_ = 1280;
+  int height_ = 720;
 
   bool headless_ = false;
   bool vsync_ = true;

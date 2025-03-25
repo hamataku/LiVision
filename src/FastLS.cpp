@@ -122,6 +122,7 @@ bool FastLS::Init() {
   }
 
   if (scene_set_) {
+    scene_->SetHeadless(headless_);
     scene_->Init();
     scene_set_ = false;
   }
@@ -196,11 +197,13 @@ void FastLS::MainLoop() {
     }
   }
 
+  scene_->UpdateMatrix();
+
   if (!headless_) {
     scene_->Draw(program_);
 
-    ImGui_Implbgfx_NewFrame();
-    ImGui_ImplSDL3_NewFrame();
+    // ImGui_Implbgfx_NewFrame();
+    // ImGui_ImplSDL3_NewFrame();
 
     // ImGui::NewFrame();
     // ImGui::ShowDemoWindow();  // your drawing here
@@ -211,7 +214,6 @@ void FastLS::MainLoop() {
   }
 
   scene_->Update();
-
   bgfx::frame();
 
   // フレームカウントを増やす

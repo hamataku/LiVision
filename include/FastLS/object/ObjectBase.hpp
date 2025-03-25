@@ -6,57 +6,56 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <iostream>
 
 #include "FastLS/utils.hpp"
 
 namespace fastls {
 class ObjectBase {
  public:
-  virtual void AddMeshList(){};
-  virtual void Init(){};
-  virtual void Draw(bgfx::ProgramHandle& program){};
+  virtual void AddMeshList() {};
+  virtual void Init() {};
+  virtual void Draw(bgfx::ProgramHandle& program) {};
 
   ObjectBase& SetColor(const utils::Color& color) {
     color_ = color;
-    mtx_changed_ = true;
+    local_mtx_changed_ = true;
     return *this;
   }
   utils::Color GetColor() const { return color_; }
 
   ObjectBase& SetPos(const glm::vec3& pos) {
     pos_ = pos;
-    mtx_changed_ = true;
+    local_mtx_changed_ = true;
     return *this;
   }
   glm::vec3 GetPos() const { return pos_; }
 
   ObjectBase& SetSize(const glm::vec2& size) {
     size_ = glm::vec3(size, 1.0F);
-    mtx_changed_ = true;
+    local_mtx_changed_ = true;
     return *this;
   }
   ObjectBase& SetSize(const glm::vec3& size) {
     size_ = size;
-    mtx_changed_ = true;
+    local_mtx_changed_ = true;
     return *this;
   }
   glm::vec3 GetSize() const { return size_; }
 
   ObjectBase& SetQuatRotation(const glm::quat& rotation) {
     quat_ = rotation;
-    mtx_changed_ = true;
+    local_mtx_changed_ = true;
     return *this;
   }
   ObjectBase& SetDegRotation(const glm::vec3& euler) {
     glm::vec3 euler_rad = glm::radians(euler);
     quat_ = glm::quat(euler_rad);
-    mtx_changed_ = true;
+    local_mtx_changed_ = true;
     return *this;
   }
   ObjectBase& SetRadRotation(const glm::vec3& euler_rad) {
     quat_ = glm::quat(euler_rad);
-    mtx_changed_ = true;
+    local_mtx_changed_ = true;
     return *this;
   }
   glm::quat GetRotation() const { return quat_; }
@@ -73,48 +72,42 @@ class ObjectBase {
   }
   bool IsLidarVisible() const { return lidar_visible_; }
 
-  // ローカル変換行列の取得
-  glm::mat4 GetLocalMatrix() {
-    CalcMtx();
-    return mtx_;
-  }
+  void RegisterParentObject(ObjectBase* obj) { parent_object_ = obj; }
 
   glm::mat4 GetGlobalMatrix() { return global_mtx_; }
 
-  // ワールド変換行列の直接設定（一時的な変換用）
-  void SetWorldMatrix(const glm::mat4& matrix, bool set_global = false) {
-    mtx_ = matrix;
+  glm::mat4 GetLocalMatrix() { return local_mtx_; }
 
-    if (set_global) {
-      global_mtx_ = matrix;
+  void ForceSetGlobalMatrix(const glm::mat4& mtx) { global_mtx_ = mtx; }
+
+  void UpdateMatrix() {
+    if (local_mtx_changed_) {
+      local_mtx_ = glm::translate(glm::mat4(1.0F), pos_) *
+                   glm::mat4_cast(quat_) * glm::scale(glm::mat4(1.0F), size_);
+      local_mtx_changed_ = false;
     }
 
-    mtx_changed_ = false;
+    // update global_mtx_
+    if (parent_object_) {
+      parent_object_->UpdateMatrix();
+      global_mtx_ = parent_object_->global_mtx_ * local_mtx_;
+    } else {
+      global_mtx_ = local_mtx_;
+    }
   }
 
  protected:
-  void CalcMtx() {
-    if (!mtx_changed_) {
-      return;
-    }
-    mtx_ = glm::translate(glm::mat4(1.0F), pos_) * glm::mat4_cast(quat_) *
-           glm::scale(glm::mat4(1.0F), size_);
-
-    mtx_changed_ = false;
-  }
-
-  glm::mat4 mtx_;
-
+  glm::mat4 global_mtx_;
   utils::Color color_{1.0F, 1.0F, 1.0F, 1.0F};
   glm::vec3 pos_ = glm::vec3(0.0F, 0.0F, 0.0F);
   glm::vec3 size_ = glm::vec3(1.0F, 1.0F, 1.0F);
   glm::quat quat_ = glm::quat(1.0F, 0.0F, 0.0F, 0.0F);
 
-  glm::mat4 global_mtx_;
-
  private:
-  bool mtx_changed_ = true;
+  bool local_mtx_changed_ = true;
+  glm::mat4 local_mtx_;
   bool visible_ = true;
   bool lidar_visible_ = true;
+  ObjectBase* parent_object_ = nullptr;
 };
 }  // namespace fastls

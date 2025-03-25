@@ -22,15 +22,13 @@ class Mesh : public ObjectBase {
   }
 
   void AddMeshList() override {
-    CalcMtx();
-    sim_lidar.AddMeshLists(vertices_, indices_, mtx_);
+    sim_lidar.AddMeshLists(vertices_, indices_, global_mtx_);
   }
 
   void Draw(bgfx::ProgramHandle& program) final {
     bgfx::setUniform(utils::u_color, &color_);
 
-    CalcMtx();
-    bgfx::setTransform(glm::value_ptr(mtx_));
+    bgfx::setTransform(glm::value_ptr(global_mtx_));
 
     bgfx::setVertexBuffer(0, vbh_);
     bgfx::setIndexBuffer(ibh_);
