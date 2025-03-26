@@ -17,25 +17,36 @@ struct Color {
   bool operator==(const Color& c) const {
     return r == c.r && g == c.g && b == c.b && a == c.a;
   }
+
+  constexpr Color(float r, float g, float b, float a)
+      : r(r), g(g), b(b), a(a) {}
+  constexpr Color(float r, float g, float b) : r(r), g(g), b(b), a(1.0F) {}
+
+  Color Alpha(float a2) const { return {r, g, b, a2}; }
 };
 
 // colors
 // NOLINTBEGIN
-inline constexpr Color white{1.0F, 1.0F, 1.0F, 1.0F};
-inline constexpr Color black{0.0F, 0.0F, 0.0F, 1.0F};
-inline constexpr Color red{1.0F, 0.0F, 0.0F, 1.0F};
-inline constexpr Color green{0.0F, 1.0F, 0.0F, 1.0F};
-inline constexpr Color blue{0.0F, 0.0F, 1.0F, 1.0F};
-inline constexpr Color yellow{1.0F, 1.0F, 0.0F, 1.0F};
-inline constexpr Color cyan{0.0F, 1.0F, 1.0F, 1.0F};
-inline constexpr Color magenta{1.0F, 0.0F, 1.0F, 1.0F};
-inline constexpr Color gray{0.5F, 0.5F, 0.5F, 1.0F};
-inline constexpr Color light_gray{0.75F, 0.75F, 0.75F, 1.0F};
-inline constexpr Color dark_gray{0.25F, 0.25F, 0.25F, 1.0F};
-// NOLINTEND
+inline constexpr Color white{1.0F, 1.0F, 1.0F};
+inline constexpr Color black{0.0F, 0.0F, 0.0F};
+inline constexpr Color red{1.0F, 0.0F, 0.0F};
+inline constexpr Color green{0.0F, 1.0F, 0.0F};
+inline constexpr Color blue{0.0F, 0.0F, 1.0F};
+inline constexpr Color yellow{1.0F, 1.0F, 0.0F};
+inline constexpr Color cyan{0.0F, 1.0F, 1.0F};
+inline constexpr Color magenta{1.0F, 0.0F, 1.0F};
+inline constexpr Color gray{0.5F, 0.5F, 0.5F};
+inline constexpr Color light_gray{0.75F, 0.75F, 0.75F};
+inline constexpr Color dark_gray{0.25F, 0.25F, 0.25F};
 
 // Uniforms
 inline bgfx::UniformHandle u_color;
+
+// State
+inline constexpr uint64_t kAlphaState =
+    BGFX_STATE_DEFAULT | BGFX_STATE_BLEND_ALPHA;
+
+// NOLINTEND
 
 // Cube
 inline bgfx::VertexBufferHandle cube_vbh = BGFX_INVALID_HANDLE;
