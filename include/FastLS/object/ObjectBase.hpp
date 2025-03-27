@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <iostream>
 
 #include "FastLS/utils.hpp"
 
@@ -61,6 +62,9 @@ class ObjectBase {
   glm::quat GetRotation() const { return quat_; }
 
   ObjectBase& SetVisible(bool visible) {
+    if (force_visible_) {
+      std::cerr << "SetVisible: Force visible is set" << std::endl;
+    }
     visible_ = visible;
     return *this;
   }
@@ -71,6 +75,11 @@ class ObjectBase {
     return *this;
   }
   bool IsLidarVisible() const { return lidar_visible_; }
+  ObjectBase& SetForceVisible(bool visible) {
+    force_visible_ = visible;
+    return *this;
+  }
+  bool IsForceVisible() const { return force_visible_; }
 
   void RegisterParentObject(ObjectBase* obj) { parent_object_ = obj; }
 
@@ -102,6 +111,7 @@ class ObjectBase {
   glm::vec3 pos_ = glm::vec3(0.0F, 0.0F, 0.0F);
   glm::vec3 size_ = glm::vec3(1.0F, 1.0F, 1.0F);
   glm::quat quat_ = glm::quat(1.0F, 0.0F, 0.0F, 0.0F);
+  bool force_visible_ = false;  // visible if v key is pressed
 
  private:
   bool local_mtx_changed_ = true;

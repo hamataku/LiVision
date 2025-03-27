@@ -194,21 +194,34 @@ void FastLS::MainLoop() {
     }
     if (event.type == SDL_EVENT_MOUSE_WHEEL) {
       zoom_distance_ += event.wheel.y * zoom_scale_;
+    } else if (event.type == SDL_EVENT_KEY_DOWN) {
+      if (event.key.key == SDLK_V) {
+        force_visible_ = !force_visible_;
+      } else if (event.key.key == SDLK_Q) {
+        quit_ = true;
+        break;
+      }
     }
   }
 
   scene_->UpdateMatrix();
 
   if (!headless_) {
-    scene_->Draw(program_);
+    scene_->Draw(program_, force_visible_);
 
-    // ImGui_Implbgfx_NewFrame();
-    // ImGui_ImplSDL3_NewFrame();
+    ImGui_Implbgfx_NewFrame();
+    ImGui_ImplSDL3_NewFrame();
 
-    // ImGui::NewFrame();
-    // ImGui::ShowDemoWindow();  // your drawing here
-    // ImGui::Render();
-    // ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
+    ImGui::NewFrame();
+    ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiCond_Once);
+    ImGui::SetNextWindowSize(ImVec2(180, 80), ImGuiCond_Once);
+
+    ImGui::Begin("Information");
+    ImGui::Text("V: Toggle visibility");
+    ImGui::Text("Q: Quit");
+    ImGui::End();
+    ImGui::Render();
+    ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
 
     MouseOperation();
   }
@@ -223,7 +236,6 @@ void FastLS::MainLoop() {
   uint64_t current_time = SDL_GetTicks();
   if (current_time - last_fps_time_ >= 1000) {
     PrintFPS();
-    // フレームカウントリセット
     frame_count_ = 0;
     last_fps_time_ = current_time;
   }

@@ -12,6 +12,8 @@ namespace fastls {
 class Drone : public Container {
  public:
   void Init() final {
+    force_visible_ = true;  // Before AddObject
+
     prop_[0]
         .SetSize(glm::vec3(0.3F, 0.3F, 0.1F))
         .SetPos(glm::vec3(-0.3F, -0.3F, -0.05F))

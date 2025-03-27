@@ -7,6 +7,7 @@ namespace fastls {
 class Container : public ObjectBase {
  public:
   Container& AddObject(ObjectBase* object) {
+    object->SetForceVisible(IsForceVisible());
     objects_.push_back(object);
     object->RegisterParentObject(this);
     return *this;

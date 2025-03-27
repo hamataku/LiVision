@@ -84,7 +84,7 @@ void CreateCylinderBuffer() {
   // make bottom_indices
   for (int i = 0; i < kPoly; i++) {
     cylinder_indices.push_back(kPoly);
-    cylinder_indices.push_back(kPoly + (i + 1) % kPoly);
+    cylinder_indices.push_back(kPoly + ((i + 1) % kPoly));
     cylinder_indices.push_back(kPoly + i);
   }
 
@@ -96,7 +96,7 @@ void CreateCylinderBuffer() {
 
     cylinder_indices.push_back((i + 1) % kPoly);
     cylinder_indices.push_back(kPoly + i);
-    cylinder_indices.push_back(kPoly + (i + 1) % kPoly);
+    cylinder_indices.push_back(kPoly + ((i + 1) % kPoly));
   }
 
   // cylinder

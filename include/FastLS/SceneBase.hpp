@@ -38,9 +38,14 @@ class SceneBase {
     }
   }
 
-  void Draw(bgfx::ProgramHandle& program) {
+  void Draw(bgfx::ProgramHandle& program, bool visible_only) {
     for (auto* object : objects_) {
-      if (object->IsVisible()) object->Draw(program);
+      if (visible_only) {
+        if (object->IsVisible() && object->IsForceVisible())
+          object->Draw(program);
+      } else {
+        if (object->IsVisible()) object->Draw(program);
+      }
     }
   }
 

@@ -64,5 +64,6 @@ class FastLS {
   float current_fps_ = 0.0F;
 
   bool quit_ = false;
+  bool force_visible_ = true;
 };
 }  // namespace fastls
