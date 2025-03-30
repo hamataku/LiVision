@@ -55,7 +55,7 @@ void DeInit() {
 }
 
 void CreateCylinderBuffer() {
-  constexpr int kPoly = 36;
+  constexpr int kPoly = 16;
   constexpr float kSize = 0.5F;
 
   // make top cylinder_vertices

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../SimLidar.hpp"
+#include "../LidarSim.hpp"
 #include "ObjectBase.hpp"
 namespace fastls {
 

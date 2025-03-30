@@ -15,13 +15,12 @@ namespace fastls {
 
 class ObjectBase;
 
-class SimLidar {
+class LidarSim {
  public:
-  SimLidar() : compute_program_(BGFX_INVALID_HANDLE) {}
-  ~SimLidar() { Destroy(); }
+  LidarSim() : compute_program_(BGFX_INVALID_HANDLE) {}
 
   void Init() {
-    std::cout << "SimLidar Init" << std::endl;
+    std::cout << "LidarSim Init" << std::endl;
 
     for (float i = 0.0F; i < 360.0F; i += kLidarStep) {
       for (float j = 0.0F; j < 60.0F; j += 6.0F) {
@@ -91,6 +90,51 @@ class SimLidar {
     bgfx::update(ray_dir_buffer_, 0, ray_dir_mem);
   }
 
+  void Destroy() {
+    if (bgfx::isValid(compute_program_)) {
+      bgfx::destroy(compute_program_);
+      compute_program_ = BGFX_INVALID_HANDLE;
+    }
+    if (bgfx::isValid(mesh_buffer_)) {
+      bgfx::destroy(mesh_buffer_);
+      mesh_buffer_ = BGFX_INVALID_HANDLE;
+    }
+    if (bgfx::isValid(ray_dir_buffer_)) {
+      bgfx::destroy(ray_dir_buffer_);
+      ray_dir_buffer_ = BGFX_INVALID_HANDLE;
+    }
+    for (auto& i : compute_texture_) {
+      if (bgfx::isValid(i)) {
+        bgfx::destroy(i);
+        i = BGFX_INVALID_HANDLE;
+      }
+    }
+    if (output_buffer_) {
+      std::free(output_buffer_);
+      output_buffer_ = nullptr;
+    }
+
+    if (bgfx::isValid(u_params_)) {
+      bgfx::destroy(u_params_);
+      u_params_ = BGFX_INVALID_HANDLE;
+    }
+
+    if (bgfx::isValid(u_mtx_)) {
+      bgfx::destroy(u_mtx_);
+      u_mtx_ = BGFX_INVALID_HANDLE;
+    }
+
+    if (bgfx::isValid(u_mtx_inv_)) {
+      bgfx::destroy(u_mtx_inv_);
+      u_mtx_inv_ = BGFX_INVALID_HANDLE;
+    }
+
+    if (bgfx::isValid(u_mtx_lidar_)) {
+      bgfx::destroy(u_mtx_lidar_);
+      u_mtx_lidar_ = BGFX_INVALID_HANDLE;
+    }
+  }
+
   void RegisterLidar(ObjectBase* lidar) { lidars_.push_back(lidar); }
 
   void AddMeshLists(const std::vector<glm::vec3>& vertex,
@@ -105,7 +149,6 @@ class SimLidar {
   void GetPointCloud(std::vector<glm::vec3>& points) {
     if (lidars_.empty()) return;
     glm::mat4 mtx = lidars_[0]->GetGlobalMatrix();
-    glm::vec3 origin = glm::vec3(mtx[3][0], mtx[3][1], mtx[3][2]);
     glm::mat4 mtx_inv = glm::inverse(mtx);
     glm::mat4 mtx_lidar;
 
@@ -129,14 +172,14 @@ class SimLidar {
     bgfx::setImage(2, compute_texture_[frame_index_], 0, bgfx::Access::Write,
                    bgfx::TextureFormat::RGBA32F);
 
-    float params[4] = {mesh_vertices_.size() / 3.0F, origin.x, origin.y,
-                       origin.z};
+    float params[4] = {mesh_vertices_.size() / 3.0F,
+                       static_cast<float>(num_rays_), 0.0F, 0.0F};
     bgfx::setUniform(u_params_, params);
     bgfx::setUniform(u_mtx_, glm::value_ptr(mtx));
     bgfx::setUniform(u_mtx_inv_, glm::value_ptr(mtx_inv));
     bgfx::setUniform(u_mtx_lidar_, glm::value_ptr(mtx_lidar));
 
-    constexpr uint32_t kThreadsX = 256;
+    constexpr uint32_t kThreadsX = 1;
     uint32_t num_groups_x = (num_rays_ + kThreadsX - 1) / kThreadsX;
 
     bgfx::dispatch(0, compute_program_, num_groups_x, 1, 1);
@@ -260,52 +303,7 @@ class SimLidar {
     // Only accept intersections in front of the ray
     return t > kEpsilon;
   }
-
-  void Destroy() {
-    if (bgfx::isValid(compute_program_)) {
-      bgfx::destroy(compute_program_);
-      compute_program_ = BGFX_INVALID_HANDLE;
-    }
-    if (bgfx::isValid(mesh_buffer_)) {
-      bgfx::destroy(mesh_buffer_);
-      mesh_buffer_ = BGFX_INVALID_HANDLE;
-    }
-    if (bgfx::isValid(ray_dir_buffer_)) {
-      bgfx::destroy(ray_dir_buffer_);
-      ray_dir_buffer_ = BGFX_INVALID_HANDLE;
-    }
-    for (auto& i : compute_texture_) {
-      if (bgfx::isValid(i)) {
-        bgfx::destroy(i);
-        i = BGFX_INVALID_HANDLE;
-      }
-    }
-    if (output_buffer_) {
-      std::free(output_buffer_);
-      output_buffer_ = nullptr;
-    }
-
-    if (bgfx::isValid(u_params_)) {
-      bgfx::destroy(u_params_);
-      u_params_ = BGFX_INVALID_HANDLE;
-    }
-
-    if (bgfx::isValid(u_mtx_)) {
-      bgfx::destroy(u_mtx_);
-      u_mtx_ = BGFX_INVALID_HANDLE;
-    }
-
-    if (bgfx::isValid(u_mtx_inv_)) {
-      bgfx::destroy(u_mtx_inv_);
-      u_mtx_inv_ = BGFX_INVALID_HANDLE;
-    }
-
-    if (bgfx::isValid(u_mtx_lidar_)) {
-      bgfx::destroy(u_mtx_lidar_);
-      u_mtx_lidar_ = BGFX_INVALID_HANDLE;
-    }
-  }
 };
 
-inline SimLidar sim_lidar;
+inline LidarSim lidar_sim;
 }  // namespace fastls

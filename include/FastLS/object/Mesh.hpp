@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../SimLidar.hpp"
+#include "../LidarSim.hpp"
 #include "FastLS/MeshParser.hpp"
 #include "ObjectBase.hpp"
 
@@ -22,7 +22,7 @@ class Mesh : public ObjectBase {
   }
 
   void AddMeshList() override {
-    sim_lidar.AddMeshLists(vertices_, indices_, global_mtx_);
+    lidar_sim.AddMeshLists(vertices_, indices_, global_mtx_);
   }
 
   void Draw(bgfx::ProgramHandle& program) final {

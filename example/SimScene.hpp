@@ -1,8 +1,8 @@
 #pragma once
 
+#include "FastLS/LidarSim.hpp"
 #include "FastLS/PointCloud.hpp"
 #include "FastLS/SceneBase.hpp"
-#include "FastLS/SimLidar.hpp"
 #include "FastLS/utils.hpp"
 // Object
 #include "FastLS/object/Drone.hpp"
@@ -36,7 +36,7 @@ class SimScene : public SceneBase {
     container_theta_ += 0.005F;
 
     std::vector<glm::vec3> points;
-    sim_lidar.GetPointCloud(points);
+    lidar_sim.GetPointCloud(points);
     point_cloud0_.SetPoints(points);
   }
 

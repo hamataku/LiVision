@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../SimLidar.hpp"
+#include "../LidarSim.hpp"
 #include "ObjectBase.hpp"
 
 namespace fastls {
@@ -8,7 +8,7 @@ namespace fastls {
 class Box : public ObjectBase {
  public:
   void AddMeshList() final {
-    sim_lidar.AddMeshLists(utils::cube_vertices, utils::cube_indices,
+    lidar_sim.AddMeshLists(utils::cube_vertices, utils::cube_indices,
                            global_mtx_);
   }
 

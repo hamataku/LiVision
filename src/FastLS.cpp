@@ -9,7 +9,7 @@
 
 #include <iostream>
 
-#include "FastLS/SimLidar.hpp"
+#include "FastLS/LidarSim.hpp"
 #include "FastLS/utils.hpp"
 #include "bgfx-imgui/imgui_impl_bgfx.h"
 #include "imgui.h"
@@ -21,6 +21,7 @@ FastLS::~FastLS() {
   // Cleanup
   utils::DeInit();
   bgfx::destroy(program_);
+  lidar_sim.Destroy();
 
   ImGui_ImplSDL3_Shutdown();
   ImGui_Implbgfx_Shutdown();
@@ -127,7 +128,7 @@ bool FastLS::Init() {
     scene_set_ = false;
   }
   scene_->AddMeshList();
-  sim_lidar.Init();
+  lidar_sim.Init();
 
   // FPS計測開始時間の初期化
   last_fps_time_ = SDL_GetTicks();
@@ -190,7 +191,7 @@ void FastLS::MainLoop() {
     ImGui_ImplSDL3_ProcessEvent(&event);
     if (event.type == SDL_EVENT_QUIT) {
       quit_ = true;
-      break;
+      return;
     }
     if (event.type == SDL_EVENT_MOUSE_WHEEL) {
       zoom_distance_ += event.wheel.y * zoom_scale_;
@@ -199,7 +200,7 @@ void FastLS::MainLoop() {
         force_visible_ = !force_visible_;
       } else if (event.key.key == SDLK_Q) {
         quit_ = true;
-        break;
+        return;
       }
     }
   }
