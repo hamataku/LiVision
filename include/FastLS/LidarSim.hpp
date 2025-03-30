@@ -179,7 +179,7 @@ class LidarSim {
     bgfx::setUniform(u_mtx_inv_, glm::value_ptr(mtx_inv));
     bgfx::setUniform(u_mtx_lidar_, glm::value_ptr(mtx_lidar));
 
-    constexpr uint32_t kThreadsX = 1;
+    constexpr uint32_t kThreadsX = 256;
     uint32_t num_groups_x = (num_rays_ + kThreadsX - 1) / kThreadsX;
 
     bgfx::dispatch(0, compute_program_, num_groups_x, 1, 1);

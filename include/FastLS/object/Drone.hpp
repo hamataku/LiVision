@@ -16,39 +16,48 @@ class Drone : public Container {
     prop_[0]
         .SetSize(glm::vec3(0.3F, 0.3F, 0.1F))
         .SetPos(glm::vec3(-0.3F, -0.3F, -0.05F))
-        .SetColor(utils::cyan);
+        .SetColor(utils::cyan)
+        .SetLidarVisible(false);
     prop_[1]
         .SetSize(glm::vec3(0.3F, 0.3F, 0.1F))
         .SetPos(glm::vec3(0.3F, -0.3F, -0.05F))
-        .SetColor(utils::cyan);
+        .SetColor(utils::cyan)
+        .SetLidarVisible(false);
     prop_[2]
         .SetSize(glm::vec3(0.3F, 0.3F, 0.1F))
         .SetPos(glm::vec3(-0.3F, 0.3F, -0.05F))
-        .SetColor(utils::cyan);
+        .SetColor(utils::cyan)
+        .SetLidarVisible(false);
     prop_[3]
         .SetSize(glm::vec3(0.3F, 0.3F, 0.1F))
         .SetPos(glm::vec3(0.3F, 0.3F, -0.05F))
-        .SetColor(utils::magenta);
+        .SetColor(utils::magenta)
+        .SetLidarVisible(false);
     for (auto& p : prop_) {
       AddObject(&p);
     }
-    lidar_.SetPos(glm::vec3(0.0F, 0.0F, 0.1F));
+
+    lidar_.SetPos(glm::vec3(0.0F, 0.0F, 0.0F));
     AddObject(&lidar_);
+
     cyl_lidar_.SetSize(glm::vec3(0.2F, 0.2F, 0.2F))
         .SetPos(glm::vec3(0.0F, 0.0F, 0.1F))
         .SetColor(utils::black)
         .SetLidarVisible(false);
     AddObject(&cyl_lidar_);
 
-    body_.SetSize(glm::vec3(0.5F, 0.5F, 0.1F)).SetColor(utils::dark_gray);
+    body_.SetSize(glm::vec3(0.5F, 0.5F, 0.1F))
+        .SetColor(utils::dark_gray)
+        .SetLidarVisible(false);
     AddObject(&body_);
   }
+
+  fastls::Lidar lidar_;
 
  private:
   fastls::Cylinder prop_[4];
   fastls::Cylinder cyl_lidar_;
   fastls::Box body_;
-  fastls::Lidar lidar_;
 };
 
 }  // namespace fastls

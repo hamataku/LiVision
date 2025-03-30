@@ -12,7 +12,7 @@ namespace fastls {
 class PointCloud : public ObjectBase {
  public:
   PointCloud() {
-    plane_.SetSize(glm::vec3(0.05F, 0.05F, 0.05F));
+    plane_.SetSize(glm::vec2(0.08F, 0.08F));
     force_visible_ = true;
   }
   void Draw(bgfx::ProgramHandle& program) final {
