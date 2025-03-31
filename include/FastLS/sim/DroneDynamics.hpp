@@ -26,6 +26,8 @@ class DroneDynamics {
   void Init(const glm::vec3& initial_pos, float initial_yaw) {
     pos_ = ToEigen(initial_pos);
     yaw_ = initial_yaw;
+    pitch_ = 0.0;  // 追加
+    roll_ = 0.0;   // 追加
     vel_ = Eigen::Vector3d::Zero();
     acc_ = Eigen::Vector3d::Zero();
     target_pos_ = pos_;
@@ -118,14 +120,24 @@ class DroneDynamics {
     rotation.col(2) = thrust_dir;
 
     // オイラー角の抽出
-    double pitch = std::atan2(-rotation(2, 0),
-                              std::sqrt((rotation(2, 1) * rotation(2, 1)) +
-                                        (rotation(2, 2) * rotation(2, 2))));
-    double roll = std::atan2(rotation(2, 1), rotation(2, 2));
+    double target_pitch = std::atan2(
+        -rotation(2, 0), std::sqrt((rotation(2, 1) * rotation(2, 1)) +
+                                   (rotation(2, 2) * rotation(2, 2))));
+    double target_roll = std::atan2(rotation(2, 1), rotation(2, 2));
+
+    // 姿勢の滑らかな遷移
+    static constexpr double kAttitudeSmoothing = 0.2;  // 値が小さいほど滑らか
+    pitch_ += (target_pitch - pitch_) * kAttitudeSmoothing;
+    roll_ += (target_roll - roll_) * kAttitudeSmoothing;
 
     // 4. 実際の加速度計算（推力による加速度から重力の影響を引く）
-    acc_ = thrust_ * thrust_dir +
-           kGravityVec_;  // ここでは+を使用（推力と重力の合力）
+    acc_ = thrust_ * thrust_dir + kGravityVec_;
+
+    // 空気抵抗の追加
+    Eigen::Vector3d drag_force =
+        -kDragCoefficient * vel_.cwiseProduct(vel_.cwiseAbs());
+    acc_ += drag_force;  // 空気抵抗による加速度を追加
+
     acc_ = ApplyAccelerationLimit(acc_);
 
     // 5. 状態更新
@@ -135,8 +147,8 @@ class DroneDynamics {
 
     // 6. オブジェクト更新
     object_->SetPos(ToGlm(pos_));
-    object_->SetRadRotation(glm::vec3(static_cast<float>(roll),
-                                      static_cast<float>(pitch),
+    object_->SetRadRotation(glm::vec3(static_cast<float>(roll_),
+                                      static_cast<float>(pitch_),
                                       static_cast<float>(yaw_)));
   }
 
@@ -203,6 +215,7 @@ class DroneDynamics {
 
   // 定数
   static constexpr double kGravity = 9.81;
+  static constexpr double kDragCoefficient = 0.5;  // 空気抵抗係数
   const Eigen::Vector3d kGravityVec_ =
       Eigen::Vector3d(0, 0, -kGravity);  // 下向きに変更
   const Eigen::Vector3d kZAxis_ = Eigen::Vector3d(0, 0, 1);
@@ -225,6 +238,8 @@ class DroneDynamics {
   Eigen::Vector3d vel_ = Eigen::Vector3d::Zero();
   Eigen::Vector3d acc_ = Eigen::Vector3d::Zero();
   double yaw_ = 0.0;
+  double pitch_ = 0.0;  // 追加
+  double roll_ = 0.0;   // 追加
   double thrust_ = kGravity;
 
   // 目標値
