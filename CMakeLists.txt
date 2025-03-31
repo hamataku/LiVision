@@ -10,9 +10,10 @@ option(FASTLS_BUILD_EXAMPLE "Build example if enabled" ON)
 add_subdirectory(third-party/SDL)
 add_subdirectory(third-party/imgui.cmake)
 
-# bgfx, glm
+# bgfx, glm, Eigen
 find_package(bgfx CONFIG REQUIRED)
 find_package(glm REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 # Make library target
 if(FASTLS_BUILD_SHARED)
@@ -45,6 +46,7 @@ target_link_libraries(
     glm::glm 
     SDL3::SDL3
     imgui.cmake
+    Eigen3::Eigen
 )
 
 # sample program
