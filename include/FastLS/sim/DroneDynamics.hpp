@@ -2,7 +2,6 @@
 #include <Eigen/Dense>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <iostream>
 
 #include "FastLS/object/ObjectBase.hpp"
 
@@ -83,7 +82,7 @@ class DroneDynamics {
   };
 
   void UpdateDynamics() {
-    // 1. 位置・速度制御
+    // 1. 位置・速度制御（PID出力は重力補償を含まない）
     Eigen::Vector3d desired_acc;
     if (control_mode_ == ControlMode::kPosition) {
       Eigen::Vector3d desired_vel = UpdatePositionPID();
@@ -94,7 +93,8 @@ class DroneDynamics {
     }
     desired_acc = ApplyAccelerationLimit(desired_acc);
 
-    // 2. 推力計算（重力補償含む）
+    // 2. 推力計算（重力補償を加える）
+    // PID出力に重力補償を加えて、機体が必要とする加速度を計算
     Eigen::Vector3d total_desired_acc = desired_acc - kGravityVec_;
     thrust_ = total_desired_acc.norm();
 
@@ -123,8 +123,9 @@ class DroneDynamics {
                                         (rotation(2, 2) * rotation(2, 2))));
     double roll = std::atan2(rotation(2, 1), rotation(2, 2));
 
-    // 4. 実際の加速度計算
-    acc_ = thrust_ * thrust_dir - kGravityVec_;
+    // 4. 実際の加速度計算（推力による加速度から重力の影響を引く）
+    acc_ = thrust_ * thrust_dir +
+           kGravityVec_;  // ここでは+を使用（推力と重力の合力）
     acc_ = ApplyAccelerationLimit(acc_);
 
     // 5. 状態更新
@@ -137,8 +138,6 @@ class DroneDynamics {
     object_->SetRadRotation(glm::vec3(static_cast<float>(roll),
                                       static_cast<float>(pitch),
                                       static_cast<float>(yaw_)));
-
-    std::cout << "Position: " << pos_.transpose() << std::endl;
   }
 
   Eigen::Vector3d UpdatePositionPID() {
@@ -204,7 +203,8 @@ class DroneDynamics {
 
   // 定数
   static constexpr double kGravity = 9.81;
-  const Eigen::Vector3d kGravityVec_ = Eigen::Vector3d(0, 0, kGravity);
+  const Eigen::Vector3d kGravityVec_ =
+      Eigen::Vector3d(0, 0, -kGravity);  // 下向きに変更
   const Eigen::Vector3d kZAxis_ = Eigen::Vector3d(0, 0, 1);
 
   // 制御モード
@@ -216,8 +216,8 @@ class DroneDynamics {
   PIDGains yaw_gains_;
 
   // 制約値
-  double max_vel_ = 0.5;
-  double max_acc_ = 2.0;
+  double max_vel_ = 2.0;
+  double max_acc_ = 1.0;
   double max_yaw_rate_ = 0.5;
 
   // 状態変数
