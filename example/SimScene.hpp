@@ -1,22 +1,23 @@
 #pragma once
 
-#include "FastLS/LidarSim.hpp"
 #include "FastLS/SceneBase.hpp"
-#include "FastLS/object/PointCloud.hpp"
-#include "FastLS/utils.hpp"
 // Object
 #include "FastLS/object/Drone.hpp"
 #include "FastLS/object/Mesh.hpp"
 #include "FastLS/object/Plane.hpp"
+#include "FastLS/object/PointCloud.hpp"
 
 namespace fastls {
 
 class SimScene : public SceneBase {
  public:
   void Init() override {
+    drone_.AddObject(&point_cloud_);
     AddObject(&drone_);
 
-    plane_.SetSize(glm::vec2(40.0F, 40.0F)).SetColor(utils::white);
+    plane_.SetSize(glm::vec2(40.0F, 40.0F))
+        .SetColor(utils::white)
+        .SetForceVisible(true);
     AddObject(&plane_);
 
     mesh_.SetSize(glm::vec3(50.0F, 50.0F, 50.0F))
@@ -25,16 +26,15 @@ class SimScene : public SceneBase {
         .SetColor(utils::light_gray);
 
     AddObject(&mesh_);
-
-    AddObject(&point_cloud_);
   }
 
   void Update() override {
-    // drone_.SetPos(glm::vec3(std::cos(container_theta_) * 6.0F,
-    //                         std::sin(container_theta_) * 6.0F, 2.0F));
-    drone_.SetPos(glm::vec3(6.0F, 0.0F, 2.0F))
-        .SetRadRotation(glm::vec3(0.0F, 0.0F, container_theta_));
-    container_theta_ += 0.005F;
+    drone_
+        .SetPos(glm::vec3(std::cos(container_theta_) * 6.0F,
+                          std::sin(container_theta_) * 6.0F, 2.0F))
+        .SetRadRotation(
+            glm::vec3(0.0F, container_theta_ * 2, container_theta_));
+    container_theta_ += 0.01F;
 
     std::vector<glm::vec3> points;
     lidar_sim.GetPointCloud(points);
