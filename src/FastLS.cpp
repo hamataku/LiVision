@@ -9,7 +9,7 @@
 
 #include <iostream>
 
-#include "FastLS/LidarSim.hpp"
+#include "FastLS/sim/LidarSim.hpp"
 #include "FastLS/utils.hpp"
 #include "bgfx-imgui/imgui_impl_bgfx.h"
 #include "imgui.h"

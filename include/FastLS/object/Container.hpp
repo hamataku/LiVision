@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../LidarSim.hpp"
-#include "ObjectBase.hpp"
+#include "FastLS/object/ObjectBase.hpp"
+#include "FastLS/sim/LidarSim.hpp"
 namespace fastls {
 
 class Container : public ObjectBase {

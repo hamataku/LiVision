@@ -1,4 +1,5 @@
-#include <array>
+#pragma once
+
 #include <fstream>
 #include <glm/glm.hpp>
 #include <iostream>

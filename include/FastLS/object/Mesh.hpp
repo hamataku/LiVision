@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../LidarSim.hpp"
 #include "FastLS/MeshParser.hpp"
-#include "ObjectBase.hpp"
+#include "FastLS/object/ObjectBase.hpp"
+#include "FastLS/sim/LidarSim.hpp"
 
 namespace fastls {
 
