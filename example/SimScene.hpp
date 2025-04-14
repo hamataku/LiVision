@@ -6,6 +6,7 @@
 #include "FastLS/object/Mesh.hpp"
 #include "FastLS/object/Plane.hpp"
 #include "FastLS/object/PointCloud.hpp"
+#include "FastLS/sim/LidarSim.hpp"
 
 namespace fastls {
 
@@ -37,6 +38,7 @@ class SimScene : public SceneBase {
     container_theta_ += 0.01F;
 
     std::vector<glm::vec3> points;
+    lidar_sim.CalcPointCloud();
     lidar_sim.GetPointCloud(points);
     point_cloud_.SetPoints(points);
   }
@@ -48,6 +50,6 @@ class SimScene : public SceneBase {
 
   fastls::Plane plane_;
   fastls::PointCloud point_cloud_;
-  fastls::Mesh mesh_{"data/bunny/bun_zipper.stl"};
+  fastls::Mesh mesh_{"data/bunny/bun_zipper_res2.stl"};
 };
 }  // namespace fastls

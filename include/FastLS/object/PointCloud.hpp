@@ -3,8 +3,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <vector>
 
+#include "FastLS/object/Box.hpp"
 #include "FastLS/object/ObjectBase.hpp"
-#include "FastLS/object/Plane.hpp"
 #include "FastLS/utils.hpp"
 
 namespace fastls {
@@ -12,17 +12,17 @@ namespace fastls {
 class PointCloud : public ObjectBase {
  public:
   PointCloud() {
-    plane_.SetSize(glm::vec2(0.12F, 0.12F));
+    box_.SetSize(glm::vec3(0.12F, 0.12F, 0.12F));
     force_visible_ = true;
   }
   void Draw(bgfx::ProgramHandle& program) final {
     for (const auto& point : points_) {
-      plane_.SetColor(CalcColor(point));
-      plane_.SetPos(point);
-      plane_.UpdateMatrix();
-      plane_.ForceSetGlobalMatrix(global_mtx_ * draw_mtx_ *
-                                  plane_.GetGlobalMatrix());
-      plane_.Draw(program);
+      box_.SetColor(CalcColor(point));
+      box_.SetPos(point);
+      box_.UpdateMatrix();
+      box_.ForceSetGlobalMatrix(global_mtx_ * draw_mtx_ *
+                                box_.GetGlobalMatrix());
+      box_.Draw(program);
     }
   }
 
@@ -33,7 +33,7 @@ class PointCloud : public ObjectBase {
   }
 
  private:
-  utils::Color CalcColor(glm::vec3 point) {
+  static utils::Color CalcColor(glm::vec3 point) {
     float z = point.z;
     float z_min = -2.0F;
     float z_max = 15.0F;
@@ -48,7 +48,7 @@ class PointCloud : public ObjectBase {
     return utils::Color{r, g, b, 1.0F};
   }
   std::vector<glm::vec3> points_;
-  Plane plane_;
+  Box box_;
   glm::mat4 draw_mtx_ = glm::mat4(1.0F);
 };
 }  // namespace fastls

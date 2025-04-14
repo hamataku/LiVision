@@ -11,8 +11,8 @@ class IMUObserver {
   explicit IMUObserver(ObjectBase* object, float dt, float acc_cov,
                        float gyr_cov)
       : object_(object), dt_(dt) {
-    acc_dist_ = std::normal_distribution<>(0.0F, std::sqrt(acc_cov) * dt_);
-    gyr_dist_ = std::normal_distribution<>(0.0F, std::sqrt(gyr_cov) * dt_);
+    acc_dist_ = std::normal_distribution<>(0.0F, std::sqrt(acc_cov * dt_));
+    gyr_dist_ = std::normal_distribution<>(0.0F, std::sqrt(gyr_cov * dt_));
   }
 
   void Update() {
@@ -27,6 +27,7 @@ class IMUObserver {
       init_ = true;
       prev_quat_g_ = cur_quat_g;
       prev_pos_g_ = cur_pos_g;
+      acc_l_ = glm::inverse(cur_quat_g) * glm::vec3(0.0F, 0.0F, -gravity_);
       return;
     }
 

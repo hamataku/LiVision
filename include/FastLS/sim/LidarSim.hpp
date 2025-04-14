@@ -23,7 +23,7 @@ class LidarSim {
     std::cout << "LidarSim Init" << std::endl;
 
     for (float i = 0.0F; i < 360.0F; i += kLidarStep) {
-      for (float j = 0.0F; j < 60.0F; j += 6.0F) {
+      for (float j = 0.0F; j < 60.0F; j += 2.0F) {
         float rad_yaw = glm::radians(i);
         float rad_pitch = glm::radians(j);
 
@@ -146,7 +146,7 @@ class LidarSim {
     }
   }
 
-  void GetPointCloud(std::vector<glm::vec3>& points) {
+  void CalcPointCloud() {
     if (lidars_.empty()) return;
     glm::mat4 mtx = lidars_[0]->GetGlobalMatrix();
     glm::mat4 mtx_inv = glm::inverse(mtx);
@@ -164,8 +164,6 @@ class LidarSim {
     mtx_lidar = glm::rotate(mtx_lidar, glm::radians(z_angle),
                             glm::vec3(0.0F, 0.0F, 1.0F));
 
-    int prev_index = 1 - frame_index_;  // 前のフレームのインデックス
-
     // コンピュートシェーダーのセットアップと実行
     bgfx::setBuffer(0, mesh_buffer_, bgfx::Access::Read);
     bgfx::setBuffer(1, ray_dir_buffer_, bgfx::Access::Read);
@@ -173,7 +171,7 @@ class LidarSim {
                    bgfx::TextureFormat::RGBA32F);
 
     float params[4] = {mesh_vertices_.size() / 3.0F,
-                       static_cast<float>(num_rays_), 0.0F, 0.0F};
+                       static_cast<float>(num_rays_), kMaxRange, 0.0F};
     bgfx::setUniform(u_params_, params);
     bgfx::setUniform(u_mtx_, glm::value_ptr(mtx));
     bgfx::setUniform(u_mtx_inv_, glm::value_ptr(mtx_inv));
@@ -184,8 +182,16 @@ class LidarSim {
 
     bgfx::dispatch(0, compute_program_, num_groups_x, 1, 1);
 
+    // バッファインデックスを切り替える
+    frame_index_ = 1 - frame_index_;
+  }
+
+  void GetPointCloud(std::vector<glm::vec3>& points) {
+    points.clear();
+    int prev_frame_index = 1 - frame_index_;
     // テクスチャからデータを読み出し
-    bgfx::readTexture(compute_texture_[prev_index], output_buffer_);
+    bgfx::readTexture(compute_texture_[prev_frame_index], output_buffer_);
+    bgfx::frame();
 
     // 結果の処理
     for (size_t i = 0; i < num_rays_; ++i) {
@@ -194,9 +200,6 @@ class LidarSim {
                             output_buffer_[(i * 4) + 2]);
       }
     }
-
-    // バッファインデックスを切り替える
-    frame_index_ = 1 - frame_index_;
   }
 
   // CPU-based ray casting implementation with the same interface
@@ -244,6 +247,7 @@ class LidarSim {
   int frame_index_ = 0;  // バッファ切り替え用
 
   static constexpr float kLidarStep = 6.0F;
+  static constexpr float kMaxRange = 10.0F;
 
   std::vector<glm::vec4> mesh_vertices_;
 

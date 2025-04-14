@@ -14,6 +14,7 @@ uniform mat4 u_mtx_lidar;
 
 #define num_indices u_params.x
 #define num_rays u_params.y
+#define max_range u_params.z
 
 #define origin_x u_mtx[0][3]
 #define origin_y u_mtx[1][3]
@@ -64,7 +65,7 @@ void main() {
 
         float t, u, v;
         if (intersectTriangle(ray_origin, ray_dir, v0, v1, v2, t, u, v)) {
-            if (t < min_t) {
+            if (t < min_t && t < max_range) {
                 min_t = t;
                 min_ray_dir = b_ray_dir.xyz;
                 has_hit = true;
