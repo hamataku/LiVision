@@ -1,4 +1,5 @@
 #pragma once
+
 #include <Eigen/Dense>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -11,8 +12,6 @@ namespace fastls {
 
 class DroneDynamics {
  public:
-  using PIDGains = PIDController::PIDGains;
-
   explicit DroneDynamics(ObjectBase* object) : object_(object) {
     pos_pid_.SetGains(PIDGains{2.0, 0.0, 1.0});  // 位置制御ゲイン
     vel_pid_.SetGains(PIDGains{2.0, 0.0, 0.0});  // 速度制御ゲイン
@@ -83,11 +82,11 @@ class DroneDynamics {
     // 1. 位置・速度制御（PID出力は重力補償を含まない）
     Eigen::Vector3d desired_acc;
     if (control_mode_ == ControlMode::kPosition) {
-      Eigen::Vector3d desired_vel = UpdatePositionPID();
+      Eigen::Vector3d desired_vel = pos_pid_.Update(target_pos_ - pos_);
       desired_vel = ApplyVelocityLimit(desired_vel);
-      desired_acc = UpdateVelocityPID(desired_vel);
+      desired_acc = vel_pid_.Update(desired_vel - vel_);
     } else {
-      desired_acc = UpdateVelocityPID(target_vel_);
+      desired_acc = vel_pid_.Update(target_vel_ - vel_);
     }
     desired_acc = ApplyAccelerationLimit(desired_acc);
 
@@ -98,7 +97,7 @@ class DroneDynamics {
 
     // 3. 姿勢計算
     // ヨー角のPID制御
-    double yaw_rate = UpdateYawPID();
+    double yaw_rate = yaw_pid_.Update(target_yaw_ - yaw_);
     yaw_rate = std::clamp(yaw_rate, -max_yaw_rate_, max_yaw_rate_);
     yaw_ += yaw_rate * settings::common_dt;
 
@@ -148,21 +147,6 @@ class DroneDynamics {
                                       static_cast<float>(yaw_)));
   }
 
-  Eigen::Vector3d UpdatePositionPID() {
-    return pos_pid_.Update(target_pos_ - pos_);
-  }
-
-  Eigen::Vector3d UpdateVelocityPID(const Eigen::Vector3d& desired_vel) {
-    return vel_pid_.Update(desired_vel - vel_);
-  }
-
-  double UpdateYawPID() {
-    double yaw_error = target_yaw_ - yaw_;
-    // 角度の正規化（-π からπ の範囲に）
-    yaw_error = std::atan2(std::sin(yaw_error), std::cos(yaw_error));
-    return yaw_pid_.Update(yaw_error);
-  }
-
   void ResetPIDIntegrals() {
     pos_pid_.Reset();
     vel_pid_.Reset();
@@ -199,9 +183,9 @@ class DroneDynamics {
   ControlMode control_mode_ = ControlMode::kPosition;
 
   // PIDコントローラー
-  PIDController pos_pid_;
-  PIDController vel_pid_;
-  PIDController yaw_pid_;
+  PIDController<Eigen::Vector3d> pos_pid_;
+  PIDController<Eigen::Vector3d> vel_pid_;
+  PIDController<double> yaw_pid_;
 
   // 制約値
   double max_vel_ = 2.0;
@@ -213,8 +197,8 @@ class DroneDynamics {
   Eigen::Vector3d vel_ = Eigen::Vector3d::Zero();
   Eigen::Vector3d acc_ = Eigen::Vector3d::Zero();
   double yaw_ = 0.0;
-  double pitch_ = 0.0;  // 追加
-  double roll_ = 0.0;   // 追加
+  double pitch_ = 0.0;
+  double roll_ = 0.0;
   double thrust_ = kGravity;
 
   // 目標値

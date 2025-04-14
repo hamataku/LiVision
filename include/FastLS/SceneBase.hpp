@@ -16,7 +16,7 @@ class SceneBase {
     if (container) {
       for (auto* obj : container->GetObjects()) {
         obj->Init();
-        objects_.push_back(obj);
+        AddObject(obj);
       }
     } else {
       objects_.push_back(object);
