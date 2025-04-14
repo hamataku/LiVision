@@ -2,17 +2,19 @@
 
 #include <random>
 
+#include "FastLS/Settings.hpp"
 #include "FastLS/object/ObjectBase.hpp"
 
 namespace fastls {
 
 class IMUObserver {
  public:
-  explicit IMUObserver(ObjectBase* object, float dt, float acc_cov,
-                       float gyr_cov)
-      : object_(object), dt_(dt) {
-    acc_dist_ = std::normal_distribution<>(0.0F, std::sqrt(acc_cov * dt_));
-    gyr_dist_ = std::normal_distribution<>(0.0F, std::sqrt(gyr_cov * dt_));
+  explicit IMUObserver(ObjectBase* object, float acc_cov, float gyr_cov)
+      : object_(object) {
+    acc_dist_ = std::normal_distribution<>(
+        0.0F, std::sqrt(acc_cov * settings::common_dt));
+    gyr_dist_ = std::normal_distribution<>(
+        0.0F, std::sqrt(gyr_cov * settings::common_dt));
   }
 
   void Update() {
@@ -32,8 +34,8 @@ class IMUObserver {
     }
 
     // Calculate linear acceleration in world frame
-    glm::vec3 vel_g = (cur_pos_g - prev_pos_g_) / dt_;
-    glm::vec3 acc_g = (vel_g - prev_vel_g_) / dt_;
+    glm::vec3 vel_g = (cur_pos_g - prev_pos_g_) / settings::common_dt;
+    glm::vec3 acc_g = (vel_g - prev_vel_g_) / settings::common_dt;
     prev_vel_g_ = vel_g;
 
     // Add gravity in world frame
@@ -53,8 +55,9 @@ class IMUObserver {
     if (sin_half_angle > 1e-6F) {
       glm::vec3 axis = glm::vec3(diff_quat_g.x, diff_quat_g.y, diff_quat_g.z) /
                        sin_half_angle;
-      angular_vel_g =
-          (2.0F * std::atan2(sin_half_angle, diff_quat_g.w) / dt_) * axis;
+      angular_vel_g = (2.0F * std::atan2(sin_half_angle, diff_quat_g.w) /
+                       settings::common_dt) *
+                      axis;
     } else {
       angular_vel_g = glm::vec3(0.0F);
     }
@@ -82,7 +85,6 @@ class IMUObserver {
   glm::vec3 angular_vel_l_ = glm::vec3(0.0F);
 
   ObjectBase* object_ = nullptr;
-  float dt_;
 
   std::mt19937 engine_{std::random_device{}()};
   std::normal_distribution<> acc_dist_;

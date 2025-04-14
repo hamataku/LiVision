@@ -3,24 +3,20 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "FastLS/Settings.hpp"
 #include "FastLS/object/ObjectBase.hpp"
+#include "FastLS/sim/PIDController.hpp"
 
 namespace fastls {
 
 class DroneDynamics {
  public:
-  // PIDゲイン構造体（先頭に移動）
-  struct PIDGains {
-    double p = 1.0;
-    double i = 0.0;
-    double d = 0.0;
-  };
+  using PIDGains = PIDController::PIDGains;
 
-  explicit DroneDynamics(ObjectBase* object, float dt)
-      : object_(object), dt_(dt) {
-    SetPositionPIDGains(PIDGains{2.0, 0.0, 1.0});  // 位置制御ゲイン
-    SetVelocityPIDGains(PIDGains{2.0, 0.0, 0.0});  // 速度制御ゲイン
-    SetYawPIDGains(PIDGains{1.0, 0.0, 0.0});       // ヨー角制御ゲイン
+  explicit DroneDynamics(ObjectBase* object) : object_(object) {
+    pos_pid_.SetGains(PIDGains{2.0, 0.0, 1.0});  // 位置制御ゲイン
+    vel_pid_.SetGains(PIDGains{2.0, 0.0, 0.0});  // 速度制御ゲイン
+    yaw_pid_.SetGains(PIDGains{1.0, 0.0, 0.0});  // ヨー角制御ゲイン
   }
 
   void Init(const glm::vec3& initial_pos, float initial_yaw) {
@@ -52,9 +48,9 @@ class DroneDynamics {
   void SetTargetYaw(float yaw) { target_yaw_ = yaw; }
 
   // ゲイン設定
-  void SetPositionPIDGains(const PIDGains& gains) { pos_gains_ = gains; }
-  void SetVelocityPIDGains(const PIDGains& gains) { vel_gains_ = gains; }
-  void SetYawPIDGains(const PIDGains& gains) { yaw_gains_ = gains; }
+  void SetPositionPIDGains(const PIDGains& gains) { pos_pid_.SetGains(gains); }
+  void SetVelocityPIDGains(const PIDGains& gains) { vel_pid_.SetGains(gains); }
+  void SetYawPIDGains(const PIDGains& gains) { yaw_pid_.SetGains(gains); }
 
   // 制約設定
   void SetMaxVel(float max_vel) { max_vel_ = max_vel; }
@@ -104,7 +100,7 @@ class DroneDynamics {
     // ヨー角のPID制御
     double yaw_rate = UpdateYawPID();
     yaw_rate = std::clamp(yaw_rate, -max_yaw_rate_, max_yaw_rate_);
-    yaw_ += yaw_rate * dt_;
+    yaw_ += yaw_rate * settings::common_dt;
 
     // 推力方向から姿勢を計算
     Eigen::Vector3d thrust_dir = total_desired_acc.normalized();
@@ -141,9 +137,9 @@ class DroneDynamics {
     acc_ = ApplyAccelerationLimit(acc_);
 
     // 5. 状態更新
-    vel_ += acc_ * dt_;
+    vel_ += acc_ * settings::common_dt;
     vel_ = ApplyVelocityLimit(vel_);
-    pos_ += vel_ * dt_;
+    pos_ += vel_ * settings::common_dt;
 
     // 6. オブジェクト更新
     object_->SetPos(ToGlm(pos_));
@@ -153,44 +149,24 @@ class DroneDynamics {
   }
 
   Eigen::Vector3d UpdatePositionPID() {
-    Eigen::Vector3d pos_error = target_pos_ - pos_;
-    pos_integral_ += pos_error * dt_;
-    Eigen::Vector3d pos_derivative = (pos_error - prev_pos_error_) / dt_;
-    prev_pos_error_ = pos_error;
-
-    return (pos_gains_.p * pos_error) + (pos_gains_.i * pos_integral_) +
-           (pos_gains_.d * pos_derivative);
+    return pos_pid_.Update(target_pos_ - pos_);
   }
 
   Eigen::Vector3d UpdateVelocityPID(const Eigen::Vector3d& desired_vel) {
-    Eigen::Vector3d vel_error = desired_vel - vel_;
-    vel_integral_ += vel_error * dt_;
-    Eigen::Vector3d vel_derivative = (vel_error - prev_vel_error_) / dt_;
-    prev_vel_error_ = vel_error;
-
-    return (vel_gains_.p * vel_error) + (vel_gains_.i * vel_integral_) +
-           (vel_gains_.d * vel_derivative);
+    return vel_pid_.Update(desired_vel - vel_);
   }
 
   double UpdateYawPID() {
     double yaw_error = target_yaw_ - yaw_;
     // 角度の正規化（-π からπ の範囲に）
     yaw_error = std::atan2(std::sin(yaw_error), std::cos(yaw_error));
-    yaw_integral_ += yaw_error * dt_;
-    double yaw_derivative = (yaw_error - prev_yaw_error_) / dt_;
-    prev_yaw_error_ = yaw_error;
-
-    return (yaw_gains_.p * yaw_error) + (yaw_gains_.i * yaw_integral_) +
-           (yaw_gains_.d * yaw_derivative);
+    return yaw_pid_.Update(yaw_error);
   }
 
   void ResetPIDIntegrals() {
-    pos_integral_ = Eigen::Vector3d::Zero();
-    vel_integral_ = Eigen::Vector3d::Zero();
-    yaw_integral_ = 0.0;
-    prev_pos_error_ = Eigen::Vector3d::Zero();
-    prev_vel_error_ = Eigen::Vector3d::Zero();
-    prev_yaw_error_ = 0.0;
+    pos_pid_.Reset();
+    vel_pid_.Reset();
+    yaw_pid_.Reset();
   }
 
   Eigen::Vector3d ApplyVelocityLimit(const Eigen::Vector3d& vel) const {
@@ -211,7 +187,6 @@ class DroneDynamics {
 
   // メンバ変数
   ObjectBase* object_ = nullptr;
-  double dt_;
 
   // 定数
   static constexpr double kGravity = 9.81;
@@ -223,10 +198,10 @@ class DroneDynamics {
   // 制御モード
   ControlMode control_mode_ = ControlMode::kPosition;
 
-  // 制御パラメータ
-  PIDGains pos_gains_;
-  PIDGains vel_gains_;
-  PIDGains yaw_gains_;
+  // PIDコントローラー
+  PIDController pos_pid_;
+  PIDController vel_pid_;
+  PIDController yaw_pid_;
 
   // 制約値
   double max_vel_ = 2.0;
@@ -246,14 +221,6 @@ class DroneDynamics {
   Eigen::Vector3d target_pos_ = Eigen::Vector3d::Zero();
   Eigen::Vector3d target_vel_ = Eigen::Vector3d::Zero();
   double target_yaw_ = 0.0;
-
-  // PID制御用の状態
-  Eigen::Vector3d pos_integral_ = Eigen::Vector3d::Zero();
-  Eigen::Vector3d vel_integral_ = Eigen::Vector3d::Zero();
-  double yaw_integral_ = 0.0;
-  Eigen::Vector3d prev_pos_error_ = Eigen::Vector3d::Zero();
-  Eigen::Vector3d prev_vel_error_ = Eigen::Vector3d::Zero();
-  double prev_yaw_error_ = 0.0;
 };
 
 }  // namespace fastls

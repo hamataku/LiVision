@@ -4,10 +4,10 @@
 #include "FastLS/object/Container.hpp"
 #include "FastLS/object/Cylinder.hpp"
 #include "FastLS/object/Lidar.hpp"
+#include "FastLS/sim/PIDController.hpp"
 #include "FastLS/utils.hpp"
 
 namespace fastls {
-
 class Drone : public Container {
  public:
   Drone() { force_visible_ = true; }
@@ -57,6 +57,7 @@ class Drone : public Container {
   fastls::Cylinder prop_[4];
   fastls::Cylinder cyl_lidar_;
   fastls::Box body_;
+  fastls::PIDController lidar_angle_pid_;
 };
 
 }  // namespace fastls
