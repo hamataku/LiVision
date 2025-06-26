@@ -63,8 +63,7 @@ inline void ParseMeshFile(const std::string& filename,
         sizeof(attribute_byte_count));  // 2バイトのアトリビュートをスキップ
   }
 
-  std::cout << "file: " << filename << std::endl;
-  std::cout << "Vertices: " << vertices.size() << std::endl;
-  std::cout << "Meshes: " << indices.size() / 3 << std::endl;
+  std::cout << "MeshParser: " << filename << ", vertices: " << vertices.size()
+            << ", meshes: " << indices.size() / 3 << std::endl;
 }
 }  // namespace fastls::mesh_parser

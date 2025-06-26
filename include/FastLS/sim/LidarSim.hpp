@@ -20,8 +20,6 @@ class LidarSim {
   LidarSim() : compute_program_(BGFX_INVALID_HANDLE) {}
 
   void Init() {
-    std::cout << "LidarSim Init" << std::endl;
-
     for (float i = 0.0F; i < 360.0F; i += kLidarStep) {
       for (float j = 0.0F; j < 60.0F; j += 2.0F) {
         float rad_yaw = glm::radians(i);
@@ -52,8 +50,6 @@ class LidarSim {
 
     // GPUバッファの初期化（meshのサイズに合わせた固定バッファ）
     auto mesh_count = static_cast<uint32_t>(mesh_vertices_.size());
-
-    std::cout << "mesh_count: " << mesh_count / 3 << std::endl;
 
     mesh_buffer_ = bgfx::createDynamicVertexBuffer(
         mesh_count, utils::vec4_vlayout, BGFX_BUFFER_COMPUTE_READ);
