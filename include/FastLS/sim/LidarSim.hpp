@@ -243,7 +243,7 @@ class LidarSim {
   int frame_index_ = 0;  // バッファ切り替え用
 
   static constexpr float kLidarStep = 6.0F;
-  static constexpr float kMaxRange = 10.0F;
+  static constexpr float kMaxRange = 20.0F;
 
   std::vector<glm::vec4> mesh_vertices_;
 
