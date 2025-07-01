@@ -9,6 +9,12 @@ namespace fastls {
 
 class IMUObserver {
  public:
+  /**
+   * @brief IMUObserverを構築する
+   * @param object 観測対象のオブジェクト
+   * @param acc_psd 加速度計ノイズのパワースペクトル密度 [(m/s^2)^2/Hz]
+   * @param gyr_psd ジャイロノイズのパワースペクトル密度 [(rad/s)^2/Hz]
+   */
   explicit IMUObserver(ObjectBase* object, float acc_cov, float gyr_cov)
       : object_(object) {
     acc_dist_ = std::normal_distribution<>(
@@ -52,14 +58,18 @@ class IMUObserver {
     if (diff_quat_g.w < 0) diff_quat_g = -diff_quat_g;  // 符号の一貫性を保つ
     glm::vec3 angular_vel_g;
     float sin_half_angle = std::sqrt(1.0F - (diff_quat_g.w * diff_quat_g.w));
+    // 修正後
     if (sin_half_angle > 1e-6F) {
       glm::vec3 axis = glm::vec3(diff_quat_g.x, diff_quat_g.y, diff_quat_g.z) /
                        sin_half_angle;
-      angular_vel_g = (2.0F * std::atan2(sin_half_angle, diff_quat_g.w) /
-                       settings::common_dt) *
-                      axis;
+      float angle = 2.0F * std::atan2(sin_half_angle, diff_quat_g.w);
+      angular_vel_g = (angle / settings::common_dt) * axis;
     } else {
-      angular_vel_g = glm::vec3(0.0F);
+      // 小角度近似: angle ≈ 2 * sin(angle/2), axis*sin(angle/2) ≈ vec_part
+      // angular_vel ≈ 2 * vec_part / dt
+      angular_vel_g =
+          (2.0F * glm::vec3(diff_quat_g.x, diff_quat_g.y, diff_quat_g.z)) /
+          settings::common_dt;
     }
 
     angular_vel_l_ = glm::inverse(cur_quat_g) * angular_vel_g;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdlib>
 #include <fstream>
 #include <glm/glm.hpp>
 #include <iostream>
@@ -26,7 +27,7 @@ inline void ParseMeshFile(const std::string& filename,
   std::ifstream file(filename, std::ios::binary);
   if (!file) {
     std::cerr << "Failed to open file: " << filename << std::endl;
-    return;
+    std::exit(EXIT_FAILURE);
   }
 
   file.seekg(80);  // ヘッダー（80バイト）をスキップ

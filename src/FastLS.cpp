@@ -3,6 +3,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_mouse.h>
+#include <bgfx/bgfx.h>
 #include <bgfx/defines.h>
 #include <bgfx/platform.h>
 #include <bx/math.h>
@@ -34,6 +35,8 @@ FastLS::~FastLS() {
 }
 
 bool FastLS::Init() {
+  std::cout << "### FastLS Init start ###" << std::endl;
+
   if (!SDL_Init(SDL_INIT_VIDEO)) {
     printf("SDL could not initialize. SDL_Error: %s\n", SDL_GetError());
     return false;
@@ -99,7 +102,9 @@ bool FastLS::Init() {
   ImGui_ImplSDL3_InitForVulkan(window_);
 #endif
 
-  bool supported = !((bgfx::getCaps()->supported &
+  const bgfx::Caps* caps = bgfx::getCaps();
+
+  bool supported = !((caps->supported &
                       (BGFX_CAPS_TEXTURE_2D_ARRAY |
                        BGFX_CAPS_TEXTURE_READ_BACK | BGFX_CAPS_COMPUTE)) == 0U);
   if (!supported) {
@@ -132,6 +137,8 @@ bool FastLS::Init() {
 
   // FPS計測開始時間の初期化
   last_fps_time_ = SDL_GetTicks();
+
+  std::cout << "### FastLS Init end ###" << std::endl;
 
   return true;
 }
@@ -252,6 +259,21 @@ void FastLS::PrintFPS() {
 }
 
 void FastLS::PrintBackend() {
+  const bgfx::Caps* caps = bgfx::getCaps();
+
+  // ベンダーIDからベンダー名を特定
+  const char* vendor = "Unknown";
+  if (caps->vendorId == BGFX_PCI_ID_AMD) {
+    vendor = "AMD";
+  } else if (caps->vendorId == BGFX_PCI_ID_INTEL) {
+    vendor = "Intel";
+  } else if (caps->vendorId == BGFX_PCI_ID_NVIDIA) {
+    vendor = "NVIDIA";
+  }
+
+  printf("Vendor: %s (ID: 0x%04x)\n", vendor, caps->vendorId);
+  printf("Device ID: 0x%04x\n", caps->deviceId);
+
   bgfx::RendererType::Enum renderer = bgfx::getRendererType();
   std::cout << "Graphic Backend: ";
   if (renderer == bgfx::RendererType::Vulkan) {
