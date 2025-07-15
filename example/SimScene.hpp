@@ -38,7 +38,7 @@ class SimScene : public SceneBase {
     container_theta_ += 0.01F;
 
     std::vector<glm::vec3> points;
-    lidar_sim.CalcPointCloud();
+    lidar_sim.RequestCalcPointCloud();
     lidar_sim.GetPointCloud(points);
     point_cloud_.SetPoints(points);
   }

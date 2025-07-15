@@ -82,6 +82,7 @@ inline std::vector<uint32_t> cylinder_indices{};
 inline bgfx::VertexLayout vec2_vlayout;
 inline bgfx::VertexLayout vec3_vlayout;
 inline bgfx::VertexLayout vec4_vlayout;
+inline bgfx::VertexLayout mat4_vlayout;
 
 // Functions
 void Init();

@@ -23,6 +23,13 @@ void Init() {
       .add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
       .end();
 
+  mat4_vlayout.begin()
+      .add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
+      .add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
+      .add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
+      .add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
+      .end();
+
   // cube
   cube_vbh = bgfx::createVertexBuffer(
       bgfx::makeRef(cube_vertices.data(),

@@ -83,9 +83,9 @@ class ObjectBase {
 
   void RegisterParentObject(ObjectBase* obj) { parent_object_ = obj; }
 
-  glm::mat4 GetGlobalMatrix() { return global_mtx_; }
+  glm::mat4 GetGlobalMatrix() const { return global_mtx_; }
 
-  glm::mat4 GetLocalMatrix() { return local_mtx_; }
+  glm::mat4 GetLocalMatrix() const { return local_mtx_; }
 
   void ForceSetGlobalMatrix(const glm::mat4& mtx) { global_mtx_ = mtx; }
 

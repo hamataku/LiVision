@@ -2,6 +2,7 @@
 
 #include "FastLS/object/Container.hpp"
 #include "FastLS/object/Cylinder.hpp"
+#include "FastLS/object/LidarSensor.hpp"
 #include "FastLS/sim/LidarSim.hpp"
 
 namespace fastls {
@@ -9,16 +10,24 @@ namespace fastls {
 class Lidar : public Container {
  public:
   void Init() final {
-    lidar_sim.RegisterLidar(this);
-
     body_.SetSize(glm::vec3(0.2F, 0.2F, 0.5F))
         .SetPos(glm::vec3(0.0F, 0.0F, 0.25F))
         .SetColor(utils::black)
         .SetLidarVisible(false);
     AddObject(&body_);
+
+    lidar_sim.RegisterLidar(&lidar_sensor_);
+    AddObject(&lidar_sensor_);
   }
+
+  std::vector<glm::vec3>& GetPointClouds() {
+    return lidar_sensor_.GetPointClouds();
+  }
+
+  glm::mat4& GetLastLidarMtx() { return lidar_sensor_.GetLastLidarMtx(); }
 
  private:
   Cylinder body_;
+  LidarSensor lidar_sensor_;
 };
 }  // namespace fastls
