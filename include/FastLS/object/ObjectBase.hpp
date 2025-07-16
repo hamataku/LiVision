@@ -22,7 +22,7 @@ class ObjectBase {
       InitImpl();
     }
     is_initialized_ = true;
-  };
+  }
 
   ObjectBase& SetColor(const utils::Color& color) {
     color_ = color;

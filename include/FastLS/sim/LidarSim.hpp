@@ -2,6 +2,7 @@
 
 #include <bgfx/bgfx.h>
 
+#include <cstddef>
 #include <glm/glm.hpp>
 #include <iostream>
 #include <random>
@@ -83,8 +84,9 @@ class LidarSim {
     }
 
     // 結果用メモリを確保
-    output_buffer_ = static_cast<float*>(std::aligned_alloc(
-        16, num_rays_ * sizeof(float) * 4 * lidar_sensors_.size()));
+    output_buffer_ = static_cast<float*>(
+        std::aligned_alloc(16, static_cast<size_t>(num_rays_) * sizeof(float) *
+                                   4 * lidar_sensors_.size()));
 
     // ユニフォームの初期化
     u_params_ = bgfx::createUniform("u_params", bgfx::UniformType::Vec4);
@@ -183,6 +185,7 @@ class LidarSim {
       mtx_randoms_[i] = glm::rotate(mtx_randoms_[i], glm::radians(z_angle),
                                     glm::vec3(0.0F, 0.0F, 1.0F));
     }
+
     // バッファの更新
     const bgfx::Memory* position_mem =
         bgfx::makeRef(positions_.data(), positions_.size() * sizeof(glm::vec4));
@@ -208,8 +211,8 @@ class LidarSim {
                        static_cast<float>(lidar_sensors_.size())};
     bgfx::setUniform(u_params_, params);
 
-    constexpr uint32_t kThreadsX = 256;
-    constexpr uint32_t kThreadsY = 1;
+    constexpr uint32_t kThreadsX = 64;
+    constexpr uint32_t kThreadsY = 16;
     uint32_t num_groups_x = (num_rays_ + kThreadsX - 1) / kThreadsX;
     uint32_t num_groups_y = (lidar_sensors_.size() + kThreadsY - 1) / kThreadsY;
 
@@ -239,7 +242,7 @@ class LidarSim {
           glm::vec3 point(output_buffer_[index], output_buffer_[index + 1],
                           output_buffer_[index + 2]);
           lidar_sensors_[i]->GetPointClouds().emplace_back(point);
-        };
+        }
       }
     }
   }
