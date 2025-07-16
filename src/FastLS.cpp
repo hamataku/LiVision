@@ -235,9 +235,7 @@ void FastLS::MainLoop() {
   }
 
   scene_->Update();
-  lidar_sim.RequestCalcPointCloud();
-  bgfx::frame();
-  lidar_sim.ReadPointCloudBuffer();
+  lidar_sim.CalcPointCloud();
 
   // フレームカウントを増やす
   frame_count_++;
