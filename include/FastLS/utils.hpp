@@ -1,6 +1,8 @@
 #pragma once
 #include <bgfx/bgfx.h>
 
+#include <Eigen/Core>
+#include <cstddef>
 #include <glm/glm.hpp>
 #include <string>
 #include <vector>
@@ -38,6 +40,10 @@ inline constexpr Color magenta{1.0F, 0.0F, 1.0F};
 inline constexpr Color gray{0.5F, 0.5F, 0.5F};
 inline constexpr Color light_gray{0.75F, 0.75F, 0.75F};
 inline constexpr Color dark_gray{0.25F, 0.25F, 0.25F};
+
+inline std::vector<Color> color_palette{red,  green,      blue,     yellow,
+                                        cyan, magenta,    white,    black,
+                                        gray, light_gray, dark_gray};
 
 // Uniforms
 inline bgfx::UniformHandle u_color;
@@ -90,4 +96,24 @@ void Init();
 void DeInit();
 void CreateCylinderBuffer();
 bgfx::ShaderHandle CreateShader(const std::string& path, const char* name);
+
+template <int N>
+glm::vec<N, float, glm::defaultp> ToGlmVec(
+    const Eigen::Matrix<double, N, 1>& eigen_vec) {
+  glm::vec<N, float, glm::defaultp> glm_vec;
+  for (size_t i = 0; i < N; ++i) {
+    glm_vec[i] = static_cast<float>(eigen_vec(i));
+  }
+  return glm_vec;
+}
+
+template <int N>
+Eigen::Matrix<double, N, 1> ToEigenVec(
+    const glm::vec<N, float, glm::defaultp>& glm_vec) {
+  Eigen::Matrix<double, N, 1> eigen_vec;
+  for (size_t i = 0; i < N; ++i) {
+    eigen_vec(i) = static_cast<double>(glm_vec[i]);
+  }
+  return eigen_vec;
+}
 }  // namespace fastls::utils

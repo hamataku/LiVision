@@ -14,14 +14,17 @@ class Odometry : public Container {
     arrow_x_.SetSize(glm::vec3(0.1F, 0.1F, 1.2F))
         .SetPos(glm::vec3(0.6F, 0.0F, 0.0F))
         .SetDegRotation(glm::vec3(0.0F, 90.0F, 0.0F))
-        .SetColor(utils::red);
+        .SetColor(utils::red)
+        .SetLidarVisible(false);
     arrow_y_.SetSize(glm::vec3(0.1F, 0.1F, 1.2F))
         .SetPos(glm::vec3(0.0F, 0.6F, 0.0F))
         .SetDegRotation(glm::vec3(90.0F, 0.0F, 0.0F))
-        .SetColor(utils::green);
+        .SetColor(utils::green)
+        .SetLidarVisible(false);
     arrow_z_.SetSize(glm::vec3(0.1F, 0.1F, 1.2F))
         .SetPos(glm::vec3(0.0F, 0.0F, 0.6F))
-        .SetColor(utils::blue);
+        .SetColor(utils::blue)
+        .SetLidarVisible(false);
     AddObject(&arrow_x_);
     AddObject(&arrow_y_);
     AddObject(&arrow_z_);

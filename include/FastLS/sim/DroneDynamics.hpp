@@ -19,7 +19,7 @@ class DroneDynamics {
   }
 
   void Init(const glm::vec3& initial_pos, float initial_yaw) {
-    pos_ = ToEigen(initial_pos);
+    pos_ = utils::ToEigenVec(initial_pos);
     yaw_ = initial_yaw;
     pitch_ = 0.0;  // 追加
     roll_ = 0.0;   // 追加
@@ -35,12 +35,12 @@ class DroneDynamics {
 
   // 制御インターフェース
   void SetTargetPos(const glm::vec3& pos) {
-    target_pos_ = ToEigen(pos);
+    target_pos_ = utils::ToEigenVec(pos);
     control_mode_ = ControlMode::kPosition;
   }
 
   void SetTargetVel(const glm::vec3& vel) {
-    target_vel_ = ToEigen(vel);
+    target_vel_ = utils::ToEigenVec(vel);
     control_mode_ = ControlMode::kVelocity;
   }
 
@@ -57,21 +57,11 @@ class DroneDynamics {
   void SetMaxYawRate(float max_yaw_rate) { max_yaw_rate_ = max_yaw_rate; }
 
   // 状態取得
-  glm::vec3 GetPos() const { return ToGlm(pos_); }
-  glm::vec3 GetVel() const { return ToGlm(vel_); }
+  glm::vec3 GetPos() const { return utils::ToGlmVec(pos_); }
+  glm::vec3 GetVel() const { return utils::ToGlmVec(vel_); }
   float GetYaw() const { return yaw_; }
 
  private:
-  // glm-Eigen変換ヘルパー関数
-  static Eigen::Vector3d ToEigen(const glm::vec3& v) {
-    return Eigen::Vector3d(v.x, v.y, v.z);
-  }
-
-  static glm::vec3 ToGlm(const Eigen::Vector3d& v) {
-    return glm::vec3(static_cast<float>(v.x()), static_cast<float>(v.y()),
-                     static_cast<float>(v.z()));
-  }
-
   // 制御モード
   enum class ControlMode {
     kPosition,  // k prefix for enum values
@@ -141,7 +131,7 @@ class DroneDynamics {
     pos_ += vel_ * settings::common_dt;
 
     // 6. オブジェクト更新
-    object_->SetPos(ToGlm(pos_));
+    object_->SetPos(utils::ToGlmVec(pos_));
     object_->SetRadRotation(glm::vec3(static_cast<float>(roll_),
                                       static_cast<float>(pitch_),
                                       static_cast<float>(yaw_)));
