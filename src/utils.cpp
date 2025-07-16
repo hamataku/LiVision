@@ -11,6 +11,10 @@ void Init() {
   // common
   u_color = bgfx::createUniform("u_color", bgfx::UniformType::Vec4);
 
+  float_vlayout.begin()
+      .add(bgfx::Attrib::Position, 1, bgfx::AttribType::Float)
+      .end();
+
   vec2_vlayout.begin()
       .add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float)
       .end();

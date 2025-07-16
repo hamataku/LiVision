@@ -35,6 +35,7 @@ class LidarSim {
     positions_.resize(lidar_sensors_.size());
     mtx_invs_.resize(lidar_sensors_.size());
     mtx_randoms_.resize(lidar_sensors_.size());
+    lidar_ranges_.resize(lidar_sensors_.size());
 
     const std::string shader_root = "shader/build/";
 
@@ -72,6 +73,10 @@ class LidarSim {
     // ランダムな回転行列用のバッファ
     mtx_random_buffer_ = bgfx::createDynamicVertexBuffer(
         lidar_sensors_.size(), utils::mat4_vlayout, BGFX_BUFFER_COMPUTE_READ);
+
+    // lidarの最大距離用のバッファ
+    lidar_range_buffer_ = bgfx::createDynamicVertexBuffer(
+        lidar_sensors_.size(), utils::float_vlayout, BGFX_BUFFER_COMPUTE_READ);
 
     // 結果バッファの初期化
     // for (auto& i : compute_texture_) {
@@ -127,6 +132,10 @@ class LidarSim {
       bgfx::destroy(mtx_random_buffer_);
       mtx_random_buffer_ = BGFX_INVALID_HANDLE;
     }
+    if (bgfx::isValid(lidar_range_buffer_)) {
+      bgfx::destroy(lidar_range_buffer_);
+      lidar_range_buffer_ = BGFX_INVALID_HANDLE;
+    }
 
     // for (auto& i : compute_texture_) {
     //   if (bgfx::isValid(i)) {
@@ -169,6 +178,7 @@ class LidarSim {
       return;
     }
 
+    // LiDARデータのパッキング
     for (size_t i = 0; i < lidar_sensors_.size(); ++i) {
       glm::mat4 mtx = lidar_sensors_[i]->GetGlobalMatrix();
       positions_[i] = glm::vec4(mtx[3][0], mtx[3][1], mtx[3][2], 0.0F);
@@ -186,6 +196,8 @@ class LidarSim {
                                     glm::vec3(0.0F, 1.0F, 0.0F));
       mtx_randoms_[i] = glm::rotate(mtx_randoms_[i], glm::radians(z_angle),
                                     glm::vec3(0.0F, 0.0F, 1.0F));
+
+      lidar_ranges_[i] = lidar_sensors_[i]->GetLidarRange();
     }
 
     // バッファの更新
@@ -198,6 +210,9 @@ class LidarSim {
     const bgfx::Memory* mtx_random_mem = bgfx::makeRef(
         mtx_randoms_.data(), mtx_randoms_.size() * sizeof(glm::mat4));
     bgfx::update(mtx_random_buffer_, 0, mtx_random_mem);
+    const bgfx::Memory* lidar_range_mem = bgfx::makeRef(
+        lidar_ranges_.data(), lidar_ranges_.size() * sizeof(float));
+    bgfx::update(lidar_range_buffer_, 0, lidar_range_mem);
 
     // コンピュートシェーダーのセットアップと実行
     bgfx::setBuffer(0, mesh_buffer_, bgfx::Access::Read);
@@ -205,12 +220,13 @@ class LidarSim {
     bgfx::setBuffer(2, position_buffer_, bgfx::Access::Read);
     bgfx::setBuffer(3, mtx_inv_buffer_, bgfx::Access::Read);
     bgfx::setBuffer(4, mtx_random_buffer_, bgfx::Access::Read);
-    bgfx::setImage(5, compute_texture_, 0, bgfx::Access::Write,
+    bgfx::setBuffer(5, lidar_range_buffer_, bgfx::Access::Read);
+    bgfx::setImage(6, compute_texture_, 0, bgfx::Access::Write,
                    bgfx::TextureFormat::RGBA32F);
 
     float params[4] = {mesh_vertices_.size() / 3.0F,
-                       static_cast<float>(num_rays_), kMaxRange,
-                       static_cast<float>(lidar_sensors_.size())};
+                       static_cast<float>(num_rays_),
+                       static_cast<float>(lidar_sensors_.size()), 0.0F};
     bgfx::setUniform(u_params_, params);
 
     constexpr uint32_t kThreadsX = 64;
@@ -246,7 +262,6 @@ class LidarSim {
 
  private:
   static constexpr float kLidarStep = 3.0F;
-  static constexpr float kMaxRange = 40.0F;
 
   std::vector<glm::vec4> mesh_vertices_;
 
@@ -256,6 +271,7 @@ class LidarSim {
   bgfx::DynamicVertexBufferHandle position_buffer_;
   bgfx::DynamicVertexBufferHandle mtx_inv_buffer_;
   bgfx::DynamicVertexBufferHandle mtx_random_buffer_;
+  bgfx::DynamicVertexBufferHandle lidar_range_buffer_;
 
   // static constexpr int kBufferCount = 2;
   // int frame_index_ = 0;  // バッファ切り替え用
@@ -266,6 +282,7 @@ class LidarSim {
   std::vector<glm::vec4> positions_;
   std::vector<glm::mat4> mtx_invs_;
   std::vector<glm::mat4> mtx_randoms_;
+  std::vector<float> lidar_ranges_;
 
   int num_rays_;
 

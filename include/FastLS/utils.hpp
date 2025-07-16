@@ -79,6 +79,7 @@ inline std::vector<glm::vec3> cylinder_vertices{};
 inline std::vector<uint32_t> cylinder_indices{};
 
 // Vertex Layout
+inline bgfx::VertexLayout float_vlayout;
 inline bgfx::VertexLayout vec2_vlayout;
 inline bgfx::VertexLayout vec3_vlayout;
 inline bgfx::VertexLayout vec4_vlayout;

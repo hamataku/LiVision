@@ -3,6 +3,7 @@
 #include "FastLS/object/Container.hpp"
 #include "FastLS/object/Cylinder.hpp"
 #include "FastLS/object/LidarSensor.hpp"
+#include "FastLS/object/ObjectBase.hpp"
 #include "FastLS/sim/LidarSim.hpp"
 
 namespace fastls {
@@ -18,6 +19,11 @@ class Lidar : public Container {
 
     lidar_sim.RegisterLidar(&lidar_sensor_);
     AddObject(&lidar_sensor_);
+  }
+
+  ObjectBase& SetLidarRange(float range) {
+    lidar_sensor_.SetLidarRange(range);
+    return *this;
   }
 
   std::vector<glm::vec3>& GetPointClouds() {
