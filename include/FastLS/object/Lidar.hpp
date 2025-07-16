@@ -30,8 +30,6 @@ class Lidar : public Container {
     return lidar_sensor_.GetPointClouds();
   }
 
-  glm::mat4& GetLastLidarMtx() { return lidar_sensor_.GetLastLidarMtx(); }
-
  private:
   Cylinder body_;
   LidarSensor lidar_sensor_;

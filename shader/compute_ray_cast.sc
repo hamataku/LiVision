@@ -1,24 +1,22 @@
 #include <bgfx_compute.sh>
 
-#define CHUNK_TRIANGLES 64
-#define LOCAL_SIZE 256
+#define LOCAL_SIZE_X 64
+#define LOCAL_SIZE_Y 16
 
 BUFFER_RO(b_vertices, vec4, 0);
 BUFFER_RO(b_ray_dirs, vec4, 1);
-IMAGE2D_WR(b_results, rgba32f, 2);
+BUFFER_RO(b_positions, vec4, 2);
+BUFFER_RO(b_mtx_invs, mat4, 3);
+BUFFER_RO(b_mtx_randoms, mat4, 4);
+BUFFER_RO(b_lidar_ranges, float, 5);
+
+IMAGE2D_WR(b_results, rgba32f, 6);
 
 uniform vec4 u_params;
-uniform mat4 u_mtx;
-uniform mat4 u_mtx_inv;
-uniform mat4 u_mtx_lidar;
 
 #define num_indices u_params.x
 #define num_rays u_params.y
-#define max_range u_params.z
-
-#define origin_x u_mtx[0][3]
-#define origin_y u_mtx[1][3]
-#define origin_z u_mtx[2][3]
+#define num_lidars u_params.z
 
 bool intersectTriangle(vec3 orig, vec3 dir, vec3 v0, vec3 v1, vec3 v2,
                        out float t, out float u, out float v) {
@@ -39,19 +37,23 @@ bool intersectTriangle(vec3 orig, vec3 dir, vec3 v0, vec3 v1, vec3 v2,
   return t > 1e-6;
 }
 
-NUM_THREADS(LOCAL_SIZE, 1, 1)
+NUM_THREADS(LOCAL_SIZE_X, LOCAL_SIZE_Y, 1)
 void main() {
     uint ray_idx = gl_GlobalInvocationID.x;
+    uint lidar_idx = gl_GlobalInvocationID.y;
 
-    if (ray_idx >= uint(num_rays)) {
+    if (ray_idx >= uint(num_rays) || lidar_idx >= uint(num_lidars)) {
         return;
     }
 
-    vec3 ray_origin = vec3(origin_x, origin_y, origin_z);
-    vec4 b_ray_dir = u_mtx_lidar * b_ray_dirs[ray_idx];
-    vec3 ray_dir = (u_mtx_inv * b_ray_dir).xyz;
+    vec4 b_position = b_positions[lidar_idx];
+
+    vec3 ray_origin = vec3(b_position.x, b_position.y, b_position.z);
+    vec4 b_ray_dir = b_mtx_randoms[lidar_idx] * b_ray_dirs[ray_idx];
+    vec3 ray_dir = (b_mtx_invs[lidar_idx] * b_ray_dir).xyz;
 
     float min_t = 3.0e+37;
+    float max_range = b_lidar_ranges[lidar_idx];
     vec3 min_ray_dir = vec3(0.0, 0.0, 0.0);
     bool has_hit = false;
 
@@ -74,10 +76,10 @@ void main() {
     }
 
     if (has_hit) {
-        imageStore(b_results, ivec2(ray_idx, 0),
+        imageStore(b_results, ivec2(ray_idx, lidar_idx),
                vec4(min_ray_dir * min_t, 1.0));
     } else {
-        imageStore(b_results, ivec2(ray_idx, 0),
+        imageStore(b_results, ivec2(ray_idx, lidar_idx),
                vec4(0.0, 0.0, 0.0, 0.0));
     }
 }

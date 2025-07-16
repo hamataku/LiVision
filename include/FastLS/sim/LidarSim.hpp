@@ -247,8 +247,6 @@ class LidarSim {
     for (size_t i = 0; i < lidar_sensors_.size(); ++i) {
       size_t start_index = i * num_rays_;
       lidar_sensors_[i]->GetPointClouds().clear();
-      lidar_sensors_[i]->GetLastLidarMtx() =
-          lidar_sensors_[i]->GetGlobalMatrix();
       for (size_t j = 0; j < num_rays_; ++j) {
         size_t index = (start_index + j) * 4;
         if (output_buffer_[index + 3] > 0.0F) {  // 交差があった場合

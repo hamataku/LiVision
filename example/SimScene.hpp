@@ -6,14 +6,12 @@
 #include "FastLS/object/Mesh.hpp"
 #include "FastLS/object/Plane.hpp"
 #include "FastLS/object/PointCloud.hpp"
-#include "FastLS/sim/LidarSim.hpp"
 
 namespace fastls {
 
 class SimScene : public SceneBase {
  public:
   void Init() override {
-    drone_.AddObject(&point_cloud_);
     AddObject(&drone_);
 
     plane_.SetSize(glm::vec2(40.0F, 40.0F))
@@ -27,6 +25,8 @@ class SimScene : public SceneBase {
         .SetColor(utils::light_gray);
 
     AddObject(&mesh_);
+
+    AddObject(&point_cloud_);
   }
 
   void Update() override {
@@ -37,10 +37,8 @@ class SimScene : public SceneBase {
             glm::vec3(0.0F, container_theta_ * 2, container_theta_));
     container_theta_ += 0.01F;
 
-    std::vector<glm::vec3> points;
-    lidar_sim.RequestCalcPointCloud();
-    lidar_sim.GetPointCloud(points);
-    point_cloud_.SetPoints(points);
+    point_cloud_.SetPoints(drone_.lidar_.GetPointClouds(),
+                           drone_.lidar_.GetGlobalMatrix());
   }
 
  private:
