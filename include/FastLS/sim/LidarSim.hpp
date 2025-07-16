@@ -73,14 +73,14 @@ class LidarSim {
         lidar_sensors_.size(), utils::mat4_vlayout, BGFX_BUFFER_COMPUTE_READ);
 
     // 結果バッファの初期化
-    compute_texture_ = bgfx::createTexture2D(
-        num_rays_, lidar_sensors_.size(), false, 1,
-        bgfx::TextureFormat::RGBA32F, BGFX_TEXTURE_COMPUTE_WRITE);
-    // for (auto& i : compute_texture_) {
-    //   i = bgfx::createTexture2D(num_rays_, lidar_sensors_.size(), false, 1,
-    //                             bgfx::TextureFormat::RGBA32F,
-    //                             BGFX_TEXTURE_COMPUTE_WRITE);
-    // }
+    // compute_texture_ = bgfx::createTexture2D(
+    //     num_rays_, lidar_sensors_.size(), false, 1,
+    //     bgfx::TextureFormat::RGBA32F, BGFX_TEXTURE_COMPUTE_WRITE);
+    for (auto& i : compute_texture_) {
+      i = bgfx::createTexture2D(num_rays_, lidar_sensors_.size(), false, 1,
+                                bgfx::TextureFormat::RGBA32F,
+                                BGFX_TEXTURE_COMPUTE_WRITE);
+    }
 
     // 結果用メモリを確保
     output_buffer_ = static_cast<float*>(std::aligned_alloc(
@@ -126,17 +126,18 @@ class LidarSim {
       mtx_random_buffer_ = BGFX_INVALID_HANDLE;
     }
 
-    if (bgfx::isValid(compute_texture_)) {
-      bgfx::destroy(compute_texture_);
-      compute_texture_ = BGFX_INVALID_HANDLE;
+    for (auto& i : compute_texture_) {
+      if (bgfx::isValid(i)) {
+        bgfx::destroy(i);
+        i = BGFX_INVALID_HANDLE;
+      }
     }
 
-    // for (auto& i : compute_texture_) {
-    //   if (bgfx::isValid(i)) {
-    //     bgfx::destroy(i);
-    //     i = BGFX_INVALID_HANDLE;
-    //   }
+    // if (bgfx::isValid(compute_texture_)) {
+    //   bgfx::destroy(compute_texture_);
+    //   compute_texture_ = BGFX_INVALID_HANDLE;
     // }
+
     if (output_buffer_) {
       std::free(output_buffer_);
       output_buffer_ = nullptr;
@@ -199,7 +200,7 @@ class LidarSim {
     bgfx::setBuffer(2, position_buffer_, bgfx::Access::Read);
     bgfx::setBuffer(3, mtx_inv_buffer_, bgfx::Access::Read);
     bgfx::setBuffer(4, mtx_random_buffer_, bgfx::Access::Read);
-    bgfx::setImage(5, compute_texture_, 0, bgfx::Access::Write,
+    bgfx::setImage(5, compute_texture_[frame_index_], 0, bgfx::Access::Write,
                    bgfx::TextureFormat::RGBA32F);
 
     float params[4] = {mesh_vertices_.size() / 3.0F,
@@ -207,40 +208,43 @@ class LidarSim {
                        static_cast<float>(lidar_sensors_.size())};
     bgfx::setUniform(u_params_, params);
 
-    constexpr uint32_t kThreadsX = 128;
-    constexpr uint32_t kThreadsY = 8;
+    constexpr uint32_t kThreadsX = 256;
+    constexpr uint32_t kThreadsY = 1;
     uint32_t num_groups_x = (num_rays_ + kThreadsX - 1) / kThreadsX;
     uint32_t num_groups_y = (lidar_sensors_.size() + kThreadsY - 1) / kThreadsY;
 
     // 計算要求
     bgfx::dispatch(0, compute_program_, num_groups_x, num_groups_y, 1);
 
-    // テクスチャからデータを読み出し要求
-    bgfx::readTexture(compute_texture_, output_buffer_);
+    frame_index_ = 1 - frame_index_;  // バッファを切り替える
   }
 
   void ReadPointCloudBuffer() {
+    if (lidar_sensors_.empty()) return;
+
+    // テクスチャからデータを読み出し要求
+    int prev_frame_index = 1 - frame_index_;
+    bgfx::readTexture(compute_texture_[prev_frame_index], output_buffer_);
+    bgfx::frame();
+
     // 結果の処理
     for (size_t i = 0; i < lidar_sensors_.size(); ++i) {
       size_t start_index = i * num_rays_;
       lidar_sensors_[i]->GetPointClouds().clear();
+      lidar_sensors_[i]->GetLastLidarMtx() =
+          lidar_sensors_[i]->GetGlobalMatrix();
       for (size_t j = 0; j < num_rays_; ++j) {
-        size_t index = start_index + j * 4;
+        size_t index = (start_index + j) * 4;
         if (output_buffer_[index + 3] > 0.0F) {  // 交差があった場合
           glm::vec3 point(output_buffer_[index], output_buffer_[index + 1],
                           output_buffer_[index + 2]);
           lidar_sensors_[i]->GetPointClouds().emplace_back(point);
-          lidar_sensors_[i]->GetLastLidarMtx() =
-              lidar_sensors_[i]->GetGlobalMatrix();
         };
       }
     }
   }
 
  private:
-  // static constexpr int kBufferCount = 2;
-  int frame_index_ = 0;  // バッファ切り替え用
-
   static constexpr float kLidarStep = 3.0F;
   static constexpr float kMaxRange = 40.0F;
 
@@ -253,7 +257,10 @@ class LidarSim {
   bgfx::DynamicVertexBufferHandle mtx_inv_buffer_;
   bgfx::DynamicVertexBufferHandle mtx_random_buffer_;
 
-  bgfx::TextureHandle compute_texture_;
+  static constexpr int kBufferCount = 2;
+  int frame_index_ = 0;  // バッファ切り替え用
+  bgfx::TextureHandle compute_texture_[kBufferCount];
+  // bgfx::TextureHandle compute_texture_;
 
   std::vector<glm::vec4> ray_dirs_;
   std::vector<glm::vec4> positions_;

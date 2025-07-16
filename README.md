@@ -5,7 +5,7 @@ Fast Lidar Simulation for multiple robots
 - glm
     - `sudo apt-get install libglm-dev`
 - bgfx.cmake
-    - git clone https://github.com/bkaradzic/bgfx.cmake.git
+    - git clone https://github.com/bkaradzic/bgfx.cmake.git --recursive
     - cd bgfx.cmake
     - mkdir build
     - cd build

@@ -41,9 +41,9 @@ class PointCloud : public ObjectBase {
         std::max(0.0F, std::min(1.0F, (z - z_min) / (z_max - z_min)));
 
     // 高さに応じてRGB値を変化させる
-    float r = std::min(1.0F, 2.0F * z_norm);           // 下半分で0→1に変化
+    float r = std::min(1.0F, 2.0F * z_norm);  // 下半分で0→1に変化
     float g = std::min(1.0F, 2.0F * (z_norm - 0.5F));  // 中間で0→1に変化
-    float b = 1.0F - r;                                // 上半分で1→0に変化
+    float b = 1.0F - r;  // 上半分で1→0に変化
 
     return utils::Color{r, g, b, 1.0F};
   }

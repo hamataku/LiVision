@@ -12,7 +12,7 @@ class Mesh : public ObjectBase {
     mesh_parser::ParseMeshFile(path, vertices_, indices_);
   }
 
-  void Init() override {
+  void InitImpl() override {
     vbh_ = bgfx::createVertexBuffer(
         bgfx::makeRef(vertices_.data(), vertices_.size() * sizeof(glm::vec3)),
         utils::vec3_vlayout);

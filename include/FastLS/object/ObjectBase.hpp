@@ -14,8 +14,15 @@ namespace fastls {
 class ObjectBase {
  public:
   virtual void AddMeshList() {};
-  virtual void Init() {};
+  virtual void InitImpl() {};
   virtual void Draw(bgfx::ProgramHandle& program) {};
+
+  void Init() {
+    if (!is_initialized_) {
+      InitImpl();
+    }
+    is_initialized_ = true;
+  };
 
   ObjectBase& SetColor(const utils::Color& color) {
     color_ = color;
@@ -119,5 +126,6 @@ class ObjectBase {
   bool visible_ = true;
   bool lidar_visible_ = true;
   ObjectBase* parent_object_ = nullptr;
+  bool is_initialized_ = false;
 };
 }  // namespace fastls

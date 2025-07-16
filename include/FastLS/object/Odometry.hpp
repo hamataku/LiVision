@@ -8,7 +8,7 @@ namespace fastls {
 
 class Odometry : public Container {
  public:
-  void Init() final {
+  void InitImpl() final {
     force_visible_ = true;  // Before AddObject
 
     arrow_x_.SetSize(glm::vec3(0.1F, 0.1F, 1.2F))
