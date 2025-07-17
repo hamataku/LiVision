@@ -1,9 +1,10 @@
 #pragma once
 #include <bgfx/bgfx.h>
 
-#include <Eigen/Core>
+#include <Eigen/Geometry>
 #include <cstddef>
 #include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <string>
 #include <vector>
 
@@ -98,7 +99,7 @@ void CreateCylinderBuffer();
 bgfx::ShaderHandle CreateShader(const std::string& path, const char* name);
 
 template <int N>
-glm::vec<N, float, glm::defaultp> ToGlmVec(
+inline glm::vec<N, float, glm::defaultp> ToGlmVec(
     const Eigen::Matrix<double, N, 1>& eigen_vec) {
   glm::vec<N, float, glm::defaultp> glm_vec;
   for (size_t i = 0; i < N; ++i) {
@@ -108,12 +109,24 @@ glm::vec<N, float, glm::defaultp> ToGlmVec(
 }
 
 template <int N>
-Eigen::Matrix<double, N, 1> ToEigenVec(
+inline Eigen::Matrix<double, N, 1> ToEigenVec(
     const glm::vec<N, float, glm::defaultp>& glm_vec) {
   Eigen::Matrix<double, N, 1> eigen_vec;
   for (size_t i = 0; i < N; ++i) {
     eigen_vec(i) = static_cast<double>(glm_vec[i]);
   }
   return eigen_vec;
+}
+
+inline Eigen::Quaterniond ToEigenQuat(const glm::quat& glm_quat) {
+  return Eigen::Quaterniond(
+      static_cast<double>(glm_quat.w), static_cast<double>(glm_quat.x),
+      static_cast<double>(glm_quat.y), static_cast<double>(glm_quat.z));
+}
+
+inline glm::quat ToGlmQuat(const Eigen::Quaterniond& eigen_quat) {
+  return glm::quat(
+      static_cast<float>(eigen_quat.w()), static_cast<float>(eigen_quat.x()),
+      static_cast<float>(eigen_quat.y()), static_cast<float>(eigen_quat.z()));
 }
 }  // namespace fastls::utils

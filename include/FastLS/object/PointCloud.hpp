@@ -26,6 +26,11 @@ class PointCloud : public ObjectBase {
     }
   }
 
+  PointCloud& SetVoxelSize(float size) {
+    box_.SetSize(glm::vec3(size, size, size));
+    return *this;
+  }
+
   void SetPoints(const std::vector<glm::vec3>& points) { points_ = points; }
   void SetPoints(std::vector<glm::vec3>& points, glm::mat4 mat) {
     points_ = points;
