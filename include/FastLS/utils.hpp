@@ -85,6 +85,12 @@ inline bgfx::IndexBufferHandle cylinder_ibh = BGFX_INVALID_HANDLE;
 inline std::vector<glm::vec3> cylinder_vertices{};
 inline std::vector<uint32_t> cylinder_indices{};
 
+// Sphere
+inline bgfx::VertexBufferHandle sphere_vbh = BGFX_INVALID_HANDLE;
+inline bgfx::IndexBufferHandle sphere_ibh = BGFX_INVALID_HANDLE;
+inline std::vector<glm::vec3> sphere_vertices{};
+inline std::vector<uint32_t> sphere_indices{};
+
 // Vertex Layout
 inline bgfx::VertexLayout float_vlayout;
 inline bgfx::VertexLayout vec2_vlayout;
@@ -96,6 +102,7 @@ inline bgfx::VertexLayout mat4_vlayout;
 void Init();
 void DeInit();
 void CreateCylinderBuffer();
+void CreateSphereBuffer();
 bgfx::ShaderHandle CreateShader(const std::string& path, const char* name);
 
 template <int N>

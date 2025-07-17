@@ -16,8 +16,8 @@ class PointCloud : public ObjectBase {
     color_ = utils::blue;
   }
   void Draw(bgfx::ProgramHandle& program) final {
+    box_.SetColor(color_);
     for (const auto& point : points_) {
-      box_.SetColor(color_);
       box_.SetPos(point);
       box_.UpdateMatrix();
       box_.ForceSetGlobalMatrix(global_mtx_ * draw_mtx_ *

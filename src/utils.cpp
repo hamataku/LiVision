@@ -55,6 +55,7 @@ void Init() {
       BGFX_BUFFER_INDEX32);
 
   CreateCylinderBuffer();
+  CreateSphereBuffer();
 }
 
 void DeInit() {
@@ -63,6 +64,68 @@ void DeInit() {
   bgfx::destroy(cube_ibh);
   bgfx::destroy(plane_vbh);
   bgfx::destroy(plane_ibh);
+  bgfx::destroy(cylinder_vbh);
+  bgfx::destroy(cylinder_ibh);
+  bgfx::destroy(sphere_vbh);
+  bgfx::destroy(sphere_ibh);
+}
+
+void CreateSphereBuffer() {
+  // 球の分割数と半径を定義
+  constexpr int kLatitudeBands = 12;
+  constexpr int kLongitudeBands = 12;
+  constexpr float kRadius = 0.5F;
+
+  // 頂点データを生成
+  for (int i = 0; i <= kLatitudeBands; ++i) {
+    // 緯度 (Z軸からの角度 phi)
+    float lat_angle = glm::pi<float>() * static_cast<float>(i) / kLatitudeBands;
+    float sin_lat = std::sin(lat_angle);
+    float cos_lat = std::cos(lat_angle);
+
+    for (int j = 0; j <= kLongitudeBands; ++j) {
+      // 経度 (XY平面上の角度 theta)
+      float long_angle =
+          2.0F * glm::pi<float>() * static_cast<float>(j) / kLongitudeBands;
+      float sin_long = std::sin(long_angle);
+      float cos_long = std::cos(long_angle);
+
+      // 球座標系から直交座標系へ変換
+      glm::vec3 vertex;
+      vertex.x = kRadius * sin_lat * cos_long;
+      vertex.y = kRadius * sin_lat * sin_long;
+      vertex.z = kRadius * cos_lat;
+      sphere_vertices.push_back(vertex);
+    }
+  }
+
+  // インデックスデータを生成
+  for (int i = 0; i < kLatitudeBands; ++i) {
+    for (int j = 0; j < kLongitudeBands; ++j) {
+      uint32_t first = (i * (kLongitudeBands + 1)) + j;
+      uint32_t second = first + kLongitudeBands + 1;
+
+      // 1つ目の三角形
+      sphere_indices.push_back(first);
+      sphere_indices.push_back(second);
+      sphere_indices.push_back(first + 1);
+
+      // 2つ目の三角形
+      sphere_indices.push_back(second);
+      sphere_indices.push_back(second + 1);
+      sphere_indices.push_back(first + 1);
+    }
+  }
+
+  // bgfxの頂点バッファとインデックスバッファを作成
+  sphere_vbh = bgfx::createVertexBuffer(
+      bgfx::makeRef(sphere_vertices.data(),
+                    sphere_vertices.size() * sizeof(glm::vec3)),
+      vec3_vlayout);
+  sphere_ibh = bgfx::createIndexBuffer(
+      bgfx::makeRef(sphere_indices.data(),
+                    sphere_indices.size() * sizeof(uint32_t)),
+      BGFX_BUFFER_INDEX32);
 }
 
 void CreateCylinderBuffer() {
