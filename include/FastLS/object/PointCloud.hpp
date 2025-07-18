@@ -18,7 +18,7 @@ class PointCloud : public ObjectBase {
   void Draw(bgfx::ProgramHandle& program) final {
     obj_.SetColor(color_);
     for (const auto& point : points_) {
-      obj_.SetPos(point);
+      obj_.SetPos(glm::vec3(point.x, point.y, point.z));
       obj_.SetSize(glm::vec3(point.w, point.w, point.w));
       obj_.UpdateMatrix();
       obj_.ForceSetGlobalMatrix(global_mtx_ * draw_mtx_ *
