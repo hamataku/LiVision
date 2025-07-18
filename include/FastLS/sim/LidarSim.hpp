@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "FastLS/file_ops.hpp"
-#include "FastLS/object/LidarSensor.hpp"
+#include "FastLS/sensor/LidarSensor.hpp"
 #include "FastLS/utils.hpp"
 
 namespace fastls {
