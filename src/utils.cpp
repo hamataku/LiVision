@@ -72,8 +72,8 @@ void DeInit() {
 
 void CreateSphereBuffer() {
   // 球の分割数と半径を定義
-  constexpr int kLatitudeBands = 12;
-  constexpr int kLongitudeBands = 12;
+  constexpr int kLatitudeBands = 32;
+  constexpr int kLongitudeBands = 32;
   constexpr float kRadius = 0.5F;
 
   // 頂点データを生成
