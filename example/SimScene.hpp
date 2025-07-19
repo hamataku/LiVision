@@ -47,7 +47,7 @@ class SimScene : public SceneBase {
   float container_theta_ = 0.0F;
 
   fastls::Plane plane_;
-  fastls::PointCloud point_cloud_;
-  fastls::Mesh mesh_{"data/bunny/bun_zipper_res2.stl"};
+  fastls::PointCloud<> point_cloud_;
+  fastls::Mesh mesh_{"data/bunny/bun_zipper_res4.stl"};
 };
 }  // namespace fastls
