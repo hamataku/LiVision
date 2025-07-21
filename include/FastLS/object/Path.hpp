@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cstddef>
-
 #include "FastLS/object/Cylinder.hpp"
 #include "FastLS/object/ObjectBase.hpp"
 #include "FastLS/object/Sphere.hpp"

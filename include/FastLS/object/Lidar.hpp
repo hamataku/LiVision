@@ -2,7 +2,6 @@
 
 #include "FastLS/object/Container.hpp"
 #include "FastLS/object/Cylinder.hpp"
-#include "FastLS/object/ObjectBase.hpp"
 #include "FastLS/sensor/LidarSensor.hpp"
 #include "FastLS/sim/LidarSim.hpp"
 

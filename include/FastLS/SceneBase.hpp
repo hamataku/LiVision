@@ -2,8 +2,6 @@
 
 #include <SDL3/SDL_events.h>
 
-#include <vector>
-
 #include "object/Container.hpp"
 #include "object/ObjectBase.hpp"
 
@@ -53,14 +51,14 @@ class SceneBase {
 
   void SetHeadless(bool headless) { headless_ = headless; }
 
-  virtual void Update() {};
-  virtual void Init() {};
+  virtual void Update(){};
+  virtual void Init(){};
   virtual bool CameraControl(float* view) {
     (void)view;
     return false;
   };
-  virtual void EventHandler(SDL_Event event) {};
-  virtual void GuiCustomize() {};
+  virtual void EventHandler(SDL_Event event){};
+  virtual void GuiCustomize(){};
 
  protected:
   bool headless_ = false;

@@ -1,5 +1,4 @@
 #pragma once
-#include <SDL3/SDL.h>
 #include <bgfx/bgfx.h>
 
 #include "SceneBase.hpp"

@@ -79,14 +79,13 @@ void CreateSphereBuffer() {
   // 頂点データを生成
   for (int i = 0; i <= kLatitudeBands; ++i) {
     // 緯度 (Z軸からの角度 phi)
-    float lat_angle = glm::pi<float>() * static_cast<float>(i) / kLatitudeBands;
+    float lat_angle = M_PI * static_cast<float>(i) / kLatitudeBands;
     float sin_lat = std::sin(lat_angle);
     float cos_lat = std::cos(lat_angle);
 
     for (int j = 0; j <= kLongitudeBands; ++j) {
       // 経度 (XY平面上の角度 theta)
-      float long_angle =
-          2.0F * glm::pi<float>() * static_cast<float>(j) / kLongitudeBands;
+      float long_angle = 2.0F * M_PI * static_cast<float>(j) / kLongitudeBands;
       float sin_long = std::sin(long_angle);
       float cos_long = std::cos(long_angle);
 

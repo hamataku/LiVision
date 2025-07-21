@@ -3,7 +3,6 @@
 #include <bgfx/bgfx.h>
 #include <bx/math.h>
 
-#include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
@@ -13,9 +12,9 @@
 namespace fastls {
 class ObjectBase {
  public:
-  virtual void AddMeshList() {};
-  virtual void InitImpl() {};
-  virtual void Draw(bgfx::ProgramHandle& program) {};
+  virtual void AddMeshList(){};
+  virtual void InitImpl(){};
+  virtual void Draw(bgfx::ProgramHandle& program){};
 
   void Init() {
     if (!is_initialized_) {

@@ -10,10 +10,9 @@ option(FASTLS_BUILD_EXAMPLE "Build example if enabled" ON)
 add_subdirectory(third-party/SDL)
 add_subdirectory(third-party/imgui.cmake)
 
-# bgfx, glm, Eigen
+# bgfx, glm
 find_package(bgfx CONFIG REQUIRED)
 find_package(glm REQUIRED)
-find_package(Eigen3 REQUIRED)
 
 # Make library target
 if(FASTLS_BUILD_SHARED)
@@ -25,6 +24,7 @@ endif()
 # Source files
 file(GLOB SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/sim/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/third-party/sdl-imgui/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/third-party/bgfx-imgui/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/third-party/implot/implot.cpp"
@@ -48,7 +48,6 @@ target_link_libraries(
     glm::glm 
     SDL3::SDL3
     imgui.cmake
-    Eigen3::Eigen
 )
 
 # sample program
