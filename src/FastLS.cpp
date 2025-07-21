@@ -14,6 +14,7 @@
 #include "FastLS/utils.hpp"
 #include "bgfx-imgui/imgui_impl_bgfx.h"
 #include "imgui.h"
+#include "implot/implot.h"
 #include "sdl-imgui/imgui_impl_sdl3.h"
 
 namespace fastls {
@@ -27,6 +28,7 @@ FastLS::~FastLS() {
   ImGui_ImplSDL3_Shutdown();
   ImGui_Implbgfx_Shutdown();
 
+  ImPlot::DestroyContext();
   ImGui::DestroyContext();
   bgfx::shutdown();
 
@@ -92,6 +94,7 @@ bool FastLS::Init() {
   bgfx::setViewRect(0, 0, 0, width_, height_);
 
   ImGui::CreateContext();
+  ImPlot::CreateContext();
 
   ImGui_Implbgfx_Init(255);
 #if BX_PLATFORM_WINDOWS
