@@ -27,17 +27,28 @@ class Path : public ObjectBase {
       cylinder_.UpdateMatrix();
       cylinder_.Draw(program);
 
-      sphere_.SetPos(p2).SetSize(glm::vec3(0.2F, 0.2F, 0.2F));
-      sphere_.UpdateMatrix();
-      sphere_.Draw(program);
+      if (is_sphere_) {
+        sphere_.SetPos(p2).SetSize(glm::vec3(0.2F, 0.2F, 0.2F));
+        sphere_.UpdateMatrix();
+        sphere_.Draw(program);
+      }
     }
   }
 
-  void SetPath(const std::vector<glm::vec3>& path) { path_ = path; }
+  Path& SetPath(const std::vector<glm::vec3>& path) {
+    path_ = path;
+    return *this;
+  }
+
+  Path& SetSphereVisible(bool is_sphere) {
+    is_sphere_ = is_sphere;
+    return *this;
+  }
 
  private:
   Cylinder cylinder_;
   Sphere sphere_;
   std::vector<glm::vec3> path_;
+  bool is_sphere_ = true;  // Draw spheres at the end of the path
 };
 }  // namespace fastls

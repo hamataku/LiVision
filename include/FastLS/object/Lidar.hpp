@@ -21,7 +21,7 @@ class Lidar : public Container {
     AddObject(&lidar_sensor_);
   }
 
-  ObjectBase& SetLidarRange(float range) {
+  Lidar& SetLidarRange(float range) {
     lidar_sensor_.SetLidarRange(range);
     return *this;
   }

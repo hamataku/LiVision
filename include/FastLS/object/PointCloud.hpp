@@ -32,17 +32,22 @@ class PointCloud : public ObjectBase {
     return *this;
   }
 
-  void SetPoints(const std::vector<glm::vec3>& points) {
+  PointCloud& SetPoints(const std::vector<glm::vec3>& points) {
     points_.clear();
     for (const auto& p : points) {
       points_.emplace_back(p.x, p.y, p.z, voxel_size_);
     }
+    return *this;
   }
-  void SetPoints(std::vector<glm::vec3>& points, glm::mat4 mat) {
+  PointCloud& SetPoints(std::vector<glm::vec3>& points, glm::mat4 mat) {
     SetPoints(points);
     draw_mtx_ = mat;
+    return *this;
   }
-  void SetPoints(const std::vector<glm::vec4>& points) { points_ = points; }
+  PointCloud& SetPoints(const std::vector<glm::vec4>& points) {
+    points_ = points;
+    return *this;
+  }
 
  private:
   std::vector<glm::vec4> points_;  // x,y,z,size
