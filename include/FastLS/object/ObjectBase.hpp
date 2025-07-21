@@ -66,7 +66,7 @@ class ObjectBase {
     local_mtx_changed_ = true;
     return *this;
   }
-  glm::quat GetRotation() const { return quat_; }
+  glm::quat GetQuatRotation() const { return quat_; }
 
   ObjectBase& SetVisible(bool visible) {
     if (force_visible_) {

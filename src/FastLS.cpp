@@ -143,7 +143,7 @@ bool FastLS::Init() {
   return true;
 }
 
-void FastLS::MouseOperation() {
+void FastLS::CameraControl(float* view) {
   if (!ImGui::GetIO().WantCaptureMouse) {
     float mouse_x;
     float mouse_y;
@@ -181,57 +181,63 @@ void FastLS::MouseOperation() {
   float cam_transform[16];
   bx::mtxMul(cam_transform, cam_translation, cam_rotation);
 
-  float view[16];
   bx::mtxInverse(view, cam_transform);
-
-  float proj[16];
-  bx::mtxProj(proj, 60.0F,
-              static_cast<float>(width_) / static_cast<float>(height_), 0.1F,
-              100.0F, bgfx::getCaps()->homogeneousDepth, bx::Handedness::Right);
-
-  bgfx::setViewTransform(0, view, proj);
 }
 
 void FastLS::MainLoop() {
-  SDL_Event event;
-  while (SDL_PollEvent(&event)) {
-    ImGui_ImplSDL3_ProcessEvent(&event);
-    if (event.type == SDL_EVENT_QUIT) {
-      quit_ = true;
-      return;
-    }
-    if (event.type == SDL_EVENT_MOUSE_WHEEL) {
-      zoom_distance_ += event.wheel.y * zoom_scale_;
-    } else if (event.type == SDL_EVENT_KEY_DOWN) {
-      if (event.key.key == SDLK_V) {
-        force_visible_ = !force_visible_;
-      } else if (event.key.key == SDLK_Q) {
-        quit_ = true;
-        return;
-      }
-    }
-  }
-
   scene_->UpdateMatrix();
 
   if (!headless_) {
+    // Camera control
     scene_->Draw(program_, force_visible_);
 
+    float proj[16];
+    bx::mtxProj(
+        proj, 60.0F, static_cast<float>(width_) / static_cast<float>(height_),
+        0.1F, 100.0F, bgfx::getCaps()->homogeneousDepth, bx::Handedness::Right);
+    float view[16];
+    bool is_external_camera_control = scene_->CameraControl(view);
+    if (!is_external_camera_control) {
+      CameraControl(view);
+    }
+    bgfx::setViewTransform(0, view, proj);
+
+    // Event handling
+    SDL_Event event = {};
+    while (SDL_PollEvent(&event)) {
+      ImGui_ImplSDL3_ProcessEvent(&event);
+      if (event.type == SDL_EVENT_QUIT) {
+        quit_ = true;
+        return;
+      }
+      if (event.type == SDL_EVENT_MOUSE_WHEEL) {
+        zoom_distance_ += event.wheel.y * zoom_scale_;
+      } else if (event.type == SDL_EVENT_KEY_DOWN) {
+        if (event.key.key == SDLK_V) {
+          force_visible_ = !force_visible_;
+        } else if (event.key.key == SDLK_Q) {
+          quit_ = true;
+          return;
+        }
+      }
+      scene_->EventHandler(event);
+    }
+
+    // Render ImGui
     ImGui_Implbgfx_NewFrame();
     ImGui_ImplSDL3_NewFrame();
 
     ImGui::NewFrame();
-    ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiCond_Once);
-    ImGui::SetNextWindowSize(ImVec2(180, 80), ImGuiCond_Once);
 
-    ImGui::Begin("Information");
+    ImGui::Begin("Information", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::Text("V: Toggle visibility");
     ImGui::Text("Q: Quit");
+
+    scene_->GuiCustomize();
+
     ImGui::End();
     ImGui::Render();
     ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
-
-    MouseOperation();
   }
 
   scene_->Update();

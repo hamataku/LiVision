@@ -1,5 +1,7 @@
 #pragma once
 
+#include <SDL3/SDL_events.h>
+
 #include <vector>
 
 #include "object/Container.hpp"
@@ -53,6 +55,12 @@ class SceneBase {
 
   virtual void Update() {};
   virtual void Init() {};
+  virtual bool CameraControl(float* view) {
+    (void)view;
+    return false;
+  };
+  virtual void EventHandler(SDL_Event event) {};
+  virtual void GuiCustomize() {};
 
  protected:
   bool headless_ = false;

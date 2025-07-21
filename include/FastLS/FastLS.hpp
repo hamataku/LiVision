@@ -28,7 +28,7 @@ class FastLS {
   bool IsQuit() const { return quit_; }
 
  private:
-  void MouseOperation();
+  void CameraControl(float* view);
   void PrintFPS();
   static void PrintBackend();
 
