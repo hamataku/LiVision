@@ -5,11 +5,21 @@
 
 namespace fastls {
 
+struct FastLSConfig {
+  bool headless = false;  // Headless mode (no window)
+  bool vsync = true;      // Enable VSync
+  int width = 1280;       // Window width
+  int height = 720;       // Window height
+};
+
 class FastLS {
  public:
-  explicit FastLS(bool headless, bool vsync)
-      : headless_(headless), vsync_(vsync) {
-    if (headless) {
+  explicit FastLS(const FastLSConfig& config)
+      : headless_(config.headless),
+        vsync_(config.vsync),
+        width_(config.width),
+        height_(config.height) {
+    if (headless_) {
       width_ = 1;
       height_ = 1;
     }
@@ -48,8 +58,8 @@ class FastLS {
   float prev_mouse_x_ = 0;
   float prev_mouse_y_ = 0;
 
-  int width_ = 1280;
-  int height_ = 720;
+  int width_;
+  int height_;
 
   bool headless_ = false;
   bool vsync_ = true;
