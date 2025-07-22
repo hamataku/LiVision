@@ -28,8 +28,8 @@ class Mesh : public ObjectBase {
   void Draw(bgfx::ProgramHandle& program) final {
     bgfx::setState(utils::kAlphaState);
     bgfx::setUniform(utils::u_color, &color_);
-
-    bgfx::setTransform(glm::value_ptr(global_mtx_));
+    auto mtx = glm::mat4(global_mtx_);
+    bgfx::setTransform(glm::value_ptr(mtx));
 
     bgfx::setVertexBuffer(0, vbh_);
     bgfx::setIndexBuffer(ibh_);

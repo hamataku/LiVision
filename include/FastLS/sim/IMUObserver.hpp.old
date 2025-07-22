@@ -1,0 +1,130 @@
+#pragma once
+
+#include <glm/glm.hpp>
+#include <glm/gtx/norm.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <random>
+
+#include "FastLS/Settings.hpp"
+#include "FastLS/object/ObjectBase.hpp"
+
+namespace fastls {
+
+class IMUObserver {
+ public:
+  IMUObserver(ObjectBase* object, double acc_psd, double gyr_psd)
+      : object_(object),
+        acc_sigma_(std::sqrt(acc_psd * settings::common_dt)),
+        gyr_sigma_(std::sqrt(gyr_psd * settings::common_dt)),
+        acc_noise_(0.0, acc_sigma_),
+        gyr_noise_(0.0, gyr_sigma_) {}
+
+  void Update() {
+    if (!object_) return;
+
+    glm::dmat4 mat_g = object_->GetGlobalMatrix();
+    glm::dquat q_g = glm::quat_cast(mat_g);
+    auto p_g = glm::dvec3(mat_g[3]);
+
+    if (!initialized_) {
+      prev_q_g_ = q_g;
+      prev_p_g_ = p_g;
+      acc_l_ = RotateToLocal(q_g, glm::dvec3(0.0, 0.0, kGravity));
+      angular_vel_l_ = glm::dvec3(0.0, 0.0, 0.0);
+      initialized_ = true;
+      return;
+    }
+
+    // Acc calculation
+    glm::dvec3 v_g = (p_g - prev_p_g_) / settings::common_dt;
+    glm::dvec3 tmp_a_g = ((v_g - prev_v_g_) / settings::common_dt) +
+                         glm::dvec3(0.0, 0.0, kGravity);
+    glm::dvec3 a_g = tmp_a_g;
+    if (glm::l2Norm(tmp_a_g) > 20.0) {
+      // 何かしらの原因で異常な加速度が計測された場合は前回の値を使用
+      a_g = prev_a_g_;
+      v_g = (a_g - glm::dvec3(0.0, 0.0, kGravity)) * settings::common_dt +
+            prev_v_g_;
+      p_g = v_g * settings::common_dt + prev_p_g_;
+    }
+    acc_l_ = AddNoise(RotateToLocal(q_g, a_g), acc_noise_);
+
+    // Angular velocity calculation
+    glm::dvec3 w_g = ComputeAngularVelocity(prev_q_g_, q_g);
+    if (glm::l2Norm(w_g) > 20.0) {
+      w_g = prev_w_g_;
+
+      // w_g に基づいて q_g を修正
+      const double angle = glm::length(w_g) * settings::common_dt;
+      // ゼロ除算を避けるため、ごくわずかな回転角度の場合のみ処理
+      if (angle > 1e-9) {
+        const glm::dvec3 axis = glm::normalize(w_g);
+        const glm::dquat dq = glm::angleAxis(angle, axis);
+        q_g = dq * prev_q_g_;
+      } else {
+        // 角速度がほぼゼロなら回転していないはず
+        q_g = prev_q_g_;
+      }
+    }
+    const glm::dvec3 w_l = RotateToLocal(q_g, w_g);
+    angular_vel_l_ = AddNoise(w_l, gyr_noise_);
+
+    prev_q_g_ = q_g;
+    prev_w_g_ = w_g;
+
+    prev_p_g_ = p_g;
+    prev_v_g_ = v_g;
+    prev_a_g_ = a_g;
+  }
+
+  glm::dvec3 GetAcc() const { return acc_l_; }
+  glm::dvec3 GetAngularVel() const { return angular_vel_l_; }
+
+ private:
+  static constexpr double kGravity = 9.81;
+
+  ObjectBase* object_ = nullptr;
+  bool initialized_ = false;
+
+  glm::dquat prev_q_g_;
+  glm::dvec3 prev_w_g_{0.0};
+
+  glm::dvec3 prev_p_g_{0.0};
+  glm::dvec3 prev_v_g_{0.0};
+  glm::dvec3 prev_a_g_{0.0};
+
+  glm::dvec3 acc_l_{0.0};
+  glm::dvec3 angular_vel_l_{0.0};
+
+  double acc_sigma_;
+  double gyr_sigma_;
+
+  std::mt19937 engine_{std::random_device{}()};
+  std::normal_distribution<double> acc_noise_;
+  std::normal_distribution<double> gyr_noise_;
+
+  static glm::dvec3 RotateToLocal(const glm::dquat& q, const glm::dvec3& v) {
+    return glm::inverse(q) * v;
+  }
+
+  glm::dvec3 AddNoise(const glm::dvec3& v,
+                      std::normal_distribution<double>& noise) {
+    return v + glm::dvec3(noise(engine_), noise(engine_), noise(engine_));
+  }
+
+  static glm::dvec3 ComputeAngularVelocity(const glm::dquat& q_prev,
+                                           const glm::dquat& q_curr) {
+    glm::dquat dq = glm::normalize(q_curr * glm::inverse(q_prev));
+    if (dq.w < 0.0) dq = -dq;
+
+    const double sin_half = std::sqrt(1.0 - (dq.w * dq.w));
+    if (sin_half > 1e-6) {
+      glm::dvec3 axis = glm::dvec3(dq.x, dq.y, dq.z) / sin_half;
+      double angle = 2.0 * std::atan2(sin_half, dq.w);
+      return (angle / settings::common_dt) * axis;
+    }
+    return (2.0 / settings::common_dt) * glm::dvec3(dq.x, dq.y, dq.z);
+  }
+};
+
+}  // namespace fastls

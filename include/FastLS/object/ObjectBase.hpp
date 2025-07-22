@@ -12,9 +12,9 @@
 namespace fastls {
 class ObjectBase {
  public:
-  virtual void AddMeshList(){};
-  virtual void InitImpl(){};
-  virtual void Draw(bgfx::ProgramHandle& program){};
+  virtual void AddMeshList() {};
+  virtual void InitImpl() {};
+  virtual void Draw(bgfx::ProgramHandle& program) {};
 
   void Init() {
     if (!is_initialized_) {
@@ -30,42 +30,42 @@ class ObjectBase {
   }
   utils::Color GetColor() const { return color_; }
 
-  ObjectBase& SetPos(const glm::vec3& pos) {
+  ObjectBase& SetPos(const glm::dvec3& pos) {
     pos_ = pos;
     local_mtx_changed_ = true;
     return *this;
   }
-  glm::vec3 GetPos() const { return pos_; }
+  glm::dvec3 GetPos() const { return pos_; }
 
-  ObjectBase& SetSize(const glm::vec2& size) {
+  ObjectBase& SetSize(const glm::dvec2& size) {
     size_ = glm::vec3(size, 1.0F);
     local_mtx_changed_ = true;
     return *this;
   }
-  ObjectBase& SetSize(const glm::vec3& size) {
+  ObjectBase& SetSize(const glm::dvec3& size) {
     size_ = size;
     local_mtx_changed_ = true;
     return *this;
   }
   glm::vec3 GetSize() const { return size_; }
 
-  ObjectBase& SetQuatRotation(const glm::quat& rotation) {
+  ObjectBase& SetQuatRotation(const glm::dquat& rotation) {
     quat_ = rotation;
     local_mtx_changed_ = true;
     return *this;
   }
-  ObjectBase& SetDegRotation(const glm::vec3& euler) {
-    glm::vec3 euler_rad = glm::radians(euler);
-    quat_ = glm::quat(euler_rad);
+  ObjectBase& SetDegRotation(const glm::dvec3& euler) {
+    glm::dvec3 euler_rad = glm::radians(euler);
+    quat_ = glm::dquat(euler_rad);
     local_mtx_changed_ = true;
     return *this;
   }
-  ObjectBase& SetRadRotation(const glm::vec3& euler_rad) {
-    quat_ = glm::quat(euler_rad);
+  ObjectBase& SetRadRotation(const glm::dvec3& euler_rad) {
+    quat_ = glm::dquat(euler_rad);
     local_mtx_changed_ = true;
     return *this;
   }
-  glm::quat GetQuatRotation() const { return quat_; }
+  glm::dquat GetQuatRotation() const { return quat_; }
 
   ObjectBase& SetVisible(bool visible) {
     if (force_visible_) {
@@ -89,16 +89,17 @@ class ObjectBase {
 
   void RegisterParentObject(ObjectBase* obj) { parent_object_ = obj; }
 
-  glm::mat4 GetGlobalMatrix() const { return global_mtx_; }
+  glm::dmat4 GetGlobalMatrix() const { return global_mtx_; }
 
-  glm::mat4 GetLocalMatrix() const { return local_mtx_; }
+  glm::dmat4 GetLocalMatrix() const { return local_mtx_; }
 
-  void ForceSetGlobalMatrix(const glm::mat4& mtx) { global_mtx_ = mtx; }
+  void ForceSetGlobalMatrix(const glm::dmat4& mtx) { global_mtx_ = mtx; }
 
+  // NOLINTNEXTLINE
   void UpdateMatrix() {
     if (local_mtx_changed_) {
-      local_mtx_ = glm::translate(glm::mat4(1.0F), pos_) *
-                   glm::mat4_cast(quat_) * glm::scale(glm::mat4(1.0F), size_);
+      local_mtx_ = glm::translate(glm::dmat4(1.0), pos_) *
+                   glm::mat4_cast(quat_) * glm::scale(glm::dmat4(1.0), size_);
       local_mtx_changed_ = false;
     }
 
@@ -112,16 +113,16 @@ class ObjectBase {
   }
 
  protected:
-  glm::mat4 global_mtx_;
+  glm::dmat4 global_mtx_;
   utils::Color color_{1.0F, 1.0F, 1.0F, 1.0F};
-  glm::vec3 pos_ = glm::vec3(0.0F, 0.0F, 0.0F);
-  glm::vec3 size_ = glm::vec3(1.0F, 1.0F, 1.0F);
-  glm::quat quat_ = glm::quat(1.0F, 0.0F, 0.0F, 0.0F);
+  glm::dvec3 pos_ = glm::vec3(0.0, 0.0, 0.0);
+  glm::dvec3 size_ = glm::vec3(1.0, 1.0, 1.0);
+  glm::dquat quat_ = glm::dquat(1.0, 0.0, 0.0, 0.0);
   bool force_visible_ = false;  // visible if v key is pressed
 
  private:
   bool local_mtx_changed_ = true;
-  glm::mat4 local_mtx_;
+  glm::dmat4 local_mtx_;
   bool visible_ = true;
   bool lidar_visible_ = true;
   ObjectBase* parent_object_ = nullptr;

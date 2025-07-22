@@ -2,6 +2,6 @@
 
 namespace fastls::settings {
 // common
-inline float common_dt = 0.01F;
+inline double common_dt = 0.01;
 
 };  // namespace fastls::settings

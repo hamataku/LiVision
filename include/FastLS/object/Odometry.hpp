@@ -9,20 +9,20 @@ namespace fastls {
 class Odometry : public Container {
  public:
   void InitImpl() final {
-    force_visible_ = true;  // Before AddObject
+    force_visible_ = true;  // Beore AddObject
 
-    arrow_x_.SetSize(glm::vec3(0.1F, 0.1F, 1.2F))
-        .SetPos(glm::vec3(0.6F, 0.0F, 0.0F))
-        .SetDegRotation(glm::vec3(0.0F, 90.0F, 0.0F))
+    arrow_x_.SetSize(glm::dvec3(0.1, 0.1, 1.2))
+        .SetPos(glm::dvec3(0.6, 0.0, 0.0))
+        .SetDegRotation(glm::dvec3(0.0, 90.0, 0.0))
         .SetColor(utils::red)
         .SetLidarVisible(false);
-    arrow_y_.SetSize(glm::vec3(0.1F, 0.1F, 1.2F))
-        .SetPos(glm::vec3(0.0F, 0.6F, 0.0F))
-        .SetDegRotation(glm::vec3(90.0F, 0.0F, 0.0F))
+    arrow_y_.SetSize(glm::dvec3(0.1, 0.1, 1.2))
+        .SetPos(glm::dvec3(0.0, 0.6, 0.0))
+        .SetDegRotation(glm::dvec3(90.0, 0.0, 0.0))
         .SetColor(utils::green)
         .SetLidarVisible(false);
-    arrow_z_.SetSize(glm::vec3(0.1F, 0.1F, 1.2F))
-        .SetPos(glm::vec3(0.0F, 0.0F, 0.6F))
+    arrow_z_.SetSize(glm::dvec3(0.1, 0.1, 1.2))
+        .SetPos(glm::dvec3(0.0, 0.0, 0.6))
         .SetColor(utils::blue)
         .SetLidarVisible(false);
     AddObject(&arrow_x_);

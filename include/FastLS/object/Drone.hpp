@@ -9,23 +9,23 @@ class Drone : public Container {
   Drone() { force_visible_ = true; }
   void InitImpl() final {
     prop_[0]
-        .SetSize(glm::vec3(0.3F, 0.3F, 0.1F))
-        .SetPos(glm::vec3(-0.3F, -0.3F, -0.05F))
+        .SetSize(glm::dvec3(0.3, 0.3, 0.1))
+        .SetPos(glm::dvec3(-0.3, -0.3, -0.05))
         .SetColor(utils::cyan)
         .SetLidarVisible(false);
     prop_[1]
-        .SetSize(glm::vec3(0.3F, 0.3F, 0.1F))
-        .SetPos(glm::vec3(0.3F, -0.3F, -0.05F))
+        .SetSize(glm::dvec3(0.3, 0.3, 0.1))
+        .SetPos(glm::dvec3(0.3, -0.3, -0.05))
         .SetColor(utils::cyan)
         .SetLidarVisible(false);
     prop_[2]
-        .SetSize(glm::vec3(0.3F, 0.3F, 0.1F))
-        .SetPos(glm::vec3(-0.3F, 0.3F, -0.05F))
+        .SetSize(glm::dvec3(0.3, 0.3, 0.1))
+        .SetPos(glm::dvec3(-0.3, 0.3, -0.05))
         .SetColor(utils::cyan)
         .SetLidarVisible(false);
     prop_[3]
-        .SetSize(glm::vec3(0.3F, 0.3F, 0.1F))
-        .SetPos(glm::vec3(0.3F, 0.3F, -0.05F))
+        .SetSize(glm::dvec3(0.3, 0.3, 0.1))
+        .SetPos(glm::dvec3(0.3, 0.3, -0.05))
         .SetColor(utils::magenta)
         .SetLidarVisible(false);
     for (auto& p : prop_) {
@@ -34,7 +34,7 @@ class Drone : public Container {
 
     AddObject(&lidar_);
 
-    body_.SetSize(glm::vec3(0.5F, 0.5F, 0.1F))
+    body_.SetSize(glm::dvec3(0.5, 0.5, 0.1))
         .SetColor(utils::dark_gray)
         .SetLidarVisible(false);
     AddObject(&body_);

@@ -18,8 +18,8 @@ class PointCloud : public ObjectBase {
   void Draw(bgfx::ProgramHandle& program) final {
     obj_.SetColor(color_);
     for (const auto& point : points_) {
-      obj_.SetPos(glm::vec3(point.x, point.y, point.z));
-      obj_.SetSize(glm::vec3(point.w, point.w, point.w));
+      obj_.SetPos(glm::dvec3(point.x, point.y, point.z));
+      obj_.SetSize(glm::dvec3(point.w, point.w, point.w));
       obj_.UpdateMatrix();
       obj_.ForceSetGlobalMatrix(global_mtx_ * draw_mtx_ *
                                 obj_.GetGlobalMatrix());
@@ -51,8 +51,8 @@ class PointCloud : public ObjectBase {
 
  private:
   std::vector<glm::vec4> points_;  // x,y,z,size
-  float voxel_size_ = 0.12F;       // Default voxel size
+  double voxel_size_ = 0.12;       // Default voxel size
   T obj_;
-  glm::mat4 draw_mtx_ = glm::mat4(1.0F);
+  glm::dmat4 draw_mtx_ = glm::dmat4(1.0);
 };
 }  // namespace fastls
