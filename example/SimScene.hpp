@@ -19,9 +19,9 @@ class SimScene : public SceneBase {
         .SetForceVisible(true);
     AddObject(&plane_);
 
-    mesh_.SetSize(glm::vec3(50.0F, 50.0F, 50.0F))
-        .SetPos(glm::vec3(0.0F, 0.0F, -2.0F))
-        .SetDegRotation(glm::vec3(90.0F, 0.0F, 0.0F))
+    mesh_.SetSize(glm::dvec3(50.0, 50.0, 50.0))
+        .SetPos(glm::dvec3(0.0, 0.0, -2.0))
+        .SetDegRotation(glm::dvec3(90.0, 0.0, 0.0))
         .SetColor(utils::light_gray);
 
     AddObject(&mesh_);
@@ -31,10 +31,10 @@ class SimScene : public SceneBase {
 
   void Update() override {
     drone_
-        .SetPos(glm::vec3(std::cos(container_theta_) * 6.0F,
-                          std::sin(container_theta_) * 6.0F, 2.0F))
+        .SetPos(glm::dvec3(std::cos(container_theta_) * 6.0,
+                           std::sin(container_theta_) * 6.0, 2.0))
         .SetRadRotation(
-            glm::vec3(0.0F, container_theta_ * 2, container_theta_));
+            glm::dvec3(0.0, container_theta_ * 2, container_theta_));
     container_theta_ += 0.01F;
 
     point_cloud_.SetPoints(drone_.lidar_.GetPointClouds(),
@@ -44,7 +44,7 @@ class SimScene : public SceneBase {
  private:
   fastls::Drone drone_;
 
-  float container_theta_ = 0.0F;
+  double container_theta_ = 0.0;
 
   fastls::Plane plane_;
   fastls::PointCloud<> point_cloud_;

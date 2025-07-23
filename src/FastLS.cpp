@@ -241,6 +241,16 @@ void FastLS::MainLoop() {
     ImGui::End();
     ImGui::Render();
     ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
+  } else {
+    // Headless Event handling(Catch Ctrl+C)
+    SDL_Event event = {};
+    while (SDL_PollEvent(&event)) {
+      ImGui_ImplSDL3_ProcessEvent(&event);
+      if (event.type == SDL_EVENT_QUIT) {
+        quit_ = true;
+        return;
+      }
+    }
   }
 
   scene_->Update();

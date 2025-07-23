@@ -74,7 +74,13 @@ class ObjectBase {
     visible_ = visible;
     return *this;
   }
-  bool IsVisible() const { return visible_; }
+  bool IsVisible() const {
+    if (parent_object_) {
+      // If parent object is set, visibility is determined by parent
+      return parent_object_->IsVisible();
+    }
+    return visible_;
+  }
 
   ObjectBase& SetLidarVisible(bool visible) {
     lidar_visible_ = visible;
@@ -85,7 +91,13 @@ class ObjectBase {
     force_visible_ = visible;
     return *this;
   }
-  bool IsForceVisible() const { return force_visible_; }
+  bool IsForceVisible() const {
+    if (parent_object_) {
+      // If parent object is set, force_visibility is determined by parent
+      return parent_object_->IsForceVisible();
+    }
+    return force_visible_;
+  }
 
   void RegisterParentObject(ObjectBase* obj) { parent_object_ = obj; }
 
