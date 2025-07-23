@@ -162,8 +162,9 @@ void FastLS::CameraControl(float* view) {
       cam_pitch_ += (delta_y)*rot_scale_;
     }
 
-    // 中ボタンドラッグでパン
-    if ((buttons & SDL_BUTTON_MMASK) != 0) {
+    // 中ボタンと右ボタンドラッグでパン
+    if ((buttons & SDL_BUTTON_MMASK) != 0 ||
+        (buttons & SDL_BUTTON_RMASK) != 0) {
       cam_pan_x_ -= delta_x * pan_scale_;
       cam_pan_y_ += delta_y * pan_scale_;  // Y軸は逆方向
     }
