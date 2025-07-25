@@ -37,19 +37,14 @@ class FastLS {
   bool IsQuit() const { return quit_; }
 
  private:
-  void CameraControl(float* view);
+  void CameraControl();
   void PrintFPS();
   static void PrintBackend();
 
   SDL_Window* window_ = nullptr;
   bgfx::ProgramHandle program_ = BGFX_INVALID_HANDLE;
-
-  // Camera control parameters
-  // float cam_pitch_ = 0.0F;
-  // float cam_yaw_ = 0.0F;
-  // float cam_pan_x_ = 0.0F;
-  // float cam_pan_y_ = 0.0F;
-  // float zoom_distance_ = 30.0F;
+  float view_[16];
+  float proj_[16];
 
   bx::Vec3 target_ = {0.0F, 0.0F, 5.0F};  // カメラの注視点
   float distance_ = 2.0F;                 // 注視点からの距離（ズーム）
@@ -57,10 +52,12 @@ class FastLS {
   float cam_pitch_ = 0.2F;                // ピッチ角
 
   // Mouse operation parameters
-  float rot_scale_ = 0.01F;
-  float pan_scale_ = 0.1F;
-  float zoom_scale_ = 0.5F;
+  static constexpr float kRotScale = 0.002F;
+  static constexpr float kPanScale = 0.01F;
+  static constexpr float kScrollScale = 0.7F;
+  static constexpr float kFixedDistance = 1.0F;
 
+  float scroll_delta_ = 0.0F;  // スクロールの移動量
   float prev_mouse_x_ = 0;
   float prev_mouse_y_ = 0;
 

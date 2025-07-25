@@ -147,59 +147,60 @@ bool FastLS::Init() {
   return true;
 }
 
-void FastLS::CameraControl(float* view) {
+void FastLS::CameraControl() {
   // ImGuiがマウスを使用している場合はカメラ操作を無効化
   if (ImGui::GetIO().WantCaptureMouse) {
-    // マウスが離されたときに差分が大きくならないよう、現在のマウス位置を保持しておく
     SDL_GetMouseState(&prev_mouse_x_, &prev_mouse_y_);
     return;
   }
 
-  float mouse_x, mouse_y;
+  float mouse_x;
+  float mouse_y;
   const uint32_t buttons = SDL_GetMouseState(&mouse_x, &mouse_y);
 
   float delta_x = mouse_x - prev_mouse_x_;
   float delta_y = mouse_y - prev_mouse_y_;
 
-  // 左ボタンドラッグでオービット回転
+  // 回転
   if ((buttons & SDL_BUTTON_LMASK) != 0) {
-    cam_yaw_ += delta_x * rot_scale_;
-    // Y軸の移動量は上下反転させると直感的
-    cam_pitch_ += delta_y * rot_scale_;
-    // ピッチ角を制限してカメラがひっくり返るのを防ぐ
+    cam_yaw_ += delta_x * kRotScale;
+    cam_pitch_ -= delta_y * kRotScale;
     cam_pitch_ = bx::clamp(cam_pitch_, -M_PI_2 + 0.01F, M_PI_2 - 0.01F);
   }
 
-  // 中ボタンまたは右ボタンドラッグでパン
+  // パン
   if ((buttons & SDL_BUTTON_MMASK) != 0 || (buttons & SDL_BUTTON_RMASK) != 0) {
-    // カメラのビュー行列の逆行列から、右方向と上方向のベクトルを取得
     float inv_view[16];
-    bx::mtxInverse(inv_view, view);  // viewは前フレームのビュー行列
+    bx::mtxInverse(inv_view, view_);
 
     bx::Vec3 right = {inv_view[0], inv_view[1], inv_view[2]};
     bx::Vec3 up = {inv_view[4], inv_view[5], inv_view[6]};
 
-    // マウスの動きに応じて注視点を移動
-    target_ =
-        bx::mad(right, -delta_x * pan_scale_ * (distance_ / 10.0F), target_);
-    target_ = bx::mad(up, delta_y * pan_scale_ * (distance_ / 10.0F), target_);
+    target_ = bx::mad(right, -delta_x * kPanScale, target_);
+    target_ = bx::mad(up, delta_y * kPanScale, target_);
+  }
+
+  // スクロールで視線方向に target_ を移動
+  if (scroll_delta_ != 0.0F) {
+    // 現在のカメラ方向を計算
+    bx::Vec3 forward = {bx::cos(cam_pitch_) * bx::cos(cam_yaw_),
+                        bx::cos(cam_pitch_) * bx::sin(cam_yaw_),
+                        bx::sin(cam_pitch_)};
+
+    // 視線方向に target_ を移動
+    target_ = bx::mad(forward, scroll_delta_ * kScrollScale, target_);
   }
 
   prev_mouse_x_ = mouse_x;
   prev_mouse_y_ = mouse_y;
 
-  // --- ビュー行列の計算 ---
+  bx::Vec3 eye = {
+      target_.x - (kFixedDistance * bx::cos(cam_pitch_) * bx::cos(cam_yaw_)),
+      target_.y - (kFixedDistance * bx::cos(cam_pitch_) * bx::sin(cam_yaw_)),
+      target_.z - (kFixedDistance * bx::sin(cam_pitch_))};
 
-  // 1. 注視点、角度、距離からカメラの位置(eye)を計算
-  bx::Vec3 eye{0.0F, 0.0F, 0.0F};
-  const float cos_pitch = bx::cos(cam_pitch_);
-  eye.x = target_.x + distance_ * cos_pitch * bx::cos(cam_yaw_);
-  eye.y = target_.y + distance_ * cos_pitch * bx::sin(cam_yaw_);
-  eye.z = target_.z + distance_ * bx::sin(cam_pitch_);
-
-  // 2. LookAt行列を生成してviewに設定
   const bx::Vec3 up_vec = {0.0F, 0.0F, 1.0F};
-  bx::mtxLookAt(view, eye, target_, up_vec);
+  bx::mtxLookAt(view_, eye, target_, up_vec);
 }
 
 void FastLS::MainLoop() {
@@ -209,19 +210,19 @@ void FastLS::MainLoop() {
     // Camera control
     scene_->Draw(program_, force_visible_);
 
-    float proj[16];
     bx::mtxProj(
-        proj, 60.0F, static_cast<float>(width_) / static_cast<float>(height_),
+        proj_, 60.0F, static_cast<float>(width_) / static_cast<float>(height_),
         0.1F, 100.0F, bgfx::getCaps()->homogeneousDepth, bx::Handedness::Right);
-    float view[16];
-    bool is_external_camera_control = scene_->CameraControl(view);
+
+    bool is_external_camera_control = scene_->CameraControl(view_);
     if (!is_external_camera_control) {
-      CameraControl(view);
+      CameraControl();
     }
-    bgfx::setViewTransform(0, view, proj);
+    bgfx::setViewTransform(0, view_, proj_);
 
     // Event handling
     SDL_Event event = {};
+    scroll_delta_ = 0.0F;
     while (SDL_PollEvent(&event)) {
       ImGui_ImplSDL3_ProcessEvent(&event);
       if (event.type == SDL_EVENT_QUIT) {
@@ -229,11 +230,7 @@ void FastLS::MainLoop() {
         return;
       }
       if (event.type == SDL_EVENT_MOUSE_WHEEL) {
-        distance_ += event.wheel.y * zoom_scale_;
-        // 距離が0以下にならないように制限
-        if (distance_ <= 0.0F) {
-          distance_ = 0.01F;  // 最小距離を0.01に設定
-        }
+        scroll_delta_ = event.wheel.y;
       } else if (event.type == SDL_EVENT_KEY_DOWN) {
         if (event.key.key == SDLK_V) {
           force_visible_ = !force_visible_;
