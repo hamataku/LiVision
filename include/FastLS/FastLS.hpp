@@ -1,6 +1,8 @@
 #pragma once
 #include <bgfx/bgfx.h>
 
+#include <cmath>
+
 #include "SceneBase.hpp"
 
 namespace fastls {
@@ -46,16 +48,15 @@ class FastLS {
   float view_[16];
   float proj_[16];
 
-  bx::Vec3 target_ = {0.0F, 0.0F, 5.0F};  // カメラの注視点
-  float distance_ = 2.0F;                 // 注視点からの距離（ズーム）
-  float cam_yaw_ = 0.0F;                  // ヨー角
-  float cam_pitch_ = 0.2F;                // ピッチ角
+  bx::Vec3 target_ = {0.0F, 0.0F, 40.0F};  // カメラの注視点
+  float cam_yaw_ = -M_PI_2;                // ヨー角
+  float cam_pitch_ = M_PI_2 - 0.01F;       // ピッチ角
 
   // Mouse operation parameters
   static constexpr float kRotScale = 0.002F;
   static constexpr float kPanScale = 0.01F;
   static constexpr float kScrollScale = 0.7F;
-  static constexpr float kFixedDistance = 1.0F;
+  static constexpr float kFixedDistance = 0.1F;
 
   float scroll_delta_ = 0.0F;  // スクロールの移動量
   float prev_mouse_x_ = 0;

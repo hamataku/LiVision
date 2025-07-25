@@ -8,7 +8,6 @@
 #include <bgfx/platform.h>
 #include <bx/math.h>
 
-#include <cmath>
 #include <iostream>
 
 #include "FastLS/sim/LidarSim.hpp"
