@@ -8,6 +8,7 @@
 #include <bgfx/platform.h>
 #include <bx/math.h>
 
+#include <cmath>
 #include <iostream>
 
 #include "FastLS/sim/LidarSim.hpp"
@@ -147,45 +148,58 @@ bool FastLS::Init() {
 }
 
 void FastLS::CameraControl(float* view) {
-  if (!ImGui::GetIO().WantCaptureMouse) {
-    float mouse_x;
-    float mouse_y;
-    const uint32_t buttons = SDL_GetMouseState(&mouse_x, &mouse_y);
-
-    // マウスの移動量を計算
-    float delta_x = mouse_x - prev_mouse_x_;
-    float delta_y = mouse_y - prev_mouse_y_;
-
-    // 左ボタンドラッグで回転
-    if ((buttons & SDL_BUTTON_LMASK) != 0) {
-      cam_yaw_ += (delta_x)*rot_scale_;
-      cam_pitch_ += (delta_y)*rot_scale_;
-    }
-
-    // 中ボタンと右ボタンドラッグでパン
-    if ((buttons & SDL_BUTTON_MMASK) != 0 ||
-        (buttons & SDL_BUTTON_RMASK) != 0) {
-      cam_pan_x_ -= delta_x * pan_scale_;
-      cam_pan_y_ += delta_y * pan_scale_;  // Y軸は逆方向
-    }
-
-    prev_mouse_x_ = mouse_x;
-    prev_mouse_y_ = mouse_y;
+  // ImGuiがマウスを使用している場合はカメラ操作を無効化
+  if (ImGui::GetIO().WantCaptureMouse) {
+    // マウスが離されたときに差分が大きくならないよう、現在のマウス位置を保持しておく
+    SDL_GetMouseState(&prev_mouse_x_, &prev_mouse_y_);
+    return;
   }
 
-  // カメラの回転行列を計算
-  float cam_rotation[16];
-  bx::mtxRotateXYZ(cam_rotation, cam_pitch_, cam_yaw_, 0.0F);
+  float mouse_x, mouse_y;
+  const uint32_t buttons = SDL_GetMouseState(&mouse_x, &mouse_y);
 
-  // パンとズームを含む移動行列を計算
-  float cam_translation[16];
-  bx::mtxTranslate(cam_translation, cam_pan_x_, cam_pan_y_, zoom_distance_);
+  float delta_x = mouse_x - prev_mouse_x_;
+  float delta_y = mouse_y - prev_mouse_y_;
 
-  // 最終的なカメラ変換行列を計算
-  float cam_transform[16];
-  bx::mtxMul(cam_transform, cam_translation, cam_rotation);
+  // 左ボタンドラッグでオービット回転
+  if ((buttons & SDL_BUTTON_LMASK) != 0) {
+    cam_yaw_ += delta_x * rot_scale_;
+    // Y軸の移動量は上下反転させると直感的
+    cam_pitch_ += delta_y * rot_scale_;
+    // ピッチ角を制限してカメラがひっくり返るのを防ぐ
+    cam_pitch_ = bx::clamp(cam_pitch_, -M_PI_2 + 0.01F, M_PI_2 - 0.01F);
+  }
 
-  bx::mtxInverse(view, cam_transform);
+  // 中ボタンまたは右ボタンドラッグでパン
+  if ((buttons & SDL_BUTTON_MMASK) != 0 || (buttons & SDL_BUTTON_RMASK) != 0) {
+    // カメラのビュー行列の逆行列から、右方向と上方向のベクトルを取得
+    float inv_view[16];
+    bx::mtxInverse(inv_view, view);  // viewは前フレームのビュー行列
+
+    bx::Vec3 right = {inv_view[0], inv_view[1], inv_view[2]};
+    bx::Vec3 up = {inv_view[4], inv_view[5], inv_view[6]};
+
+    // マウスの動きに応じて注視点を移動
+    target_ =
+        bx::mad(right, -delta_x * pan_scale_ * (distance_ / 10.0F), target_);
+    target_ = bx::mad(up, delta_y * pan_scale_ * (distance_ / 10.0F), target_);
+  }
+
+  prev_mouse_x_ = mouse_x;
+  prev_mouse_y_ = mouse_y;
+
+  // --- ビュー行列の計算 ---
+
+  // 1. 注視点、角度、距離からカメラの位置(eye)を計算
+  bx::Vec3 eye{0.0F, 0.0F, 0.0F};
+  const float cos_pitch = bx::cos(cam_pitch_);
+  eye.x = target_.x + distance_ * cos_pitch * bx::cos(cam_yaw_);
+  eye.y = target_.y + distance_ * cos_pitch * bx::sin(cam_yaw_);
+  eye.z = target_.z + distance_ * bx::sin(cam_pitch_);
+
+  // 2. LookAt行列を生成してviewに設定
+  const bx::Vec3 up_vec = {0.0F, 0.0F, 1.0F};
+  bx::mtxLookAt(view, eye, target_, up_vec);
 }
 
 void FastLS::MainLoop() {
@@ -215,7 +229,11 @@ void FastLS::MainLoop() {
         return;
       }
       if (event.type == SDL_EVENT_MOUSE_WHEEL) {
-        zoom_distance_ += event.wheel.y * zoom_scale_;
+        distance_ += event.wheel.y * zoom_scale_;
+        // 距離が0以下にならないように制限
+        if (distance_ <= 0.0F) {
+          distance_ = 0.01F;  // 最小距離を0.01に設定
+        }
       } else if (event.type == SDL_EVENT_KEY_DOWN) {
         if (event.key.key == SDLK_V) {
           force_visible_ = !force_visible_;
