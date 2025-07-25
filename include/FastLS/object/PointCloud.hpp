@@ -49,6 +49,8 @@ class PointCloud : public ObjectBase {
     return *this;
   }
 
+  std::vector<glm::vec4>& GetPoints() { return points_; }
+
  private:
   std::vector<glm::vec4> points_;  // x,y,z,size
   double voxel_size_ = 0.12;       // Default voxel size
