@@ -51,20 +51,24 @@ class SceneBase {
 
   void SetHeadless(bool headless) { headless_ = headless; }
 
-  virtual void Update(){};
-  virtual void Init(){};
+  virtual void Update() {};
+  virtual void Init() {};
   virtual bool CameraControl(float* view) {
     (void)view;
     return false;
   };
-  virtual void EventHandler(SDL_Event event){};
-  virtual void GuiCustomize(){};
+  virtual void EventHandler(SDL_Event event) {};
+  virtual void GuiCustomize() {};
+
+  void ExitRequest() { is_exit_requested_ = true; }
+  bool IsExitRequested() const { return is_exit_requested_; }
 
  protected:
   bool headless_ = false;
 
  private:
   std::vector<ObjectBase*> objects_;
+  bool is_exit_requested_ = false;
 };
 
 }  // namespace fastls

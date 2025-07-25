@@ -89,6 +89,9 @@ class ObjectBase {
   bool IsLidarVisible() const { return lidar_visible_; }
   ObjectBase& SetForceVisible(bool visible) {
     force_visible_ = visible;
+    if (force_visible_) {
+      visible_ = true;  // Force visible overrides normal visibility
+    }
     return *this;
   }
   bool IsForceVisible() const {

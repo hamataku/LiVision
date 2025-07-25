@@ -233,7 +233,7 @@ void FastLS::MainLoop() {
 
     ImGui::NewFrame();
 
-    ImGui::Begin("Information", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+    ImGui::Begin("Control panel", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::Text("V: Toggle visibility");
     ImGui::Text("Q: Quit");
 
@@ -256,6 +256,11 @@ void FastLS::MainLoop() {
 
   scene_->Update();
   lidar_sim.CalcPointCloud();
+
+  if (scene_->IsExitRequested()) {
+    quit_ = true;
+    return;
+  }
 
   // フレームカウントを増やす
   frame_count_++;

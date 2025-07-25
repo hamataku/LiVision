@@ -39,9 +39,9 @@ class PointCloud : public ObjectBase {
     }
     return *this;
   }
-  PointCloud& SetPoints(std::vector<glm::vec3>& points, glm::mat4 mat) {
+  PointCloud& SetPoints(std::vector<glm::vec3>& points, glm::mat4 draw_mtx) {
     SetPoints(points);
-    draw_mtx_ = mat;
+    draw_mtx_ = draw_mtx;
     return *this;
   }
   PointCloud& SetPoints(const std::vector<glm::vec4>& points) {
@@ -49,7 +49,8 @@ class PointCloud : public ObjectBase {
     return *this;
   }
 
-  std::vector<glm::vec4>& GetPoints() { return points_; }
+  const std::vector<glm::vec4>& GetPoints() { return points_; }
+  glm::dmat4 GetDrawMatrix() const { return draw_mtx_; }
 
  private:
   std::vector<glm::vec4> points_;  // x,y,z,size
