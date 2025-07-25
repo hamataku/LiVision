@@ -38,6 +38,8 @@ class Path : public ObjectBase {
     return *this;
   }
 
+  std::vector<glm::vec3>& GetPath() { return path_; }
+
   Path& SetSphereVisible(bool is_sphere) {
     is_sphere_ = is_sphere;
     return *this;
