@@ -14,7 +14,7 @@ class ObjectBase {
  public:
   virtual void AddMeshList() {};
   virtual void InitImpl() {};
-  virtual void Draw(bgfx::ProgramHandle& program) {};
+  virtual void Draw(bgfx::ProgramHandle& program) { (void)program; };
 
   void Init() {
     if (!is_initialized_) {

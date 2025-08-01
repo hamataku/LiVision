@@ -15,6 +15,8 @@ class PointCloud : public ObjectBase {
     force_visible_ = true;
     color_ = utils::blue;
   }
+  virtual ~PointCloud() = default;
+
   void Draw(bgfx::ProgramHandle& program) final {
     obj_.SetColor(color_);
     for (const auto& point : points_) {

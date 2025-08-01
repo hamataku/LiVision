@@ -48,25 +48,25 @@ class FastLS {
   float view_[16];
   float proj_[16];
 
-  bx::Vec3 target_ = {0.0F, 0.0F, 40.0F};  // カメラの注視点
+  bx::Vec3 target_ = {0.0F, 0.0F, 30.0F};  // カメラの注視点
   float cam_yaw_ = -M_PI_2;                // ヨー角
-  float cam_pitch_ = M_PI_2 - 0.01F;       // ピッチ角
+  float cam_pitch_ = M_PI_2 - 0.02F;       // ピッチ角
 
   // Mouse operation parameters
   static constexpr float kRotScale = 0.002F;
   static constexpr float kPanScale = 0.01F;
-  static constexpr float kScrollScale = 0.7F;
+  static constexpr float kScrollScale = 1.2F;
   static constexpr float kFixedDistance = 0.1F;
 
   float scroll_delta_ = 0.0F;  // スクロールの移動量
   float prev_mouse_x_ = 0;
   float prev_mouse_y_ = 0;
 
-  int width_;
-  int height_;
-
   bool headless_ = false;
   bool vsync_ = true;
+
+  int width_;
+  int height_;
 
   SceneBase* scene_ = nullptr;
   bool scene_set_ = false;

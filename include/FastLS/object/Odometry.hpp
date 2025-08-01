@@ -8,6 +8,7 @@ namespace fastls {
 
 class Odometry : public Container {
  public:
+  virtual ~Odometry() = default;
   void InitImpl() final {
     force_visible_ = true;  // Beore AddObject
 

@@ -57,7 +57,7 @@ class SceneBase {
     (void)view;
     return false;
   };
-  virtual void EventHandler(SDL_Event event) {};
+  virtual void EventHandler(SDL_Event event) { (void)event; };
   virtual void GuiCustomize() {};
 
   void ExitRequest() { is_exit_requested_ = true; }

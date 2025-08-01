@@ -9,6 +9,8 @@ namespace fastls {
 class Path : public ObjectBase {
  public:
   Path() { force_visible_ = true; }
+  virtual ~Path() = default;
+
   void Draw(bgfx::ProgramHandle& program) final {
     cylinder_.SetColor(color_);
     sphere_.SetColor(color_);
