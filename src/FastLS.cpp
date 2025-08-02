@@ -19,23 +19,6 @@
 
 namespace fastls {
 
-FastLS::~FastLS() {
-  // Cleanup
-  utils::DeInit();
-  bgfx::destroy(program_);
-  lidar_sim.Destroy();
-
-  ImGui_ImplSDL3_Shutdown();
-  ImGui_Implbgfx_Shutdown();
-
-  ImPlot::DestroyContext();
-  ImGui::DestroyContext();
-  bgfx::shutdown();
-
-  SDL_DestroyWindow(window_);
-  SDL_Quit();
-}
-
 bool FastLS::Init() {
   std::cout << "### FastLS Init start ###" << std::endl;
 
@@ -146,6 +129,23 @@ bool FastLS::Init() {
   return true;
 }
 
+void FastLS::Exit() {
+  // Cleanup
+  utils::DeInit();
+  bgfx::destroy(program_);
+  lidar_sim.Destroy();
+
+  ImGui_ImplSDL3_Shutdown();
+  ImGui_Implbgfx_Shutdown();
+
+  ImPlot::DestroyContext();
+  ImGui::DestroyContext();
+  bgfx::shutdown();
+
+  SDL_DestroyWindow(window_);
+  SDL_Quit();
+}
+
 void FastLS::CameraControl() {
   // ImGuiがマウスを使用している場合はカメラ操作を無効化
   if (ImGui::GetIO().WantCaptureMouse) {
@@ -226,7 +226,6 @@ void FastLS::MainLoop() {
       ImGui_ImplSDL3_ProcessEvent(&event);
       if (event.type == SDL_EVENT_QUIT) {
         quit_ = true;
-        return;
       }
       if (event.type == SDL_EVENT_MOUSE_WHEEL) {
         scroll_delta_ = event.wheel.y;
@@ -235,7 +234,6 @@ void FastLS::MainLoop() {
           force_visible_ = !force_visible_;
         } else if (event.key.key == SDLK_Q) {
           quit_ = true;
-          return;
         }
       }
       scene_->EventHandler(event);
@@ -263,7 +261,6 @@ void FastLS::MainLoop() {
       ImGui_ImplSDL3_ProcessEvent(&event);
       if (event.type == SDL_EVENT_QUIT) {
         quit_ = true;
-        return;
       }
     }
   }
@@ -273,7 +270,6 @@ void FastLS::MainLoop() {
 
   if (scene_->IsExitRequested()) {
     quit_ = true;
-    return;
   }
 
   // フレームカウントを増やす
@@ -285,6 +281,11 @@ void FastLS::MainLoop() {
     PrintFPS();
     frame_count_ = 0;
     last_fps_time_ = current_time;
+  }
+
+  // quit
+  if (quit_) {
+    Exit();
   }
 }
 

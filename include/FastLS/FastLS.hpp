@@ -27,9 +27,8 @@ class FastLS {
     }
   }
 
-  ~FastLS();
-
   bool Init();
+  void Exit();
   void MainLoop();
   void SetScene(SceneBase* scene) {
     scene_ = scene;
