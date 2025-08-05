@@ -6,7 +6,6 @@
 namespace fastls {
 class Drone : public Container {
  public:
-  Drone() { force_visible_ = true; }
   virtual ~Drone() = default;
   void InitImpl() final {
     prop_[0]

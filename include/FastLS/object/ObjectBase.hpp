@@ -68,9 +68,6 @@ class ObjectBase {
   glm::dquat GetQuatRotation() const { return quat_; }
 
   ObjectBase& SetVisible(bool visible) {
-    if (force_visible_) {
-      std::cerr << "SetVisible: Force visible is set" << std::endl;
-    }
     visible_ = visible;
     return *this;
   }
@@ -87,20 +84,6 @@ class ObjectBase {
     return *this;
   }
   bool IsLidarVisible() const { return lidar_visible_; }
-  ObjectBase& SetForceVisible(bool visible) {
-    force_visible_ = visible;
-    if (force_visible_) {
-      visible_ = true;  // Force visible overrides normal visibility
-    }
-    return *this;
-  }
-  bool IsForceVisible() const {
-    if (parent_object_) {
-      // If parent object is set, force_visibility is determined by parent
-      return parent_object_->IsForceVisible();
-    }
-    return force_visible_;
-  }
 
   void RegisterParentObject(ObjectBase* obj) { parent_object_ = obj; }
 
@@ -133,7 +116,6 @@ class ObjectBase {
   glm::dvec3 pos_ = glm::vec3(0.0, 0.0, 0.0);
   glm::dvec3 size_ = glm::vec3(1.0, 1.0, 1.0);
   glm::dquat quat_ = glm::dquat(1.0, 0.0, 0.0, 0.0);
-  bool force_visible_ = false;  // visible if v key is pressed
 
  private:
   bool local_mtx_changed_ = true;

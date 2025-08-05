@@ -11,10 +11,7 @@ namespace fastls {
 template <class T = Box>
 class PointCloud : public ObjectBase {
  public:
-  PointCloud() {
-    force_visible_ = true;
-    color_ = utils::blue;
-  }
+  PointCloud() { color_ = utils::blue; }
   virtual ~PointCloud() = default;
 
   void Draw(bgfx::ProgramHandle& program) final {

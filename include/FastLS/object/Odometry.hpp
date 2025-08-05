@@ -10,8 +10,6 @@ class Odometry : public Container {
  public:
   virtual ~Odometry() = default;
   void InitImpl() final {
-    force_visible_ = true;  // Beore AddObject
-
     arrow_x_.SetSize(glm::dvec3(0.1, 0.1, 1.2))
         .SetPos(glm::dvec3(0.6, 0.0, 0.0))
         .SetDegRotation(glm::dvec3(0.0, 90.0, 0.0))

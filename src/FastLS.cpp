@@ -207,7 +207,7 @@ void FastLS::MainLoop() {
 
   if (!headless_) {
     // Camera control
-    scene_->Draw(program_, force_visible_);
+    scene_->Draw(program_);
 
     bx::mtxProj(
         proj_, 60.0F, static_cast<float>(width_) / static_cast<float>(height_),
@@ -230,9 +230,7 @@ void FastLS::MainLoop() {
       if (event.type == SDL_EVENT_MOUSE_WHEEL) {
         scroll_delta_ = event.wheel.y;
       } else if (event.type == SDL_EVENT_KEY_DOWN) {
-        if (event.key.key == SDLK_V) {
-          force_visible_ = !force_visible_;
-        } else if (event.key.key == SDLK_Q) {
+        if (event.key.key == SDLK_Q) {
           quit_ = true;
         }
       }
@@ -246,7 +244,6 @@ void FastLS::MainLoop() {
     ImGui::NewFrame();
 
     ImGui::Begin("Control panel", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-    ImGui::Text("V: Toggle visibility");
     ImGui::Text("Q: Quit");
 
     scene_->GuiCustomize();

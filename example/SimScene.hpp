@@ -14,9 +14,7 @@ class SimScene : public SceneBase {
   void Init() override {
     AddObject(&drone_);
 
-    plane_.SetSize(glm::vec2(40.0F, 40.0F))
-        .SetColor(utils::white)
-        .SetForceVisible(true);
+    plane_.SetSize(glm::vec2(40.0F, 40.0F)).SetColor(utils::white);
     AddObject(&plane_);
 
     mesh_.SetSize(glm::dvec3(50.0, 50.0, 50.0))
