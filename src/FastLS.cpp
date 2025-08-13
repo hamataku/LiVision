@@ -144,6 +144,7 @@ void FastLS::Exit() {
 
   SDL_DestroyWindow(window_);
   SDL_Quit();
+  std::cout << "### FastLS Exit ###" << std::endl;
 }
 
 void FastLS::CameraControl() {
