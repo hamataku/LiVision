@@ -7,6 +7,8 @@ namespace fastls {
 
 class Cylinder : public ObjectBase {
  public:
+  virtual ~Cylinder() = default;
+
   void AddMeshList() final {
     lidar_sim.AddMeshLists(utils::cylinder_vertices, utils::cylinder_indices,
                            global_mtx_);
