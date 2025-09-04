@@ -72,7 +72,7 @@ class ObjectBase {
     return *this;
   }
   bool IsVisible() const {
-    if (parent_object_) {
+    if (parent_object_ && visible_) {
       // If parent object is set, visibility is determined by parent
       return parent_object_->IsVisible();
     }

@@ -128,7 +128,7 @@ void CreateSphereBuffer() {
 }
 
 void CreateCylinderBuffer() {
-  constexpr int kPoly = 16;
+  constexpr int kPoly = 32;
   constexpr float kSize = 0.5F;
 
   // make top cylinder_vertices
