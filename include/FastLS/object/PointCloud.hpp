@@ -25,12 +25,10 @@ class PointCloud : public ObjectBase {
       obj_.Draw(program);
     }
   }
-
   PointCloud& SetVoxelSize(float size) {
     voxel_size_ = size;
     return *this;
   }
-
   PointCloud& SetPoints(const std::vector<glm::vec3>& points) {
     points_.clear();
     for (const auto& p : points) {
@@ -47,7 +45,6 @@ class PointCloud : public ObjectBase {
     points_ = points;
     return *this;
   }
-
   const std::vector<glm::vec4>& GetPoints() { return points_; }
   glm::dmat4 GetDrawMatrix() const { return draw_mtx_; }
 
