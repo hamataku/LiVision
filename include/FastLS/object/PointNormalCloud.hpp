@@ -33,7 +33,7 @@ class PointNormalCloud : public ObjectBase {
         glm::dvec3 v = glm::normalize(glm::dvec3(normal));
         glm::dquat quat = glm::rotation(z, v);
         normal_obj_.SetColor(utils::red)
-            .SetSize(glm::dvec3(0.1, 0.1, normal_length_))
+            .SetSize(glm::dvec3(0.01, 0.01, normal_length_))
             .SetPos(box_center)
             .SetQuatRotation(quat);
         normal_obj_.UpdateMatrix();
