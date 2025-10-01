@@ -48,16 +48,19 @@ class IMUObserver {
     acc_g += glm::dvec3(0.0, 0.0, kGravity);
 
     // Transform to local frame
-    glm::dvec3 acc_l_new = glm::inverse(cur_quat_g) * acc_g;
-    glm::dvec3 acc_l_diff = acc_l_new - acc_l_;
+    acc_l_ = glm::inverse(cur_quat_g) * acc_g;
+    acc_l_ +=
+        glm::dvec3(acc_dist_(engine_), acc_dist_(engine_), acc_dist_(engine_));
+    // glm::dvec3 acc_l_new = glm::inverse(cur_quat_g) * acc_g;
+    // glm::dvec3 acc_l_diff = acc_l_new - acc_l_;
 
-    if (glm::length(acc_l_diff) > kAccAbnormalityThreshold) {
-      // 異常値検出したら、前の値を使う
-      acc_l_diff = glm::dvec3(0.0);
-    }
+    // if (glm::length(acc_l_diff) > kAccAbnormalityThreshold) {
+    //   // 異常値検出したら、前の値を使う
+    //   acc_l_diff = glm::dvec3(0.0);
+    // }
 
-    acc_l_ += acc_l_diff + glm::dvec3(acc_dist_(engine_), acc_dist_(engine_),
-                                      acc_dist_(engine_));
+    // acc_l_ += acc_l_diff + glm::dvec3(acc_dist_(engine_), acc_dist_(engine_),
+    //                                   acc_dist_(engine_));
 
     // Calculate angular velocity
     glm::dquat diff_quat_g =
