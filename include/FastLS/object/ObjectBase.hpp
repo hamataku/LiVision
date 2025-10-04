@@ -5,13 +5,15 @@
 
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <iostream>
 
 #include "FastLS/utils.hpp"
 
 namespace fastls {
 class ObjectBase {
  public:
+  ObjectBase() = default;
+  virtual ~ObjectBase() = default;
+
   virtual void AddMeshList() {};
   virtual void InitImpl() {};
   virtual void Draw(bgfx::ProgramHandle& program) { (void)program; };

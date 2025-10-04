@@ -1,65 +1,75 @@
 #pragma once
 
+#include <array>
+#include <cassert>
 #include <glm/gtx/quaternion.hpp>
 
 #include "FastLS/object/Cylinder.hpp"
 #include "FastLS/object/ObjectBase.hpp"
+#include "FastLS/object/Sphere.hpp"
 #include "FastLS/utils.hpp"
 
 namespace fastls {
 
 class DegeneracyIndicator : public ObjectBase {
  public:
-  DegeneracyIndicator() { color_ = utils::yellow; }
-  virtual ~DegeneracyIndicator() = default;
+  DegeneracyIndicator() {
+    for (auto& t_cyl : trans_cyl_) {
+      t_cyl.SetColor(fastls::utils::yellow.Alpha(0.8))
+          .SetSize(glm::dvec3(0.2, 0.2, 3));
+    }
+    rot_cyl_.SetColor(fastls::utils::blue.Alpha(0.8))
+        .SetSize(glm::dvec3(1.5, 1.5, 0.01));
+    rot_sphere_.SetColor(fastls::utils::blue.Alpha(0.8))
+        .SetSize(glm::dvec3(1, 1, 1));
+  }
 
   void Draw(bgfx::ProgramHandle& program) final {
-    cyl_.SetColor(color_);
-    if (dim_ == 1) {
-      // 1 dim degen
+    // draw trans degeneracy
+    assert(degen_trans_.size() < 3 &&
+           "DegeneracyIndicator: degen_trans_ exceeds 3");
+    for (size_t i = 0; i < degen_trans_.size(); ++i) {
       glm::dvec3 z = glm::dvec3(0.0, 0.0, 1.0);
-      glm::dvec3 v = glm::normalize(dir_);
+      glm::dvec3 v = glm::normalize(degen_trans_[i]);
       glm::dquat quat = glm::rotation(z, v);
-      cyl_.SetVisible(true)
-          .SetSize(glm::dvec3(0.2, 0.2, 3))
-          .SetPos(pos_)
-          .SetQuatRotation(quat);
-      cyl_.UpdateMatrix();
-      cyl_.Draw(program);
-    } else if (dim_ == 2) {
-      // 2 dim degen
+      trans_cyl_[i].SetPos(pos_).SetQuatRotation(quat);
+      trans_cyl_[i].UpdateMatrix();
+      trans_cyl_[i].Draw(program);
+    }
+
+    // draw rot degeneracy
+    assert(degen_rot_.size() < 3 &&
+           "DegeneracyIndicator: degen_rot_ exceeds 3");
+    if (degen_rot_.size() == 1) {
       glm::dvec3 z = glm::dvec3(0.0, 0.0, 1.0);
-      glm::dvec3 v = glm::normalize(dir_);
+      glm::dvec3 v = glm::normalize(degen_rot_[0]);
       glm::dquat quat = glm::rotation(z, v);
-      cyl_.SetVisible(true)
-          .SetSize(glm::dvec3(2.0, 2.0, 0.01))
-          .SetPos(pos_)
-          .SetQuatRotation(quat);
-      cyl_.UpdateMatrix();
-      cyl_.Draw(program);
-    } else if (dim_ == 3) {
-      // 3 dim degen
-      cyl_.SetVisible(true)
-          .SetSize(glm::dvec3(1.0, 1.0, 1.0))
-          .SetPos(pos_)
-          .SetRadRotation(glm::dvec3(0, 0, 0));
-      cyl_.UpdateMatrix();
-      cyl_.Draw(program);
+      rot_cyl_.SetPos(pos_).SetQuatRotation(quat);
+      rot_cyl_.UpdateMatrix();
+      rot_cyl_.Draw(program);
+    } else if (degen_rot_.size() >= 2) {
+      rot_sphere_.SetPos(pos_);
+      rot_sphere_.UpdateMatrix();
+      rot_sphere_.Draw(program);
     }
   }
 
-  DegeneracyIndicator& SetDegeneracyInfo(int dim, const glm::dvec3& dir,
-                                         const glm::dvec3& pos) {
-    dim_ = dim;
-    dir_ = dir;
+  DegeneracyIndicator& SetDegeneracyInfo(
+      const std::vector<glm::dvec3>& degen_rot,
+      const std::vector<glm::dvec3>& degen_trans, const glm::dvec3& pos) {
+    degen_rot_ = degen_rot;
+    degen_trans_ = degen_trans;
     pos_ = pos;
     return *this;
   }
 
  private:
-  int dim_;
-  glm::dvec3 dir_;
+  std::vector<glm::dvec3> degen_rot_;
+  std::vector<glm::dvec3> degen_trans_;
   glm::dvec3 pos_;
-  Cylinder cyl_;
+
+  std::array<Cylinder, 3> trans_cyl_;
+  Cylinder rot_cyl_;
+  Sphere rot_sphere_;
 };
 }  // namespace fastls

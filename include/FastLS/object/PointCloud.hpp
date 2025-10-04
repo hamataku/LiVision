@@ -12,7 +12,6 @@ template <class T = Box>
 class PointCloud : public ObjectBase {
  public:
   PointCloud() { color_ = utils::blue; }
-  virtual ~PointCloud() = default;
 
   void Draw(bgfx::ProgramHandle& program) final {
     obj_.SetColor(color_);

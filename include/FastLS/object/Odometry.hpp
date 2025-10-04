@@ -8,7 +8,6 @@ namespace fastls {
 
 class Odometry : public Container {
  public:
-  virtual ~Odometry() = default;
   void InitImpl() final {
     arrow_x_.SetSize(glm::dvec3(0.1, 0.1, 1.2))
         .SetPos(glm::dvec3(0.6, 0.0, 0.0))

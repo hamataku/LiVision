@@ -6,7 +6,6 @@
 namespace fastls {
 class Drone : public Container {
  public:
-  virtual ~Drone() = default;
   void InitImpl() final {
     prop_[0]
         .SetSize(glm::dvec3(0.3, 0.3, 0.1))
