@@ -53,7 +53,7 @@ class FastLS {
 
   // Mouse operation parameters
   static constexpr float kRotScale = 0.002F;
-  static constexpr float kPanScale = 0.01F;
+  static constexpr float kPanScale = 0.02F;
   static constexpr float kScrollScale = 1.2F;
   static constexpr float kFixedDistance = 0.1F;
 
