@@ -307,22 +307,21 @@ void FastLS::PrintBackend() {
     vendor = "Intel";
   } else if (caps->vendorId == BGFX_PCI_ID_NVIDIA) {
     vendor = "NVIDIA";
+  } else if (caps->vendorId == BGFX_PCI_ID_MICROSOFT) {
+    vendor = "Microsoft";
+  } else if (caps->vendorId == BGFX_PCI_ID_ARM) {
+    vendor = "ARM";
+  } else if (caps->vendorId == BGFX_PCI_ID_APPLE) {
+    vendor = "Apple";
+  } else if (caps->vendorId == BGFX_PCI_ID_SOFTWARE_RASTERIZER) {
+    vendor = "Software Rasterizer";
   }
 
-  printf("Vendor: %s (ID: 0x%04x)\n", vendor, caps->vendorId);
-  printf("Device ID: 0x%04x\n", caps->deviceId);
+  printf("- Vendor: %s (ID: 0x%04x)\n", vendor, caps->vendorId);
+  printf("- Device ID: 0x%04x\n", caps->deviceId);
 
-  bgfx::RendererType::Enum renderer = bgfx::getRendererType();
-  std::cout << "Graphic Backend: ";
-  if (renderer == bgfx::RendererType::Vulkan) {
-    std::cout << "Vulkan" << std::endl;
-  } else if (renderer == bgfx::RendererType::Metal) {
-    std::cout << "Metal" << std::endl;
-  } else if (renderer == bgfx::RendererType::OpenGL) {
-    std::cout << "OpenGL" << std::endl;
-  } else {
-    std::cout << renderer << std::endl;
-  }
+  std::cout << "- Graphic Backend: "
+            << bgfx::getRendererName(bgfx::getRendererType()) << std::endl;
 }
 
 }  // namespace fastls
