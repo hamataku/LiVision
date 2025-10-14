@@ -164,6 +164,14 @@ void LidarSim::CalcPointCloud() {
     return;
   }
 
+  if (mesh_vertices_.empty()) {
+    for (auto& lidar : lidar_sensors_) {
+      lidar->GetPointClouds().clear();
+    }
+    bgfx::frame();
+    return;
+  }
+
   // LiDARデータのパッキング
   for (size_t i = 0; i < lidar_sensors_.size(); ++i) {
     glm::mat4 mtx = lidar_sensors_[i]->GetGlobalMatrix();
