@@ -1,15 +1,13 @@
 #pragma once
 
 #include "FastLS/object/ObjectBase.hpp"
-#include "FastLS/sim/LidarSim.hpp"
 
 namespace fastls {
 
 class Box : public ObjectBase {
  public:
-  void AddMeshList() final {
-    lidar_sim.AddMeshLists(utils::cube_vertices, utils::cube_indices,
-                           global_mtx_);
+  utils::MeshView GetMeshView() final {
+    return utils::MeshView{utils::cube_vertices, utils::cube_indices};
   }
 
   void Draw(bgfx::ProgramHandle& program) final {

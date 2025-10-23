@@ -1,9 +1,44 @@
 #include "FastLS/sim/LidarSim.hpp"
 
+#include <bgfx/bgfx.h>
+
 #include "FastLS/file_ops.hpp"
+#include "FastLS/object/ObjectBase.hpp"
 
 namespace fastls {
+void LidarSim::InitMeshList(ObjectBase* object) {
+  utils::MeshView view = object->GetMeshView();
+  glm::mat4 mtx = object->GetGlobalMatrix();
+  bool is_dynamic = object->IsLidarDynamicObserve();
+
+  for (const auto& i : view.indices) {
+    const auto& v = view.vertices[i];
+    glm::vec4 result = mtx * glm::vec4(v, 1.0F);
+    if (is_dynamic) {
+      mesh_dynamic_vertices_.push_back(result);
+    } else {
+      mesh_static_vertices_.push_back(result);
+    }
+  }
+}
+
+void LidarSim::UpdateDynamicMeshList(ObjectBase* object) {
+  if (!object->IsLidarDynamicObserve()) return;
+
+  utils::MeshView view = object->GetMeshView();
+  glm::mat4 mtx = object->GetGlobalMatrix();
+
+  for (const auto& i : view.indices) {
+    const auto& v = view.vertices[i];
+    glm::vec4 result = mtx * glm::vec4(v, 1.0F);
+    mesh_dynamic_vertices_.push_back(result);
+  }
+}
+
 void LidarSim::Init() {
+  total_vertices_size_ =
+      mesh_static_vertices_.size() + mesh_dynamic_vertices_.size();
+
   for (float i = 0.0F; i < 360.0F; i += kLidarStep) {
     for (float j = 0.0F; j < 60.0F; j += 2.0F) {
       float rad_yaw = glm::radians(i);
@@ -38,7 +73,7 @@ void LidarSim::Init() {
       bgfx::createProgram(handle, true /* destroy shader on completion */);
 
   // GPUバッファの初期化（meshのサイズに合わせた固定バッファ）
-  auto mesh_count = static_cast<uint32_t>(mesh_vertices_.size());
+  auto mesh_count = static_cast<uint32_t>(total_vertices_size_);
 
   mesh_buffer_ = bgfx::createDynamicVertexBuffer(
       mesh_count, utils::vec4_vlayout, BGFX_BUFFER_COMPUTE_READ);
@@ -81,15 +116,20 @@ void LidarSim::Init() {
   // ユニフォームの初期化
   u_params_ = bgfx::createUniform("u_params", bgfx::UniformType::Vec4);
 
-  // メッシュデータのアップロード
-  const bgfx::Memory* vertex_mem = bgfx::makeRef(
-      mesh_vertices_.data(), mesh_vertices_.size() * sizeof(glm::vec4));
-  bgfx::update(mesh_buffer_, 0, vertex_mem);
+  // 静的メッシュデータのアップロード
+  if (!mesh_static_vertices_.empty()) {
+    const bgfx::Memory* static_vertex_mem =
+        bgfx::makeRef(mesh_static_vertices_.data(),
+                      mesh_static_vertices_.size() * sizeof(glm::vec4));
+    bgfx::update(mesh_buffer_, 0, static_vertex_mem);
+  }
 
   // レイデータのアップロード
   const bgfx::Memory* ray_dir_mem =
       bgfx::makeRef(ray_dirs_.data(), ray_dirs_.size() * sizeof(glm::vec4));
   bgfx::update(ray_dir_buffer_, 0, ray_dir_mem);
+
+  mesh_dynamic_vertices_.clear();
 }
 
 void LidarSim::Destroy() {
@@ -148,23 +188,13 @@ void LidarSim::RegisterLidar(LidarSensor* lidar_sensor) {
   lidar_sensors_.push_back(lidar_sensor);
 }
 
-void LidarSim::AddMeshLists(const std::vector<glm::vec3>& vertex,
-                            const std::vector<uint32_t>& index,
-                            const glm::mat4& mtx) {
-  for (const auto& i : index) {
-    glm::vec3 v = vertex[i];
-    glm::vec4 result = mtx * glm::vec4(v, 1.0F);
-    mesh_vertices_.push_back(result);
-  }
-}
-
 void LidarSim::CalcPointCloud() {
   if (lidar_sensors_.empty()) {
     bgfx::frame();
     return;
   }
 
-  if (mesh_vertices_.empty()) {
+  if (total_vertices_size_ == 0) {
     for (auto& lidar : lidar_sensors_) {
       lidar->GetPointClouds().clear();
     }
@@ -208,6 +238,16 @@ void LidarSim::CalcPointCloud() {
       bgfx::makeRef(lidar_ranges_.data(), lidar_ranges_.size() * sizeof(float));
   bgfx::update(lidar_range_buffer_, 0, lidar_range_mem);
 
+  // 動的メッシュデータのアップロード
+  if (!mesh_dynamic_vertices_.empty()) {
+    const bgfx::Memory* dynamic_vertex_mem =
+        bgfx::makeRef(mesh_dynamic_vertices_.data(),
+                      mesh_dynamic_vertices_.size() * sizeof(glm::vec4));
+    const auto start_vertex =
+        static_cast<uint32_t>(mesh_static_vertices_.size());
+    bgfx::update(mesh_buffer_, start_vertex, dynamic_vertex_mem);
+  }
+
   // コンピュートシェーダーのセットアップと実行
   bgfx::setBuffer(0, mesh_buffer_, bgfx::Access::Read);
   bgfx::setBuffer(1, ray_dir_buffer_, bgfx::Access::Read);
@@ -218,8 +258,7 @@ void LidarSim::CalcPointCloud() {
   bgfx::setImage(6, compute_texture_, 0, bgfx::Access::Write,
                  bgfx::TextureFormat::RGBA32F);
 
-  float params[4] = {mesh_vertices_.size() / 3.0F,
-                     static_cast<float>(num_rays_),
+  float params[4] = {total_vertices_size_ / 3.0F, static_cast<float>(num_rays_),
                      static_cast<float>(lidar_sensors_.size()), 0.0F};
   bgfx::setUniform(u_params_, params);
 
@@ -250,6 +289,8 @@ void LidarSim::CalcPointCloud() {
       }
     }
   }
+
+  mesh_dynamic_vertices_.clear();
 }
 
 }  // namespace fastls

@@ -4,6 +4,7 @@
 
 #include <random>
 
+#include "FastLS/object/ObjectBase.hpp"
 #include "FastLS/sensor/LidarSensor.hpp"
 
 namespace fastls {
@@ -16,15 +17,17 @@ class LidarSim {
 
   void Destroy();
   void RegisterLidar(LidarSensor* lidar_sensor);
-  void AddMeshLists(const std::vector<glm::vec3>& vertex,
-                    const std::vector<uint32_t>& index, const glm::mat4& mtx);
+  void InitMeshList(ObjectBase* object);
+  void UpdateDynamicMeshList(ObjectBase* object);
 
   void CalcPointCloud();
 
  private:
   static constexpr float kLidarStep = 3.0F;
 
-  std::vector<glm::vec4> mesh_vertices_;
+  std::vector<glm::vec4> mesh_static_vertices_;
+  std::vector<glm::vec4> mesh_dynamic_vertices_;
+  size_t total_vertices_size_ = 0;
 
   bgfx::ProgramHandle compute_program_;
   bgfx::DynamicVertexBufferHandle mesh_buffer_;

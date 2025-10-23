@@ -118,7 +118,7 @@ bool FastLS::Init() {
     scene_->Init();
     scene_set_ = false;
   }
-  scene_->AddMeshList();
+  scene_->InitMeshList();
   lidar_sim.Init();
 
   // FPS計測開始時間の初期化

@@ -2,7 +2,6 @@
 
 #include "FastLS/MeshParser.hpp"
 #include "FastLS/object/ObjectBase.hpp"
-#include "FastLS/sim/LidarSim.hpp"
 
 namespace fastls {
 
@@ -21,8 +20,8 @@ class Mesh : public ObjectBase {
         BGFX_BUFFER_INDEX32);
   }
 
-  void AddMeshList() override {
-    lidar_sim.AddMeshLists(vertices_, indices_, global_mtx_);
+  utils::MeshView GetMeshView() final {
+    return utils::MeshView{vertices_, indices_};
   }
 
   void Draw(bgfx::ProgramHandle& program) final {

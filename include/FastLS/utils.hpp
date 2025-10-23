@@ -52,6 +52,15 @@ inline constexpr uint64_t kAlphaState =
 
 // NOLINTEND
 
+struct MeshView {
+  const std::vector<glm::vec3>& vertices;
+  const std::vector<uint32_t>& indices;
+};
+
+// None
+inline std::vector<uint32_t> none_indices{};
+inline std::vector<glm::vec3> none_vertices{};
+
 // Cube
 inline bgfx::VertexBufferHandle cube_vbh = BGFX_INVALID_HANDLE;
 inline bgfx::IndexBufferHandle cube_ibh = BGFX_INVALID_HANDLE;

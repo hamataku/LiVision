@@ -2,6 +2,7 @@
 
 #include <SDL3/SDL_events.h>
 
+#include "FastLS/sim/LidarSim.hpp"
 #include "object/Container.hpp"
 #include "object/ObjectBase.hpp"
 
@@ -23,18 +24,28 @@ class SceneBase {
     }
   }
 
-  void AddMeshList() {
+  void InitMeshList() {
     for (auto* object : objects_) {
       object->UpdateMatrix();
     }
     for (auto& object : objects_) {
-      if (object->IsLidarVisible()) object->AddMeshList();
+      if (object->IsLidarVisible()) {
+        lidar_sim.InitMeshList(object);
+      }
     }
   }
 
   void UpdateMatrix() {
     for (auto* object : objects_) {
       object->UpdateMatrix();
+    }
+  }
+
+  void UpdateDynamicMeshList() {
+    for (auto& object : objects_) {
+      if (object->IsLidarVisible()) {
+        lidar_sim.UpdateDynamicMeshList(object);
+      }
     }
   }
 

@@ -9,12 +9,15 @@
 #include "FastLS/utils.hpp"
 
 namespace fastls {
+
 class ObjectBase {
  public:
   ObjectBase() = default;
   virtual ~ObjectBase() = default;
 
-  virtual void AddMeshList() {};
+  virtual utils::MeshView GetMeshView() {
+    return utils::MeshView{utils::none_vertices, utils::none_indices};
+  }
   virtual void InitImpl() {};
   virtual void Draw(bgfx::ProgramHandle& program) { (void)program; };
 
@@ -87,6 +90,12 @@ class ObjectBase {
   }
   bool IsLidarVisible() const { return lidar_visible_; }
 
+  ObjectBase& SetLidarDynamicObserve(bool is_dynamic) {
+    is_dynamic_ = is_dynamic;
+    return *this;
+  }
+  bool IsLidarDynamicObserve() const { return is_dynamic_; }
+
   void RegisterParentObject(ObjectBase* obj) { parent_object_ = obj; }
 
   glm::dmat4 GetGlobalMatrix() const { return global_mtx_; }
@@ -126,5 +135,6 @@ class ObjectBase {
   bool lidar_visible_ = true;
   ObjectBase* parent_object_ = nullptr;
   bool is_initialized_ = false;
+  bool is_dynamic_ = false;
 };
 }  // namespace fastls
