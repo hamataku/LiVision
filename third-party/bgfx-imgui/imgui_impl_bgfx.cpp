@@ -20,7 +20,6 @@
 #include "bgfx/bgfx.h"
 #include "bgfx/embedded_shader.h"
 #include "bx/math.h"
-#include "bx/timer.h"
 
 // Data
 static uint8_t g_View = 255;
@@ -103,7 +102,7 @@ void ImGui_Implbgfx_RenderDrawLists(ImDrawData* draw_data) {
 
         bgfx::setState(state);
         bgfx::TextureHandle texture = {
-            (uint16_t)((intptr_t)pcmd->TextureId & 0xffff)};
+            (uint16_t)((intptr_t)pcmd->TexRef.GetTexID() & 0xffff)};
         bgfx::setTexture(0, g_AttribLocationTex, texture);
         bgfx::setVertexBuffer(0, &tvb, 0, numVertices);
         bgfx::setIndexBuffer(&tib, pcmd->IdxOffset, pcmd->ElemCount);
@@ -169,7 +168,7 @@ void ImGui_Implbgfx_InvalidateDeviceObjects() {
 
   if (isValid(g_FontTexture)) {
     bgfx::destroy(g_FontTexture);
-    ImGui::GetIO().Fonts->TexID = 0;
+    // ImGui::GetIO().Fonts->SetTexID(nullptr);
     g_FontTexture.idx = bgfx::kInvalidHandle;
   }
 }

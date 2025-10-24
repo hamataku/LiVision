@@ -76,6 +76,7 @@ class ObjectBase {
     visible_ = visible;
     return *this;
   }
+  // NOLINTNEXTLINE
   bool IsVisible() const {
     if (parent_object_ && visible_) {
       // If parent object is set, visibility is determined by parent
@@ -90,11 +91,18 @@ class ObjectBase {
   }
   bool IsLidarVisible() const { return lidar_visible_; }
 
-  ObjectBase& SetLidarDynamicObserve(bool is_dynamic) {
-    is_dynamic_ = is_dynamic;
+  ObjectBase& SetLidarDynamicObserve(bool is_lidar_dynamic) {
+    is_lidar_dynamic_ = is_lidar_dynamic;
     return *this;
   }
-  bool IsLidarDynamicObserve() const { return is_dynamic_; }
+  // NOLINTNEXTLINE
+  bool IsLidarDynamicObserve() const {
+    if (parent_object_) {
+      // If parent object is set, lidar dynamic is determined by parent
+      return parent_object_->IsLidarDynamicObserve();
+    }
+    return is_lidar_dynamic_;
+  }
 
   void RegisterParentObject(ObjectBase* obj) { parent_object_ = obj; }
 
@@ -135,6 +143,6 @@ class ObjectBase {
   bool lidar_visible_ = true;
   ObjectBase* parent_object_ = nullptr;
   bool is_initialized_ = false;
-  bool is_dynamic_ = false;
+  bool is_lidar_dynamic_ = false;
 };
 }  // namespace fastls

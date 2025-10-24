@@ -25,10 +25,10 @@ endif()
 file(GLOB SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/sim/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/sdl-imgui/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/third-party/bgfx-imgui/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/third-party/implot/implot.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/third-party/implot/implot_items.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/imgui.cmake/imgui/backends/imgui_impl_sdl3.cpp"
 )
 
 target_sources(${PROJECT_NAME} PRIVATE ${SOURCES})

@@ -13,9 +13,9 @@
 #include "FastLS/sim/LidarSim.hpp"
 #include "FastLS/utils.hpp"
 #include "bgfx-imgui/imgui_impl_bgfx.h"
+#include "imgui.cmake/imgui/backends/imgui_impl_sdl3.h"
 #include "imgui.h"
 #include "implot/implot.h"
-#include "sdl-imgui/imgui_impl_sdl3.h"
 
 namespace fastls {
 
