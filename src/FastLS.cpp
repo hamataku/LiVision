@@ -266,6 +266,7 @@ void FastLS::MainLoop() {
   }
 
   scene_->Update();
+  scene_->UpdateDynamicMeshList();
   lidar_sim.CalcPointCloud();
 
   if (scene_->IsExitRequested()) {

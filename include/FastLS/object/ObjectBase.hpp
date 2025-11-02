@@ -96,13 +96,7 @@ class ObjectBase {
     return *this;
   }
   // NOLINTNEXTLINE
-  bool IsLidarDynamicObserve() const {
-    if (parent_object_) {
-      // If parent object is set, lidar dynamic is determined by parent
-      return parent_object_->IsLidarDynamicObserve();
-    }
-    return is_lidar_dynamic_;
-  }
+  bool IsLidarDynamicObserve() const { return is_lidar_dynamic_; }
 
   void RegisterParentObject(ObjectBase* obj) { parent_object_ = obj; }
 
