@@ -37,6 +37,7 @@ inline constexpr Color cyan{0.0F, 1.0F, 1.0F};
 inline constexpr Color magenta{1.0F, 0.0F, 1.0F};
 inline constexpr Color gray{0.5F, 0.5F, 0.5F};
 inline constexpr Color light_gray{0.75F, 0.75F, 0.75F};
+inline constexpr Color off_white{0.9F, 0.9F, 0.9F};
 inline constexpr Color dark_gray{0.25F, 0.25F, 0.25F};
 
 inline std::vector<Color> color_palette{red,  green,      blue,     yellow,

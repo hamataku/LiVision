@@ -33,6 +33,7 @@ class Drone : public Container {
       AddObject(&p);
     }
 
+    lidar_.SetPos(glm::dvec3(0, 0, 0.1));
     AddObject(&lidar_);
 
     body_.SetSize(glm::dvec3(0.5, 0.5, 0.1))

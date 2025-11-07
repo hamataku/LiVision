@@ -12,15 +12,16 @@ class IMUObserver {
   /**
    * @brief IMUObserverを構築する
    * @param object 観測対象のオブジェクト
-   * @param acc_psd 加速度計ノイズのパワースペクトル密度 [(m/s^2)^2/Hz]
-   * @param gyr_psd ジャイロノイズのパワースペクトル密度 [(rad/s)^2/Hz]
+   * @param acc_psd 加速度計ノイズ密度 [m/s^2/√Hz]
+   * @param gyr_psd ジャイロノイズ密度 [rad/s/√Hz]
    */
-  explicit IMUObserver(ObjectBase* object, double acc_cov, double gyr_cov)
+  explicit IMUObserver(ObjectBase* object, double acc_noise_density,
+                       double gyr_noise_density)
       : object_(object) {
     acc_dist_ = std::normal_distribution<>(
-        0.0, std::sqrt(acc_cov / settings::common_dt));
+        0.0, acc_noise_density * std::sqrt(settings::common_dt));
     gyr_dist_ = std::normal_distribution<>(
-        0.0, std::sqrt(gyr_cov / settings::common_dt));
+        0.0, gyr_noise_density * std::sqrt(settings::common_dt));
   }
 
   void Update() {
