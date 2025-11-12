@@ -2,7 +2,6 @@
 
 #include <random>
 
-#include "FastLS/Settings.hpp"
 #include "FastLS/object/ObjectBase.hpp"
 
 namespace fastls {
@@ -15,13 +14,13 @@ class IMUObserver {
    * @param acc_psd 加速度計ノイズ密度 [m/s^2/√Hz]
    * @param gyr_psd ジャイロノイズ密度 [rad/s/√Hz]
    */
-  explicit IMUObserver(ObjectBase* object, double acc_noise_density,
+  explicit IMUObserver(ObjectBase* object, double dt, double acc_noise_density,
                        double gyr_noise_density)
-      : object_(object) {
-    acc_dist_ = std::normal_distribution<>(
-        0.0, acc_noise_density * std::sqrt(settings::common_dt));
-    gyr_dist_ = std::normal_distribution<>(
-        0.0, gyr_noise_density * std::sqrt(settings::common_dt));
+      : object_(object), dt_(dt) {
+    acc_dist_ =
+        std::normal_distribution<>(0.0, acc_noise_density * std::sqrt(dt_));
+    gyr_dist_ =
+        std::normal_distribution<>(0.0, gyr_noise_density * std::sqrt(dt_));
   }
 
   void Update() {
@@ -41,8 +40,8 @@ class IMUObserver {
     }
 
     // Calculate linear acceleration in world frame
-    glm::dvec3 vel_g = (cur_pos_g - prev_pos_g_) / settings::common_dt;
-    glm::dvec3 acc_g = (vel_g - prev_vel_g_) / settings::common_dt;
+    glm::dvec3 vel_g = (cur_pos_g - prev_pos_g_) / dt_;
+    glm::dvec3 acc_g = (vel_g - prev_vel_g_) / dt_;
     prev_vel_g_ = vel_g;
 
     // Add gravity in world frame
@@ -75,13 +74,12 @@ class IMUObserver {
           glm::dvec3(diff_quat_g.x, diff_quat_g.y, diff_quat_g.z) /
           sin_half_angle;
       double angle = 2.0 * std::atan2(sin_half_angle, diff_quat_g.w);
-      angular_vel_g = (angle / settings::common_dt) * axis;
+      angular_vel_g = (angle / dt_) * axis;
     } else {
       // 小角度近似: angle ≈ 2 * sin(angle/2), axis*sin(angle/2) ≈ vec_part
       // angular_vel ≈ 2 * vec_part / dt
       angular_vel_g =
-          (2.0 * glm::dvec3(diff_quat_g.x, diff_quat_g.y, diff_quat_g.z)) /
-          settings::common_dt;
+          (2.0 * glm::dvec3(diff_quat_g.x, diff_quat_g.y, diff_quat_g.z)) / dt_;
     }
 
     angular_vel_l_ = glm::inverse(cur_quat_g) * angular_vel_g;
@@ -109,6 +107,7 @@ class IMUObserver {
   glm::dvec3 angular_vel_l_ = glm::dvec3(0.0);
 
   ObjectBase* object_ = nullptr;
+  double dt_;
 
   std::mt19937 engine_{std::random_device{}()};
   std::normal_distribution<> acc_dist_;

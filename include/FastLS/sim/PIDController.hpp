@@ -1,7 +1,5 @@
 #pragma once
 
-#include "FastLS/Settings.hpp"
-
 namespace fastls {
 struct PIDGains {
   double p = 1.0;
@@ -12,7 +10,7 @@ struct PIDGains {
 template <typename T>
 class PIDController {
  public:
-  PIDController() { Reset(); }
+  explicit PIDController(double dt) : dt_(dt) { Reset(); }
   void Reset() {
     integral_ = T();
     prev_error_ = T();
@@ -21,8 +19,8 @@ class PIDController {
   void SetGains(const PIDGains& gains) { gains_ = gains; }
 
   T Update(const T& error) {
-    integral_ += error * settings::common_dt;
-    T derivative = (error - prev_error_) / settings::common_dt;
+    integral_ += error * dt_;
+    T derivative = (error - prev_error_) / dt_;
     prev_error_ = error;
 
     return (gains_.p * error) + (gains_.i * integral_) +
@@ -31,6 +29,7 @@ class PIDController {
 
  private:
   PIDGains gains_;
+  double dt_;
   T integral_ = T();
   T prev_error_ = T();
 };
