@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "FastLS/object/ObjectBase.hpp"
 
 namespace fastls {

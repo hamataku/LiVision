@@ -10,8 +10,8 @@ namespace fastls {
 class Lidar : public Container {
  public:
   void InitImpl() final {
-    body_.SetSize(glm::dvec3(0.2, 0.2, 0.5))
-        .SetPos(glm::dvec3(0.0, 0.0, 0.25))
+    body_.SetSize(glm::dvec3(0.2, 0.2, 0.2))
+        .SetPos(glm::dvec3(0.0, 0.0, 0))
         .SetColor(utils::black)
         .SetLidarVisible(false);
     AddObject(&body_);
