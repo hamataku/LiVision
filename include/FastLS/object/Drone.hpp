@@ -13,22 +13,22 @@ class Drone : public Container {
     bool lidar_dynamic_observe = true;
 
     prop_.at(0)
-        .SetSize(glm::dvec3(0.3, 0.3, 0.0))
+        .SetSize(glm::dvec3(0.3, 0.3, 0.03))
         .SetPos(glm::dvec3(0.3, 0.3, -0.11))
         .SetColor(utils::magenta)
         .SetLidarDynamicObserve(lidar_dynamic_observe);
     prop_.at(1)
-        .SetSize(glm::dvec3(0.3, 0.3, 0.0))
+        .SetSize(glm::dvec3(0.3, 0.3, 0.03))
         .SetPos(glm::dvec3(-0.3, 0.3, -0.11))
         .SetColor(utils::cyan)
         .SetLidarDynamicObserve(lidar_dynamic_observe);
     prop_.at(2)
-        .SetSize(glm::dvec3(0.3, 0.3, 0.0))
+        .SetSize(glm::dvec3(0.3, 0.3, 0.03))
         .SetPos(glm::dvec3(-0.3, -0.3, -0.11))
         .SetColor(utils::cyan)
         .SetLidarDynamicObserve(lidar_dynamic_observe);
     prop_.at(3)
-        .SetSize(glm::dvec3(0.3, 0.3, 0.0))
+        .SetSize(glm::dvec3(0.3, 0.3, 0.03))
         .SetPos(glm::dvec3(0.3, -0.3, -0.11))
         .SetColor(utils::cyan)
         .SetLidarDynamicObserve(lidar_dynamic_observe);
