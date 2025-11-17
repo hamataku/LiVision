@@ -56,6 +56,7 @@ void Init() {
 
   CreateCylinderBuffer();
   CreateSphereBuffer();
+  CreateConeBuffer();
 }
 
 void DeInit() {
@@ -180,6 +181,60 @@ void CreateCylinderBuffer() {
   cylinder_ibh = bgfx::createIndexBuffer(
       bgfx::makeRef(cylinder_indices.data(),
                     cylinder_indices.size() * sizeof(uint32_t)),
+      BGFX_BUFFER_INDEX32);
+}
+
+void CreateConeBuffer() {
+  // Implementation for creating cone vertex and index buffers
+  constexpr int kPoly = 16;
+  constexpr float kRadius = 0.5F;
+  constexpr float kHeight = 1.0F;
+
+  cone_vertices.clear();
+  cone_indices.clear();
+
+  // Apex at +Z/2, base center at -Z/2
+  cone_vertices.emplace_back(0.0F, 0.0F, kHeight * 0.5F);  // apex (idx 0)
+  cone_vertices.emplace_back(0.0F, 0.0F,
+                             -kHeight * 0.5F);  // base center (idx 1)
+
+  // base rim vertices start at index 2
+  for (int i = 0; i < kPoly; ++i) {
+    float theta = glm::radians(360.0F * static_cast<float>(i) / kPoly);
+    cone_vertices.emplace_back(kRadius * std::cos(theta),
+                               kRadius * std::sin(theta), -kHeight * 0.5F);
+  }
+
+  const uint32_t apex_idx = 0;
+  const uint32_t base_center_idx = 1;
+  const uint32_t rim_start = 2;
+
+  // side triangles (apex, rim_i, rim_{i+1})
+  for (int i = 0; i < kPoly; ++i) {
+    uint32_t i0 = rim_start + i;
+    uint32_t i1 = rim_start + ((i + 1) % kPoly);
+    cone_indices.push_back(apex_idx);
+    cone_indices.push_back(i0);
+    cone_indices.push_back(i1);
+  }
+
+  // base triangles (base_center, rim_{i+1}, rim_i) so normal points -Z
+  for (int i = 0; i < kPoly; ++i) {
+    uint32_t i0 = rim_start + i;
+    uint32_t i1 = rim_start + ((i + 1) % kPoly);
+    cone_indices.push_back(base_center_idx);
+    cone_indices.push_back(i1);
+    cone_indices.push_back(i0);
+  }
+
+  // create cone buffers
+  cone_vbh = bgfx::createVertexBuffer(
+      bgfx::makeRef(cone_vertices.data(),
+                    cone_vertices.size() * sizeof(glm::vec3)),
+      vec3_vlayout);
+  cone_ibh = bgfx::createIndexBuffer(
+      bgfx::makeRef(cone_indices.data(),
+                    cone_indices.size() * sizeof(uint32_t)),
       BGFX_BUFFER_INDEX32);
 }
 

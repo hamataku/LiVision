@@ -6,7 +6,8 @@ namespace fastls {
 class Plane : public ObjectBase {
  public:
   utils::MeshView GetMeshView() final {
-    return utils::MeshView{utils::plane_vertices, utils::plane_indices};
+    return utils::MeshView{.vertices = utils::plane_vertices,
+                           .indices = utils::plane_indices};
   }
 
   void Draw(bgfx::ProgramHandle& program) final {

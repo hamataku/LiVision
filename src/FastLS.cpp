@@ -246,7 +246,7 @@ void FastLS::MainLoop() {
 
     // ImGui::Begin("Control panel", nullptr,
     // ImGuiWindowFlags_AlwaysAutoResize);
-    ImGui::Begin("Control panel", nullptr);
+    ImGui::Begin("Control panel", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::Text("Q: Quit");
 
     scene_->GuiCustomize();

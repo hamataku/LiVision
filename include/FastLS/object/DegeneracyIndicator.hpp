@@ -16,7 +16,7 @@ class DegeneracyIndicator : public ObjectBase {
   DegeneracyIndicator() {
     for (auto& t_cyl : trans_cyl_) {
       t_cyl.SetColor(fastls::utils::yellow.Alpha(0.8))
-          .SetSize(glm::dvec3(0.2, 0.2, 3));
+          .SetSize(glm::dvec3(0.1, 0.1, 2));
     }
     rot_cyl_.SetColor(fastls::utils::blue.Alpha(0.8))
         .SetSize(glm::dvec3(1.5, 1.5, 0.01));

@@ -7,7 +7,8 @@ namespace fastls {
 class Sphere : public ObjectBase {
  public:
   utils::MeshView GetMeshView() final {
-    return utils::MeshView{utils::sphere_vertices, utils::sphere_indices};
+    return utils::MeshView{.vertices = utils::sphere_vertices,
+                           .indices = utils::sphere_indices};
   }
 
   void Draw(bgfx::ProgramHandle& program) final {

@@ -1,7 +1,7 @@
 #pragma once
 
+#include "FastLS/object/Arrow.hpp"
 #include "FastLS/object/Container.hpp"
-#include "FastLS/object/Cylinder.hpp"
 #include "FastLS/utils.hpp"
 
 namespace fastls {
@@ -9,29 +9,21 @@ namespace fastls {
 class Odometry : public Container {
  public:
   void InitImpl() final {
-    arrow_x_.SetSize(glm::dvec3(0.1, 0.1, 1.2))
-        .SetPos(glm::dvec3(0.6, 0.0, 0.0))
-        .SetDegRotation(glm::dvec3(0.0, 90.0, 0.0))
-        .SetColor(utils::red)
-        .SetLidarVisible(false);
-    arrow_y_.SetSize(glm::dvec3(0.1, 0.1, 1.2))
-        .SetPos(glm::dvec3(0.0, 0.6, 0.0))
-        .SetDegRotation(glm::dvec3(90.0, 0.0, 0.0))
-        .SetColor(utils::green)
-        .SetLidarVisible(false);
-    arrow_z_.SetSize(glm::dvec3(0.1, 0.1, 1.2))
-        .SetPos(glm::dvec3(0.0, 0.0, 0.6))
-        .SetColor(utils::blue)
-        .SetLidarVisible(false);
+    arrow_x_.SetFromTo(glm::dvec3(0.0, 0.0, 0.0), glm::dvec3(1.2, 0.0, 0.0))
+        .SetColor(utils::red);
+    arrow_y_.SetFromTo(glm::dvec3(0.0, 0.0, 0.0), glm::dvec3(0.0, 1.2, 0.0))
+        .SetColor(utils::green);
+    arrow_z_.SetFromTo(glm::dvec3(0.0, 0.0, 0.0), glm::dvec3(0.0, 0.0, 1.2))
+        .SetColor(utils::blue);
     AddObject(&arrow_x_);
     AddObject(&arrow_y_);
     AddObject(&arrow_z_);
   }
 
  private:
-  fastls::Cylinder arrow_x_;
-  fastls::Cylinder arrow_y_;
-  fastls::Cylinder arrow_z_;
+  Arrow arrow_x_;
+  Arrow arrow_y_;
+  Arrow arrow_z_;
 };
 
 }  // namespace fastls

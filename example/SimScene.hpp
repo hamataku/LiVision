@@ -12,6 +12,7 @@ namespace fastls {
 class SimScene : public SceneBase {
  public:
   void Init() override {
+    drone_.AddObject(&point_cloud_);
     AddObject(&drone_);
 
     plane_.SetSize(glm::vec2(40.0F, 40.0F)).SetColor(utils::white);
@@ -23,8 +24,6 @@ class SimScene : public SceneBase {
         .SetColor(utils::light_gray);
 
     AddObject(&mesh_);
-
-    AddObject(&point_cloud_);
   }
 
   void Update() override {
@@ -35,8 +34,7 @@ class SimScene : public SceneBase {
             glm::dvec3(0.0, container_theta_ * 2, container_theta_));
     container_theta_ += 0.01F;
 
-    point_cloud_.SetPoints(drone_.lidar_.GetPointClouds(),
-                           drone_.lidar_.GetGlobalMatrix());
+    point_cloud_.SetPoints(drone_.lidar_.GetPointClouds());
   }
 
  private:
@@ -46,6 +44,6 @@ class SimScene : public SceneBase {
 
   fastls::Plane plane_;
   fastls::PointCloud<> point_cloud_;
-  fastls::Mesh mesh_{"data/bunny/bun_zipper_res4.stl"};
+  fastls::Mesh mesh_{"data/bunny/bun_zipper_res3.stl"};
 };
 }  // namespace fastls

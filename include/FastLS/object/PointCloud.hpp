@@ -19,8 +19,7 @@ class PointCloud : public ObjectBase {
       obj_.SetPos(glm::dvec3(point.x, point.y, point.z));
       obj_.SetSize(glm::dvec3(point.w, point.w, point.w));
       obj_.UpdateMatrix();
-      obj_.ForceSetGlobalMatrix(global_mtx_ * draw_mtx_ *
-                                obj_.GetGlobalMatrix());
+      obj_.ForceSetGlobalMatrix(global_mtx_ * obj_.GetGlobalMatrix());
       obj_.Draw(program);
     }
   }
@@ -35,22 +34,22 @@ class PointCloud : public ObjectBase {
     }
     return *this;
   }
-  PointCloud& SetPoints(std::vector<glm::vec3>& points, glm::mat4 draw_mtx) {
-    SetPoints(points);
-    draw_mtx_ = draw_mtx;
-    return *this;
-  }
+  // PointCloud& SetPoints(std::vector<glm::vec3>& points, glm::mat4 draw_mtx) {
+  //   SetPoints(points);
+  //   draw_mtx_ = draw_mtx;
+  //   return *this;
+  // }
   PointCloud& SetPoints(const std::vector<glm::vec4>& points) {
     points_ = points;
     return *this;
   }
   const std::vector<glm::vec4>& GetPoints() { return points_; }
-  glm::dmat4 GetDrawMatrix() const { return draw_mtx_; }
+  // glm::dmat4 GetDrawMatrix() const { return draw_mtx_; }
 
  private:
   std::vector<glm::vec4> points_;  // x,y,z,size
   double voxel_size_ = 0.12;       // Default voxel size
   T obj_;
-  glm::dmat4 draw_mtx_ = glm::dmat4(1.0);
+  // glm::dmat4 draw_mtx_ = glm::dmat4(1.0);
 };
 }  // namespace fastls

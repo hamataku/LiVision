@@ -1,8 +1,9 @@
 #pragma once
 
+#include <array>
+
 #include "FastLS/object/Box.hpp"
 #include "FastLS/object/Container.hpp"
-#include "FastLS/object/Cylinder.hpp"
 #include "FastLS/object/Lidar.hpp"
 #include "FastLS/utils.hpp"
 

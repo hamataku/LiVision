@@ -4,7 +4,7 @@
 int main() {
   fastls::FastLS fast_ls{{
       .headless = false,  // Set to true for headless mode
-      .vsync = true,      // Set to true to enable VSync
+      .vsync = false,     // Set to true to enable VSync
       .width = 1280,      // Set the window width
       .height = 720       // Set the window height
   }};

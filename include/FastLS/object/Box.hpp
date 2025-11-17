@@ -7,7 +7,8 @@ namespace fastls {
 class Box : public ObjectBase {
  public:
   utils::MeshView GetMeshView() final {
-    return utils::MeshView{utils::cube_vertices, utils::cube_indices};
+    return utils::MeshView{.vertices = utils::cube_vertices,
+                           .indices = utils::cube_indices};
   }
 
   void Draw(bgfx::ProgramHandle& program) final {

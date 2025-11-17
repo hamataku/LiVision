@@ -106,6 +106,12 @@ inline bgfx::IndexBufferHandle sphere_ibh = BGFX_INVALID_HANDLE;
 inline std::vector<glm::vec3> sphere_vertices{};
 inline std::vector<uint32_t> sphere_indices{};
 
+// Cone
+inline bgfx::VertexBufferHandle cone_vbh = BGFX_INVALID_HANDLE;
+inline bgfx::IndexBufferHandle cone_ibh = BGFX_INVALID_HANDLE;
+inline std::vector<glm::vec3> cone_vertices{};
+inline std::vector<uint32_t> cone_indices{};
+
 // Vertex Layout
 inline bgfx::VertexLayout float_vlayout;
 inline bgfx::VertexLayout vec2_vlayout;
@@ -118,5 +124,6 @@ void Init();
 void DeInit();
 void CreateCylinderBuffer();
 void CreateSphereBuffer();
+void CreateConeBuffer();
 bgfx::ShaderHandle CreateShader(const std::string& path, const char* name);
 }  // namespace fastls::utils

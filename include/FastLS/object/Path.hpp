@@ -18,15 +18,16 @@ class Path : public ObjectBase {
       float length = glm::distance(p1, p2);
       glm::dvec3 mid_point = (p1 + p2) / 2.0;
       cylinder_.SetPos(mid_point);
-      cylinder_.SetSize(glm::dvec3(0.1, 0.1, length));
+      cylinder_.SetSize(glm::dvec3(0.05, 0.05, length));
       cylinder_.SetQuatRotation(
           glm::quatLookAt(direction, glm::dvec3(0.0, 0.0, 1.0)));
       cylinder_.UpdateMatrix();
       cylinder_.Draw(program);
 
       if (is_sphere_) {
-        sphere_.SetPos(p2).SetSize(glm::dvec3(0.2, 0.2, 0.2));
+        sphere_.SetPos(p2).SetSize(glm::dvec3(0.1, 0.1, 0.1));
         sphere_.UpdateMatrix();
+        sphere_.ForceSetGlobalMatrix(global_mtx_ * sphere_.GetGlobalMatrix());
         sphere_.Draw(program);
       }
     }
