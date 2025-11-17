@@ -39,8 +39,8 @@ void LidarSim::Init() {
   total_vertices_size_ =
       mesh_static_vertices_.size() + mesh_dynamic_vertices_.size();
 
-  for (float i = 0.0F; i < 360.0F; i += kLidarStep) {
-    for (float j = -7.0F; j < 52.0F; j += 2.0F) {
+  for (float i = 0.0F; i < 360.0F; i += kLidarStepH) {
+    for (float j = -7.0F; j < 52.0F; j += kLidarStepV) {
       float rad_yaw = glm::radians(i);
       float rad_pitch = glm::radians(j);
 

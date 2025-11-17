@@ -23,7 +23,8 @@ class LidarSim {
   void CalcPointCloud();
 
  private:
-  static constexpr float kLidarStep = 2.0F;
+  static constexpr float kLidarStepH = 2.0F;
+  static constexpr float kLidarStepV = 1.0F;
 
   std::vector<glm::vec4> mesh_static_vertices_;
   std::vector<glm::vec4> mesh_dynamic_vertices_;
@@ -54,8 +55,9 @@ class LidarSim {
 
   std::random_device rd_;
   std::mt19937 gen_{rd_()};
-  std::uniform_real_distribution<double> random_hfov_{0, 360};
-  std::uniform_real_distribution<double> random_vfov_{-1, 1};
+  std::uniform_real_distribution<double> random_hfov_{0, kLidarStepH};
+  std::uniform_real_distribution<double> random_vfov_{-kLidarStepV,
+                                                      kLidarStepV};
 
   float* output_buffer_ = nullptr;
 

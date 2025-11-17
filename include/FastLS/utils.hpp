@@ -29,20 +29,28 @@ struct Color {
 // NOLINTBEGIN
 inline constexpr Color white{1.0F, 1.0F, 1.0F};
 inline constexpr Color black{0.0F, 0.0F, 0.0F};
+
+inline constexpr Color gray{0.5F, 0.5F, 0.5F};
+inline constexpr Color light_gray{0.75F, 0.75F, 0.75F};
+inline constexpr Color off_white{0.9F, 0.9F, 0.9F};
+inline constexpr Color dark_gray{0.25F, 0.25F, 0.25F};
+
 inline constexpr Color red{1.0F, 0.0F, 0.0F};
 inline constexpr Color green{0.0F, 1.0F, 0.0F};
 inline constexpr Color blue{0.0F, 0.0F, 1.0F};
 inline constexpr Color yellow{1.0F, 1.0F, 0.0F};
 inline constexpr Color cyan{0.0F, 1.0F, 1.0F};
 inline constexpr Color magenta{1.0F, 0.0F, 1.0F};
-inline constexpr Color gray{0.5F, 0.5F, 0.5F};
-inline constexpr Color light_gray{0.75F, 0.75F, 0.75F};
-inline constexpr Color off_white{0.9F, 0.9F, 0.9F};
-inline constexpr Color dark_gray{0.25F, 0.25F, 0.25F};
 
-inline std::vector<Color> color_palette{red,  green,      blue,     yellow,
-                                        cyan, magenta,    white,    black,
-                                        gray, light_gray, dark_gray};
+inline constexpr Color orange{0.95F, 0.45F, 0.10F};
+inline constexpr Color teal{0.10F, 0.65F, 0.65F};
+inline constexpr Color olive{0.65F, 0.70F, 0.20F};
+inline constexpr Color violet{0.65F, 0.40F, 0.90F};
+inline constexpr Color rose{0.95F, 0.35F, 0.45F};
+inline constexpr Color sand{0.90F, 0.80F, 0.55F};
+
+inline std::vector<Color> color_palette{
+    red, green, blue, yellow, cyan, magenta, orange, teal, olive, rose, sand};
 
 // Uniforms
 inline bgfx::UniformHandle u_color;
