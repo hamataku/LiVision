@@ -12,7 +12,7 @@ class Lidar : public Container {
   void InitImpl() final {
     body_.SetSize(glm::dvec3(0.2, 0.2, 0.2))
         .SetPos(glm::dvec3(0.0, 0.0, 0))
-        .SetColor(utils::black)
+        .SetColor(utils::blue)
         .SetLidarVisible(false);
     AddObject(&body_);
 
