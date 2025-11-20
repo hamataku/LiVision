@@ -12,7 +12,7 @@ namespace fastls {
 class SimScene : public SceneBase {
  public:
   void Init() override {
-    drone_.AddObject(&point_cloud_);
+    drone_.lidar_.AddObject(&point_cloud_);
     AddObject(&drone_);
 
     plane_.SetSize(glm::vec2(40.0F, 40.0F)).SetColor(utils::white);
