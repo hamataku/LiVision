@@ -210,9 +210,10 @@ void FastLS::MainLoop() {
     // Camera control
     scene_->Draw(program_);
 
-    bx::mtxProj(
-        proj_, 60.0F, static_cast<float>(width_) / static_cast<float>(height_),
-        0.1F, 100.0F, bgfx::getCaps()->homogeneousDepth, bx::Handedness::Right);
+    bx::mtxProj(proj_, 60.0F,
+                static_cast<float>(width_) / static_cast<float>(height_), 0.1F,
+                1000.0F, bgfx::getCaps()->homogeneousDepth,
+                bx::Handedness::Right);
 
     bool is_external_camera_control = scene_->CameraControl(view_);
     if (!is_external_camera_control) {
