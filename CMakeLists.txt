@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.21)
 project(fastls LANGUAGES CXX)
 
 # Options
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
 option(FASTLS_BUILD_SHARED "Build as shared library" OFF)
 option(FASTLS_BUILD_EXAMPLE "Build example if enabled" ON)
