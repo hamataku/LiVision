@@ -16,12 +16,19 @@ class Lidar : public Container {
         .SetLidarVisible(false);
     AddObject(&body_);
 
-    lidar_sim.RegisterLidar(&lidar_sensor_);
+    if (lidar_enable_) {
+      lidar_sim.RegisterLidar(&lidar_sensor_);
+    }
     AddObject(&lidar_sensor_);
   }
 
   Lidar& SetLidarRange(float range) {
     lidar_sensor_.SetLidarRange(range);
+    return *this;
+  }
+
+  Lidar& SetLidarEnable(bool enable) {
+    lidar_enable_ = enable;
     return *this;
   }
 
@@ -32,5 +39,6 @@ class Lidar : public Container {
  private:
   Cylinder body_;
   LidarSensor lidar_sensor_;
+  bool lidar_enable_ = true;
 };
 }  // namespace fastls
