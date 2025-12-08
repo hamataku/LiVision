@@ -30,7 +30,7 @@ class LidarSim {
   std::vector<glm::vec4> mesh_dynamic_vertices_;
   size_t total_vertices_size_ = 0;
 
-  bgfx::ProgramHandle compute_program_;
+  bgfx::ProgramHandle compute_program_{};
   bgfx::DynamicVertexBufferHandle mesh_buffer_;
   bgfx::DynamicVertexBufferHandle ray_dir_buffer_;
   bgfx::DynamicVertexBufferHandle position_buffer_;
@@ -49,7 +49,7 @@ class LidarSim {
   std::vector<glm::mat4> mtx_randoms_;
   std::vector<float> lidar_ranges_;
 
-  int num_rays_;
+  size_t num_rays_;
 
   bgfx::UniformHandle u_params_;
 

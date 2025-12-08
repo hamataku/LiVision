@@ -7,7 +7,7 @@ namespace fastls {
 class DroneLidarUp : public Container {
  public:
   void InitImpl() final {
-    lidar_.SetPos(glm::dvec3(0, 0, 0.25)).SetRadRotation(lidar_angle_offset_);
+    lidar_.SetPos(glm::dvec3(0, 0, 0.4)).SetRadRotation(lidar_angle_offset_);
     AddObject(&lidar_);
 
     AddObject(&body_);
