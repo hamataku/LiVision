@@ -1,7 +1,7 @@
 #pragma once
 
 #include "FastLS/object/DroneBody.hpp"
-#include "FastLS/object/Lidar.hpp"
+#include "FastLS/object/Mid360.hpp"
 
 namespace fastls {
 class DroneLidarDown : public Container {
@@ -13,7 +13,7 @@ class DroneLidarDown : public Container {
     AddObject(&body_);
   }
 
-  Lidar lidar_;
+  Mid360 lidar_;
   glm::dvec3 lidar_angle_offset_{0, M_PI, 0};
 
  private:

@@ -40,7 +40,11 @@ class ObjectBase {
     local_mtx_changed_ = true;
     return *this;
   }
-  glm::dvec3 GetPos() const { return pos_; }
+  glm::dvec3 GetLocalPos() const { return pos_; }
+  glm::dvec3 GetGlobalPos() {
+    UpdateMatrix();
+    return glm::dvec3(global_mtx_[3][0], global_mtx_[3][1], global_mtx_[3][2]);
+  }
 
   ObjectBase& SetSize(const glm::dvec2& size) {
     size_ = glm::vec3(size, 1.0F);

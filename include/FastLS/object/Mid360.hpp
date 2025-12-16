@@ -2,13 +2,14 @@
 
 #include "FastLS/object/Container.hpp"
 #include "FastLS/object/Cylinder.hpp"
+#include "FastLS/object/ObjectBase.hpp"
 #include "FastLS/sensor/LidarSensor.hpp"
 #include "FastLS/sim/LidarSim.hpp"
 #include "FastLS/utils.hpp"
 
 namespace fastls {
 
-class Lidar : public Container {
+class Mid360 : public Container {
  public:
   void InitImpl() final {
     body_.SetSize(glm::dvec3(0.06, 0.06, 0.03))
@@ -27,14 +28,17 @@ class Lidar : public Container {
       lidar_sim.RegisterLidar(&lidar_sensor_);
     }
     AddObject(&lidar_sensor_);
+
+    imu_place_.SetPos(glm::dvec3(0.011, 0.02329, -0.04412));
+    AddObject(&imu_place_);
   }
 
-  Lidar& SetLidarRange(float range) {
+  Mid360& SetLidarRange(float range) {
     lidar_sensor_.SetLidarRange(range);
     return *this;
   }
 
-  Lidar& SetLidarEnable(bool enable) {
+  Mid360& SetLidarEnable(bool enable) {
     lidar_enable_ = enable;
     return *this;
   }
@@ -42,6 +46,8 @@ class Lidar : public Container {
   std::vector<glm::vec3>& GetPointClouds() {
     return lidar_sensor_.GetPointClouds();
   }
+
+  ObjectBase imu_place_;
 
  private:
   Cylinder body_;
