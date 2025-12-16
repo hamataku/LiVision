@@ -23,7 +23,7 @@ class LidarSim {
   void CalcPointCloud();
 
  private:
-  static constexpr float kLidarStepH = 2.5F;
+  static constexpr float kLidarStepH = 1.5F;
   static constexpr float kLidarStepV = 1.5F;
 
   std::vector<glm::vec4> mesh_static_vertices_;
