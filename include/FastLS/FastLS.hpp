@@ -12,6 +12,7 @@ struct FastLSConfig {
   bool vsync = true;      // Enable VSync
   int width = 1280;       // Window width
   int height = 720;       // Window height
+  bool fps = false;       // Display FPS
 };
 
 class FastLS {
@@ -20,7 +21,8 @@ class FastLS {
       : headless_(config.headless),
         vsync_(config.vsync),
         width_(config.width),
-        height_(config.height) {
+        height_(config.height),
+        fps_(config.fps) {
     if (headless_) {
       width_ = 1;
       height_ = 1;
@@ -66,6 +68,7 @@ class FastLS {
 
   int width_;
   int height_;
+  bool fps_;
 
   SceneBase* scene_ = nullptr;
   bool scene_set_ = false;

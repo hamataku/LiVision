@@ -294,7 +294,7 @@ void FastLS::MainLoop() {
 void FastLS::PrintFPS() {
   float elapsed_seconds = (SDL_GetTicks() - last_fps_time_) / 1000.0F;
 
-  if (elapsed_seconds > 0) {
+  if (fps_ && elapsed_seconds > 0) {
     current_fps_ = frame_count_ / elapsed_seconds;
     std::cout << "FPS: " << current_fps_ << std::endl;
   }
