@@ -3,6 +3,7 @@
 #include <random>
 
 #include "FastLS/object/ObjectBase.hpp"
+#include "common/utils.hpp"
 
 namespace fastls {
 
@@ -15,8 +16,9 @@ class IMUObserver {
    * @param gyr_psd ジャイロノイズ密度 [rad/s/√Hz]
    */
   explicit IMUObserver(ObjectBase* object, double dt, double acc_noise_density,
-                       double gyr_noise_density)
-      : object_(object), dt_(dt) {
+                       double gyr_noise_density,
+                       glm::dvec3 acc_bias = glm::dvec3(0.0))
+      : object_(object), dt_(dt), acc_bias_(acc_bias) {
     acc_dist_ =
         std::normal_distribution<>(0.0, acc_noise_density * std::sqrt(dt_));
     gyr_dist_ =
@@ -50,7 +52,8 @@ class IMUObserver {
     // Transform to local frame
     acc_l_ = glm::inverse(cur_quat_g) * acc_g;
     acc_l_ +=
-        glm::dvec3(acc_dist_(engine_), acc_dist_(engine_), acc_dist_(engine_));
+        glm::dvec3(acc_dist_(engine_), acc_dist_(engine_), acc_dist_(engine_)) +
+        acc_bias_;
     // glm::dvec3 acc_l_new = glm::inverse(cur_quat_g) * acc_g;
     // glm::dvec3 acc_l_diff = acc_l_new - acc_l_;
 
@@ -112,5 +115,6 @@ class IMUObserver {
   std::mt19937 engine_{std::random_device{}()};
   std::normal_distribution<> acc_dist_;
   std::normal_distribution<> gyr_dist_;
+  glm::dvec3 acc_bias_ = glm::dvec3(0.0);
 };
 }  // namespace fastls
