@@ -49,9 +49,9 @@ class FastLS {
   float view_[16];
   float proj_[16];
 
-  bx::Vec3 target_ = {0.0F, 0.0F, 30.0F};  // カメラの注視点
-  float cam_yaw_ = -M_PI_2;                // ヨー角
-  float cam_pitch_ = M_PI_2 - 0.02F;       // ピッチ角
+  bx::Vec3 target_ = {0.0F, 0.0F, 5.0F};  // カメラの注視点
+  float cam_yaw_ = -M_PI_2;               // ヨー角
+  float cam_pitch_ = M_PI_2 - 0.02F;      // ピッチ角
 
   // Mouse operation parameters
   static constexpr float kRotScale = 0.002F;
