@@ -2,6 +2,7 @@
 
 #include <bgfx/bgfx.h>
 
+#include <cstdint>
 #include <random>
 
 #include "FastLS/object/ObjectBase.hpp"
@@ -23,8 +24,21 @@ class LidarSim {
   void CalcPointCloud();
 
  private:
+  struct BvhNode {
+    glm::vec3 bmin;
+    glm::vec3 bmax;
+    uint32_t left = 0;
+    uint32_t right = 0;
+    uint32_t first = 0;
+    uint32_t count = 0;
+    bool leaf = false;
+  };
+
+  void BuildBvh();
+
   static constexpr float kLidarStepH = 1.5F;
   static constexpr float kLidarStepV = 1.5F;
+  static constexpr uint32_t kBvhLeafSize = 8;
 
   std::vector<glm::vec4> mesh_static_vertices_;
   std::vector<glm::vec4> mesh_dynamic_vertices_;
@@ -37,6 +51,8 @@ class LidarSim {
   bgfx::DynamicVertexBufferHandle mtx_inv_buffer_;
   bgfx::DynamicVertexBufferHandle mtx_random_buffer_;
   bgfx::DynamicVertexBufferHandle lidar_range_buffer_;
+  bgfx::DynamicVertexBufferHandle bvh_node_buffer_;
+  bgfx::DynamicVertexBufferHandle bvh_tri_index_buffer_;
 
   // static constexpr int kBufferCount = 2;
   // int frame_index_ = 0;  // バッファ切り替え用
@@ -52,6 +68,7 @@ class LidarSim {
   size_t num_rays_;
 
   bgfx::UniformHandle u_params_;
+  bgfx::UniformHandle u_bvh_params_;
 
   std::random_device rd_;
   std::mt19937 gen_{rd_()};
@@ -60,6 +77,14 @@ class LidarSim {
                                                       kLidarStepV};
 
   float* output_buffer_ = nullptr;
+
+  std::vector<BvhNode> bvh_nodes_;
+  std::vector<uint32_t> bvh_tri_indices_;
+  std::vector<glm::vec4> bvh_node_data_;
+  std::vector<float> bvh_tri_index_data_;
+  size_t bvh_node_capacity_ = 0;
+  size_t bvh_tri_capacity_ = 0;
+  bool bvh_initialized_ = false;
 
   std::vector<LidarSensor*> lidar_sensors_;
 };

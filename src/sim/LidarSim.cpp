@@ -2,6 +2,11 @@
 
 #include <bgfx/bgfx.h>
 
+#include <algorithm>
+#include <functional>
+#include <limits>
+#include <numeric>
+
 #include "FastLS/file_ops.hpp"
 #include "FastLS/object/ObjectBase.hpp"
 
@@ -33,6 +38,148 @@ void LidarSim::UpdateDynamicMeshList(ObjectBase* object) {
     glm::vec4 result = mtx * glm::vec4(v, 1.0F);
     mesh_dynamic_vertices_.push_back(result);
   }
+}
+
+void LidarSim::BuildBvh() {
+  const size_t current_vertex_count =
+      mesh_static_vertices_.size() + mesh_dynamic_vertices_.size();
+  const size_t num_triangles = current_vertex_count / 3;
+
+  bvh_nodes_.clear();
+  bvh_tri_indices_.clear();
+  bvh_node_data_.clear();
+  bvh_tri_index_data_.clear();
+
+  if (num_triangles == 0) {
+    return;
+  }
+
+  bvh_tri_indices_.resize(num_triangles);
+  std::iota(bvh_tri_indices_.begin(), bvh_tri_indices_.end(), 0U);
+
+  auto get_vertex = [this](size_t index) -> glm::vec3 {
+    if (index < mesh_static_vertices_.size()) {
+      return glm::vec3(mesh_static_vertices_[index]);
+    }
+    const size_t dyn_index = index - mesh_static_vertices_.size();
+    return glm::vec3(mesh_dynamic_vertices_[dyn_index]);
+  };
+
+  auto tri_centroid = [&](uint32_t tri_idx) -> glm::vec3 {
+    const size_t base = static_cast<size_t>(tri_idx) * 3U;
+    const glm::vec3 v0 = get_vertex(base);
+    const glm::vec3 v1 = get_vertex(base + 1U);
+    const glm::vec3 v2 = get_vertex(base + 2U);
+    return (v0 + v1 + v2) * (1.0F / 3.0F);
+  };
+
+  auto tri_bounds = [&](uint32_t tri_idx, glm::vec3& out_min,
+                        glm::vec3& out_max) {
+    const size_t base = static_cast<size_t>(tri_idx) * 3U;
+    const glm::vec3 v0 = get_vertex(base);
+    const glm::vec3 v1 = get_vertex(base + 1U);
+    const glm::vec3 v2 = get_vertex(base + 2U);
+    out_min = glm::min(v0, glm::min(v1, v2));
+    out_max = glm::max(v0, glm::max(v1, v2));
+  };
+
+  std::function<uint32_t(uint32_t, uint32_t)> build_node =
+      [&](uint32_t start, uint32_t end) -> uint32_t {
+    const uint32_t node_index = static_cast<uint32_t>(bvh_nodes_.size());
+    bvh_nodes_.push_back({});
+
+    glm::vec3 bmin(std::numeric_limits<float>::max());
+    glm::vec3 bmax(std::numeric_limits<float>::lowest());
+    glm::vec3 cmin(std::numeric_limits<float>::max());
+    glm::vec3 cmax(std::numeric_limits<float>::lowest());
+
+    for (uint32_t i = start; i < end; ++i) {
+      glm::vec3 tri_min, tri_max;
+      tri_bounds(bvh_tri_indices_[i], tri_min, tri_max);
+      bmin = glm::min(bmin, tri_min);
+      bmax = glm::max(bmax, tri_max);
+      const glm::vec3 centroid = tri_centroid(bvh_tri_indices_[i]);
+      cmin = glm::min(cmin, centroid);
+      cmax = glm::max(cmax, centroid);
+    }
+
+    BvhNode& node = bvh_nodes_[node_index];
+    node.bmin = bmin;
+    node.bmax = bmax;
+
+    const uint32_t count = end - start;
+    if (count <= kBvhLeafSize) {
+      node.leaf = true;
+      node.first = start;
+      node.count = count;
+      node.left = 0;
+      node.right = 0;
+      return node_index;
+    }
+
+    const glm::vec3 extent = cmax - cmin;
+    uint32_t axis = 0;
+    if (extent.y > extent.x && extent.y >= extent.z) {
+      axis = 1;
+    } else if (extent.z > extent.x && extent.z >= extent.y) {
+      axis = 2;
+    }
+
+    const uint32_t mid = (start + end) / 2U;
+    std::nth_element(
+        bvh_tri_indices_.begin() + start,
+        bvh_tri_indices_.begin() + mid,
+        bvh_tri_indices_.begin() + end,
+        [&](uint32_t a, uint32_t b) {
+          return tri_centroid(a)[axis] < tri_centroid(b)[axis];
+        });
+
+    node.left = build_node(start, mid);
+    node.right = build_node(mid, end);
+    node.leaf = false;
+    node.first = 0;
+    node.count = 0;
+    return node_index;
+  };
+
+  build_node(0U, static_cast<uint32_t>(num_triangles));
+
+  if (bvh_node_capacity_ == 0 || bvh_tri_capacity_ == 0) {
+    return;
+  }
+  if (bvh_nodes_.size() > bvh_node_capacity_ ||
+      bvh_tri_indices_.size() > bvh_tri_capacity_) {
+    return;
+  }
+
+  bvh_node_data_.resize(bvh_nodes_.size() * 3U);
+  for (size_t i = 0; i < bvh_nodes_.size(); ++i) {
+    const BvhNode& node = bvh_nodes_[i];
+    const size_t base = i * 3U;
+    bvh_node_data_[base] =
+        glm::vec4(node.bmin, static_cast<float>(node.left));
+    bvh_node_data_[base + 1U] =
+        glm::vec4(node.bmax, static_cast<float>(node.right));
+    bvh_node_data_[base + 2U] =
+        glm::vec4(static_cast<float>(node.first),
+                  static_cast<float>(node.count), node.leaf ? 1.0F : 0.0F,
+                  0.0F);
+  }
+
+  bvh_tri_index_data_.resize(bvh_tri_indices_.size());
+  for (size_t i = 0; i < bvh_tri_indices_.size(); ++i) {
+    bvh_tri_index_data_[i] = static_cast<float>(bvh_tri_indices_[i]);
+  }
+
+  const bgfx::Memory* node_mem =
+      bgfx::makeRef(bvh_node_data_.data(),
+                    bvh_node_data_.size() * sizeof(glm::vec4));
+  bgfx::update(bvh_node_buffer_, 0, node_mem);
+
+  const bgfx::Memory* tri_mem =
+      bgfx::makeRef(bvh_tri_index_data_.data(),
+                    bvh_tri_index_data_.size() * sizeof(float));
+  bgfx::update(bvh_tri_index_buffer_, 0, tri_mem);
 }
 
 void LidarSim::Init() {
@@ -98,6 +245,18 @@ void LidarSim::Init() {
   lidar_range_buffer_ = bgfx::createDynamicVertexBuffer(
       lidar_sensors_.size(), utils::float_vlayout, BGFX_BUFFER_COMPUTE_READ);
 
+    const auto tri_capacity = static_cast<size_t>(total_vertices_size_ / 3U);
+    bvh_tri_capacity_ = std::max<size_t>(1U, tri_capacity);
+    bvh_node_capacity_ = std::max<size_t>(1U, tri_capacity * 2U);
+
+    bvh_node_buffer_ = bgfx::createDynamicVertexBuffer(
+      static_cast<uint32_t>(bvh_node_capacity_ * 3U), utils::vec4_vlayout,
+      BGFX_BUFFER_COMPUTE_READ);
+
+    bvh_tri_index_buffer_ = bgfx::createDynamicVertexBuffer(
+      static_cast<uint32_t>(bvh_tri_capacity_), utils::float_vlayout,
+      BGFX_BUFFER_COMPUTE_READ);
+
   // 結果バッファの初期化
   // for (auto& i : compute_texture_) {
   //   i = bgfx::createTexture2D(num_rays_, lidar_sensors_.size(), false, 1,
@@ -115,6 +274,7 @@ void LidarSim::Init() {
 
   // ユニフォームの初期化
   u_params_ = bgfx::createUniform("u_params", bgfx::UniformType::Vec4);
+  u_bvh_params_ = bgfx::createUniform("u_bvh_params", bgfx::UniformType::Vec4);
 
   // 静的メッシュデータのアップロード
   if (!mesh_static_vertices_.empty()) {
@@ -128,6 +288,9 @@ void LidarSim::Init() {
   const bgfx::Memory* ray_dir_mem =
       bgfx::makeRef(ray_dirs_.data(), ray_dirs_.size() * sizeof(glm::vec4));
   bgfx::update(ray_dir_buffer_, 0, ray_dir_mem);
+
+  BuildBvh();
+  bvh_initialized_ = true;
 
   mesh_dynamic_vertices_.clear();
 }
@@ -161,6 +324,14 @@ void LidarSim::Destroy() {
     bgfx::destroy(lidar_range_buffer_);
     lidar_range_buffer_ = BGFX_INVALID_HANDLE;
   }
+  if (bgfx::isValid(bvh_node_buffer_)) {
+    bgfx::destroy(bvh_node_buffer_);
+    bvh_node_buffer_ = BGFX_INVALID_HANDLE;
+  }
+  if (bgfx::isValid(bvh_tri_index_buffer_)) {
+    bgfx::destroy(bvh_tri_index_buffer_);
+    bvh_tri_index_buffer_ = BGFX_INVALID_HANDLE;
+  }
 
   // for (auto& i : compute_texture_) {
   //   if (bgfx::isValid(i)) {
@@ -181,6 +352,10 @@ void LidarSim::Destroy() {
   if (bgfx::isValid(u_params_)) {
     bgfx::destroy(u_params_);
     u_params_ = BGFX_INVALID_HANDLE;
+  }
+  if (bgfx::isValid(u_bvh_params_)) {
+    bgfx::destroy(u_bvh_params_);
+    u_bvh_params_ = BGFX_INVALID_HANDLE;
   }
 }
 
@@ -248,6 +423,11 @@ void LidarSim::CalcPointCloud() {
     bgfx::update(mesh_buffer_, start_vertex, dynamic_vertex_mem);
   }
 
+  if (!mesh_dynamic_vertices_.empty() || !bvh_initialized_) {
+    BuildBvh();
+    bvh_initialized_ = true;
+  }
+
   // コンピュートシェーダーのセットアップと実行
   bgfx::setBuffer(0, mesh_buffer_, bgfx::Access::Read);
   bgfx::setBuffer(1, ray_dir_buffer_, bgfx::Access::Read);
@@ -255,12 +435,22 @@ void LidarSim::CalcPointCloud() {
   bgfx::setBuffer(3, mtx_inv_buffer_, bgfx::Access::Read);
   bgfx::setBuffer(4, mtx_random_buffer_, bgfx::Access::Read);
   bgfx::setBuffer(5, lidar_range_buffer_, bgfx::Access::Read);
+  bgfx::setBuffer(7, bvh_node_buffer_, bgfx::Access::Read);
+  bgfx::setBuffer(8, bvh_tri_index_buffer_, bgfx::Access::Read);
   bgfx::setImage(6, compute_texture_, 0, bgfx::Access::Write,
                  bgfx::TextureFormat::RGBA32F);
 
-  float params[4] = {total_vertices_size_ / 3.0F, static_cast<float>(num_rays_),
+  const size_t current_vertex_count =
+      mesh_static_vertices_.size() + mesh_dynamic_vertices_.size();
+  const float current_triangles = static_cast<float>(current_vertex_count / 3U);
+  float params[4] = {current_triangles, static_cast<float>(num_rays_),
                      static_cast<float>(lidar_sensors_.size()), 0.0F};
   bgfx::setUniform(u_params_, params);
+
+  float bvh_params[4] = {static_cast<float>(bvh_nodes_.size()),
+                         static_cast<float>(bvh_tri_indices_.size()), 0.0F,
+                         0.0F};
+  bgfx::setUniform(u_bvh_params_, bvh_params);
 
   constexpr uint32_t kThreadsX = 64;
   constexpr uint32_t kThreadsY = 16;
