@@ -3,8 +3,8 @@
 #include <glm/gtx/quaternion.hpp>
 #include <vector>
 
-#include "FastLS/object/Box.hpp"
 #include "FastLS/object/ObjectBase.hpp"
+#include "FastLS/object/obstacle/Box.hpp"
 
 namespace fastls {
 

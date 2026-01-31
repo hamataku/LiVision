@@ -1,7 +1,7 @@
 #pragma once
 
-#include "FastLS/object/DroneBody.hpp"
-#include "FastLS/object/Mid360.hpp"
+#include "FastLS/object/obstacle/DroneBody.hpp"
+#include "FastLS/object/sensor/Mid360.hpp"
 
 namespace fastls {
 class DroneLidarUp : public Container {

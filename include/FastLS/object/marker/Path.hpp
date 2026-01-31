@@ -1,8 +1,8 @@
 #pragma once
 
-#include "FastLS/object/Cylinder.hpp"
 #include "FastLS/object/ObjectBase.hpp"
-#include "FastLS/object/Sphere.hpp"
+#include "FastLS/object/obstacle/Cylinder.hpp"
+#include "FastLS/object/obstacle/Sphere.hpp"
 
 namespace fastls {
 

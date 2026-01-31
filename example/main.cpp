@@ -6,7 +6,8 @@ int main() {
       .headless = false,  // Set to true for headless mode
       .vsync = false,     // Set to true to enable VSync
       .width = 1280,      // Set the window width
-      .height = 720       // Set the window height
+      .height = 720,      // Set the window height
+      .fps = true,        // Target frames per second
   }};
 
   fastls::SimScene sim_scene;

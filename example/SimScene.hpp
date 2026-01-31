@@ -2,10 +2,10 @@
 
 #include "FastLS/SceneBase.hpp"
 // Object
-#include "FastLS/object/Drone.hpp"
-#include "FastLS/object/Mesh.hpp"
-#include "FastLS/object/Plane.hpp"
-#include "FastLS/object/PointCloud.hpp"
+#include "FastLS/object/marker/PointCloud.hpp"
+#include "FastLS/object/obstacle/DroneLidarUp.hpp"
+#include "FastLS/object/obstacle/Mesh.hpp"
+#include "FastLS/object/obstacle/Plane.hpp"
 
 namespace fastls {
 
@@ -38,7 +38,7 @@ class SimScene : public SceneBase {
   }
 
  private:
-  fastls::Drone drone_;
+  fastls::DroneLidarUp drone_;
 
   double container_theta_ = 0.0;
 
