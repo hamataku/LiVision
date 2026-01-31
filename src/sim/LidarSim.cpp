@@ -127,10 +127,8 @@ void LidarSim::BuildBvh() {
 
     const uint32_t mid = (start + end) / 2U;
     std::nth_element(
-        bvh_tri_indices_.begin() + start,
-        bvh_tri_indices_.begin() + mid,
-        bvh_tri_indices_.begin() + end,
-        [&](uint32_t a, uint32_t b) {
+        bvh_tri_indices_.begin() + start, bvh_tri_indices_.begin() + mid,
+        bvh_tri_indices_.begin() + end, [&](uint32_t a, uint32_t b) {
           return tri_centroid(a)[axis] < tri_centroid(b)[axis];
         });
 
@@ -156,14 +154,12 @@ void LidarSim::BuildBvh() {
   for (size_t i = 0; i < bvh_nodes_.size(); ++i) {
     const BvhNode& node = bvh_nodes_[i];
     const size_t base = i * 3U;
-    bvh_node_data_[base] =
-        glm::vec4(node.bmin, static_cast<float>(node.left));
+    bvh_node_data_[base] = glm::vec4(node.bmin, static_cast<float>(node.left));
     bvh_node_data_[base + 1U] =
         glm::vec4(node.bmax, static_cast<float>(node.right));
-    bvh_node_data_[base + 2U] =
-        glm::vec4(static_cast<float>(node.first),
-                  static_cast<float>(node.count), node.leaf ? 1.0F : 0.0F,
-                  0.0F);
+    bvh_node_data_[base + 2U] = glm::vec4(static_cast<float>(node.first),
+                                          static_cast<float>(node.count),
+                                          node.leaf ? 1.0F : 0.0F, 0.0F);
   }
 
   bvh_tri_index_data_.resize(bvh_tri_indices_.size());
@@ -171,14 +167,12 @@ void LidarSim::BuildBvh() {
     bvh_tri_index_data_[i] = static_cast<float>(bvh_tri_indices_[i]);
   }
 
-  const bgfx::Memory* node_mem =
-      bgfx::makeRef(bvh_node_data_.data(),
-                    bvh_node_data_.size() * sizeof(glm::vec4));
+  const bgfx::Memory* node_mem = bgfx::makeRef(
+      bvh_node_data_.data(), bvh_node_data_.size() * sizeof(glm::vec4));
   bgfx::update(bvh_node_buffer_, 0, node_mem);
 
-  const bgfx::Memory* tri_mem =
-      bgfx::makeRef(bvh_tri_index_data_.data(),
-                    bvh_tri_index_data_.size() * sizeof(float));
+  const bgfx::Memory* tri_mem = bgfx::makeRef(
+      bvh_tri_index_data_.data(), bvh_tri_index_data_.size() * sizeof(float));
   bgfx::update(bvh_tri_index_buffer_, 0, tri_mem);
 }
 
@@ -245,15 +239,15 @@ void LidarSim::Init() {
   lidar_range_buffer_ = bgfx::createDynamicVertexBuffer(
       lidar_sensors_.size(), utils::float_vlayout, BGFX_BUFFER_COMPUTE_READ);
 
-    const auto tri_capacity = static_cast<size_t>(total_vertices_size_ / 3U);
-    bvh_tri_capacity_ = std::max<size_t>(1U, tri_capacity);
-    bvh_node_capacity_ = std::max<size_t>(1U, tri_capacity * 2U);
+  const auto tri_capacity = static_cast<size_t>(total_vertices_size_ / 3U);
+  bvh_tri_capacity_ = std::max<size_t>(1U, tri_capacity);
+  bvh_node_capacity_ = std::max<size_t>(1U, tri_capacity * 2U);
 
-    bvh_node_buffer_ = bgfx::createDynamicVertexBuffer(
+  bvh_node_buffer_ = bgfx::createDynamicVertexBuffer(
       static_cast<uint32_t>(bvh_node_capacity_ * 3U), utils::vec4_vlayout,
       BGFX_BUFFER_COMPUTE_READ);
 
-    bvh_tri_index_buffer_ = bgfx::createDynamicVertexBuffer(
+  bvh_tri_index_buffer_ = bgfx::createDynamicVertexBuffer(
       static_cast<uint32_t>(bvh_tri_capacity_), utils::float_vlayout,
       BGFX_BUFFER_COMPUTE_READ);
 
