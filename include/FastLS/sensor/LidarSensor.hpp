@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "FastLS/object/ObjectBase.hpp"
+#include "FastLS/ObjectBase.hpp"
 
 namespace fastls {
 

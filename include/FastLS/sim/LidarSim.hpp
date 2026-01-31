@@ -5,8 +5,8 @@
 #include <cstdint>
 #include <random>
 
-#include "FastLS/object/ObjectBase.hpp"
-#include "FastLS/object/sensor/LidarSensor.hpp"
+#include "FastLS/ObjectBase.hpp"
+#include "FastLS/sensor/LidarSensor.hpp"
 
 namespace fastls {
 

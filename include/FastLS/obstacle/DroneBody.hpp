@@ -2,9 +2,9 @@
 
 #include <array>
 
-#include "FastLS/object/Container.hpp"
-#include "FastLS/object/obstacle/Box.hpp"
-#include "FastLS/object/obstacle/Cylinder.hpp"
+#include "FastLS/Container.hpp"
+#include "FastLS/obstacle/Box.hpp"
+#include "FastLS/obstacle/Cylinder.hpp"
 #include "FastLS/utils.hpp"
 
 namespace fastls {

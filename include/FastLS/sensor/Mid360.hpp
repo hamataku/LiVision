@@ -1,9 +1,11 @@
 #pragma once
 
-#include "FastLS/object/Container.hpp"
-#include "FastLS/object/ObjectBase.hpp"
-#include "FastLS/object/obstacle/Cylinder.hpp"
-#include "FastLS/object/sensor/LidarSensor.hpp"
+#include <memory>
+
+#include "FastLS/Container.hpp"
+#include "FastLS/ObjectBase.hpp"
+#include "FastLS/obstacle/Cylinder.hpp"
+#include "FastLS/sensor/LidarSensor.hpp"
 #include "FastLS/sim/LidarSim.hpp"
 #include "FastLS/utils.hpp"
 
@@ -55,4 +57,5 @@ class Mid360 : public Container {
   LidarSensor lidar_sensor_;
   bool lidar_enable_ = true;
 };
+
 }  // namespace fastls

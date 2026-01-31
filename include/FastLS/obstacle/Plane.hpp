@@ -1,14 +1,13 @@
 #pragma once
 
-#include "FastLS/object/ObjectBase.hpp"
+#include "FastLS/ObjectBase.hpp"
 
 namespace fastls {
-
-class Box : public ObjectBase {
+class Plane : public ObjectBase {
  public:
   utils::MeshView GetMeshView() final {
-    return utils::MeshView{.vertices = utils::cube_vertices,
-                           .indices = utils::cube_indices};
+    return utils::MeshView{.vertices = utils::plane_vertices,
+                           .indices = utils::plane_indices};
   }
 
   void Draw(bgfx::ProgramHandle& program) final {
@@ -17,9 +16,10 @@ class Box : public ObjectBase {
     auto mtx = glm::mat4(global_mtx_);
     bgfx::setTransform(glm::value_ptr(mtx));
 
-    bgfx::setVertexBuffer(0, utils::cube_vbh);
-    bgfx::setIndexBuffer(utils::cube_ibh);
+    bgfx::setVertexBuffer(0, utils::plane_vbh);
+    bgfx::setIndexBuffer(utils::plane_ibh);
     bgfx::submit(0, program);
   }
 };
+
 }  // namespace fastls

@@ -1,5 +1,9 @@
 #include "FastLS/FastLS.hpp"
-#include "SimScene.hpp"
+#include "FastLS/marker/PointCloud.hpp"
+#include "FastLS/obstacle/DroneLidarUp.hpp"
+#include "FastLS/obstacle/Mesh.hpp"
+#include "FastLS/obstacle/Plane.hpp"
+#include "FastLS/utils.hpp"
 
 int main() {
   fastls::FastLS fast_ls{{
@@ -10,13 +14,33 @@ int main() {
       .fps = true,        // Target frames per second
   }};
 
-  fastls::SimScene sim_scene;
-  fast_ls.SetScene(&sim_scene);
+  double container_theta = 0.0;
 
-  fast_ls.Init();
+  fastls::PointCloud<> point_cloud;
+  fastls::DroneLidarUp drone;
+  drone.lidar_.AddObject(&point_cloud);
+  fast_ls.AddObject(&drone);
 
-  while (!(fast_ls.IsQuit())) {
-    fast_ls.MainLoop();
+  fastls::Plane plane;
+  plane.SetSize(glm::vec2(40.0F, 40.0F)).SetColor(fastls::utils::white);
+  fast_ls.AddObject(&plane);
+
+  fastls::Mesh mesh("data/bunny/bun_zipper_res4.stl");
+  mesh.SetSize(glm::dvec3(50.0, 50.0, 50.0))
+      .SetPos(glm::dvec3(0.0, 0.0, -2.0))
+      .SetDegRotation(glm::dvec3(90.0, 0.0, 0.0))
+      .SetColor(fastls::utils::light_gray);
+  fast_ls.AddObject(&mesh);
+
+  while (fast_ls.SpinOnce()) {
+    drone
+        .SetPos(glm::dvec3(std::cos(container_theta) * 6.0,
+                           std::sin(container_theta) * 6.0, 2.0))
+        .SetRadRotation(glm::dvec3(0.0, container_theta * 2, container_theta));
+
+    container_theta += 0.01F;
+
+    point_cloud.SetPoints(drone.lidar_.GetPointClouds());
   }
 
   return 0;

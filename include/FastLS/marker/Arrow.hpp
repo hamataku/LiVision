@@ -2,8 +2,8 @@
 
 #include <glm/gtx/quaternion.hpp>
 
-#include "FastLS/object/obstacle/Cone.hpp"
-#include "FastLS/object/obstacle/Cylinder.hpp"
+#include "FastLS/obstacle/Cone.hpp"
+#include "FastLS/obstacle/Cylinder.hpp"
 
 namespace fastls {
 

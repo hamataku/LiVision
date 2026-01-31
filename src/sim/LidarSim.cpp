@@ -7,8 +7,8 @@
 #include <limits>
 #include <numeric>
 
+#include "FastLS/ObjectBase.hpp"
 #include "FastLS/file_ops.hpp"
-#include "FastLS/object/ObjectBase.hpp"
 
 namespace fastls {
 void LidarSim::InitMeshList(ObjectBase* object) {

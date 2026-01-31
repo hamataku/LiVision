@@ -4,8 +4,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <vector>
 
-#include "FastLS/object/ObjectBase.hpp"
-#include "FastLS/object/obstacle/Box.hpp"
+#include "FastLS/ObjectBase.hpp"
+#include "FastLS/obstacle/Box.hpp"
 #include "FastLS/utils.hpp"
 
 namespace fastls {

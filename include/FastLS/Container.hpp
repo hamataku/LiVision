@@ -1,6 +1,8 @@
 #pragma once
 
-#include "FastLS/object/ObjectBase.hpp"
+#include <memory>
+
+#include "FastLS/ObjectBase.hpp"
 namespace fastls {
 
 class Container : public ObjectBase {

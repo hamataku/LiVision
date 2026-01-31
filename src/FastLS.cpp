@@ -8,8 +8,10 @@
 #include <bgfx/platform.h>
 #include <bx/math.h>
 
+#include <cstdlib>
 #include <iostream>
 
+#include "FastLS/Container.hpp"
 #include "FastLS/sim/LidarSim.hpp"
 #include "FastLS/utils.hpp"
 #include "bgfx-imgui/imgui_impl_bgfx.h"
@@ -18,13 +20,20 @@
 #include "implot/implot.h"
 
 namespace fastls {
-
-bool FastLS::Init() {
-  std::cout << "### FastLS Init start ###" << std::endl;
+FastLS::FastLS(const FastLSConfig& config)
+    : headless_(config.headless),
+      vsync_(config.vsync),
+      width_(config.width),
+      height_(config.height),
+      fps_(config.fps) {
+  if (headless_) {
+    width_ = 1;
+    height_ = 1;
+  }
 
   if (!SDL_Init(SDL_INIT_VIDEO)) {
     printf("SDL could not initialize. SDL_Error: %s\n", SDL_GetError());
-    return false;
+    std::exit(EXIT_FAILURE);
   }
 
   if (headless_) {
@@ -37,7 +46,7 @@ bool FastLS::Init() {
 
   if (window_ == nullptr) {
     printf("Window could not be created. SDL_Error: %s\n", SDL_GetError());
-    return false;
+    std::exit(EXIT_FAILURE);
   }
 
   bgfx::renderFrame();  // single threaded mode
@@ -95,7 +104,7 @@ bool FastLS::Init() {
                        BGFX_CAPS_TEXTURE_READ_BACK | BGFX_CAPS_COMPUTE)) == 0U);
   if (!supported) {
     std::cerr << "Not supported machine" << std::endl;
-    return false;
+    std::exit(EXIT_FAILURE);
   }
 
   const std::string shader_root = "shader/build/";
@@ -107,29 +116,9 @@ bool FastLS::Init() {
 
   PrintBackend();
   utils::Init();
-
-  if (scene_ == nullptr) {
-    std::cerr << "Scene is not set" << std::endl;
-    return false;
-  }
-
-  if (scene_set_) {
-    scene_->SetHeadless(headless_);
-    scene_->Init();
-    scene_set_ = false;
-  }
-  scene_->InitMeshList();
-  lidar_sim.Init();
-
-  // FPS計測開始時間の初期化
-  last_fps_time_ = SDL_GetTicks();
-
-  std::cout << "### FastLS Init end ###" << std::endl;
-
-  return true;
 }
 
-void FastLS::Exit() {
+FastLS::~FastLS() {
   // Cleanup
   utils::DeInit();
   bgfx::destroy(program_);
@@ -203,22 +192,28 @@ void FastLS::CameraControl() {
   bx::mtxLookAt(view_, eye, target_, up_vec);
 }
 
-void FastLS::MainLoop() {
-  scene_->UpdateMatrix();
+bool FastLS::SpinOnce() {
+  if (!initialized_) {
+    InitMeshList();
+    lidar_sim.Init();
+
+    // FPS計測開始時間の初期化
+    last_fps_time_ = SDL_GetTicks();
+    initialized_ = true;
+  }
+
+  UpdateMatrix();
 
   if (!headless_) {
     // Camera control
-    scene_->Draw(program_);
+    Draw(program_);
 
     bx::mtxProj(proj_, 60.0F,
                 static_cast<float>(width_) / static_cast<float>(height_), 0.1F,
                 1000.0F, bgfx::getCaps()->homogeneousDepth,
                 bx::Handedness::Right);
 
-    bool is_external_camera_control = scene_->CameraControl(view_);
-    if (!is_external_camera_control) {
-      CameraControl();
-    }
+    CameraControl();
     bgfx::setViewTransform(0, view_, proj_);
 
     // Event handling
@@ -231,12 +226,8 @@ void FastLS::MainLoop() {
       }
       if (event.type == SDL_EVENT_MOUSE_WHEEL) {
         scroll_delta_ = event.wheel.y;
-      } else if (event.type == SDL_EVENT_KEY_DOWN) {
-        if (event.key.key == SDLK_Q) {
-          quit_ = true;
-        }
       }
-      scene_->EventHandler(event);
+      // scene_->EventHandler(event);
     }
 
     // Render ImGui
@@ -248,9 +239,8 @@ void FastLS::MainLoop() {
     // ImGui::Begin("Control panel", nullptr,
     // ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::Begin("Control panel", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-    ImGui::Text("Q: Quit");
 
-    scene_->GuiCustomize();
+    // scene_->GuiCustomize();
 
     ImGui::End();
     ImGui::Render();
@@ -266,13 +256,8 @@ void FastLS::MainLoop() {
     }
   }
 
-  scene_->Update();
-  scene_->UpdateDynamicMeshList();
+  UpdateDynamicMeshList();
   lidar_sim.CalcPointCloud();
-
-  if (scene_->IsExitRequested()) {
-    quit_ = true;
-  }
 
   // フレームカウントを増やす
   frame_count_++;
@@ -285,9 +270,50 @@ void FastLS::MainLoop() {
     last_fps_time_ = current_time;
   }
 
-  // quit
-  if (quit_) {
-    Exit();
+  return !quit_;
+}
+
+void FastLS::AddObject(ObjectBase* object) {
+  object->Init();
+  auto* container = dynamic_cast<Container*>(object);
+  if (container) {
+    for (auto* obj : container->GetObjects()) {
+      obj->Init();
+      AddObject(obj);
+    }
+  } else {
+    objects_.push_back(object);
+  }
+}
+
+void FastLS::InitMeshList() {
+  for (auto* object : objects_) {
+    object->UpdateMatrix();
+  }
+  for (auto* object : objects_) {
+    if (object->IsLidarVisible()) {
+      lidar_sim.InitMeshList(object);
+    }
+  }
+}
+
+void FastLS::UpdateMatrix() {
+  for (auto* object : objects_) {
+    object->UpdateMatrix();
+  }
+}
+
+void FastLS::UpdateDynamicMeshList() {
+  for (auto* object : objects_) {
+    if (object->IsLidarVisible()) {
+      lidar_sim.UpdateDynamicMeshList(object);
+    }
+  }
+}
+
+void FastLS::Draw(bgfx::ProgramHandle& program) {
+  for (auto* object : objects_) {
+    if (object->IsVisible()) object->Draw(program);
   }
 }
 

@@ -2,7 +2,7 @@
 
 #include <random>
 
-#include "FastLS/object/ObjectBase.hpp"
+#include "FastLS/ObjectBase.hpp"
 #include "common/utils.hpp"
 
 namespace fastls {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "FastLS/MeshParser.hpp"
-#include "FastLS/object/ObjectBase.hpp"
+#include "FastLS/ObjectBase.hpp"
 
 namespace fastls {
 

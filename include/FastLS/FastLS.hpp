@@ -1,9 +1,11 @@
 #pragma once
+#include <SDL3/SDL_events.h>
 #include <bgfx/bgfx.h>
+#include <bx/math.h>
 
 #include <cmath>
 
-#include "SceneBase.hpp"
+#include "FastLS/ObjectBase.hpp"
 
 namespace fastls {
 
@@ -17,32 +19,23 @@ struct FastLSConfig {
 
 class FastLS {
  public:
-  explicit FastLS(const FastLSConfig& config)
-      : headless_(config.headless),
-        vsync_(config.vsync),
-        width_(config.width),
-        height_(config.height),
-        fps_(config.fps) {
-    if (headless_) {
-      width_ = 1;
-      height_ = 1;
-    }
-  }
+  explicit FastLS(const FastLSConfig& config);
+  ~FastLS();
 
-  bool Init();
-  void Exit();
-  void MainLoop();
-  void SetScene(SceneBase* scene) {
-    scene_ = scene;
-    scene_set_ = true;
-  }
-
-  bool IsQuit() const { return quit_; }
+  bool SpinOnce();
+  void AddObject(ObjectBase* object);
 
  private:
+  void InitMeshList();
+  void UpdateMatrix();
+  void UpdateDynamicMeshList();
+  void Draw(bgfx::ProgramHandle& program);
   void CameraControl();
+
   void PrintFPS();
   static void PrintBackend();
+
+  std::vector<ObjectBase*> objects_;
 
   SDL_Window* window_ = nullptr;
   bgfx::ProgramHandle program_ = BGFX_INVALID_HANDLE;
@@ -70,8 +63,7 @@ class FastLS {
   int height_;
   bool fps_;
 
-  SceneBase* scene_ = nullptr;
-  bool scene_set_ = false;
+  bool initialized_ = false;
 
   // FPS計算用の変数
   uint32_t frame_count_ = 0;

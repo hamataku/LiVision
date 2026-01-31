@@ -1,7 +1,7 @@
 #pragma once
 
-#include "FastLS/object/Container.hpp"
-#include "FastLS/object/marker/Arrow.hpp"
+#include "FastLS/Container.hpp"
+#include "FastLS/marker/Arrow.hpp"
 #include "FastLS/utils.hpp"
 
 namespace fastls {
