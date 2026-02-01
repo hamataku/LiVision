@@ -34,7 +34,7 @@ class Arrow : public ObjectBase {
       body_.SetPos(body_center)
           .SetQuatRotation(rotation)
           .SetSize(glm::dvec3(body_radius_ * 2.0, body_radius_ * 2.0, body_len))
-          .SetColor(color_);
+          .SetColorSpec(color_spec_);
       body_.UpdateMatrix();
       body_.ForceSetGlobalMatrix(global_mtx_ * body_.GetGlobalMatrix());
       body_.Draw(program);
@@ -46,7 +46,7 @@ class Arrow : public ObjectBase {
     head_.SetPos(head_center)
         .SetQuatRotation(rotation)
         .SetSize(glm::dvec3(head_radius_ * 2.0, head_radius_ * 2.0, head_len))
-        .SetColor(color_);
+        .SetColorSpec(color_spec_);
     head_.UpdateMatrix();
     head_.ForceSetGlobalMatrix(global_mtx_ * head_.GetGlobalMatrix());
     head_.Draw(program);

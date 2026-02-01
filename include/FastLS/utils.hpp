@@ -27,33 +27,56 @@ struct Color {
 
 // colors
 // NOLINTBEGIN
-inline constexpr Color white{1.0F, 1.0F, 1.0F};
-inline constexpr Color black{0.0F, 0.0F, 0.0F};
+// Color mode and rainbow params used by shaders
+enum class ColorMode { Fixed = 0, Rainbow = 1 };
 
-inline constexpr Color gray{0.5F, 0.5F, 0.5F};
-inline constexpr Color light_gray{0.75F, 0.75F, 0.75F};
-inline constexpr Color off_white{0.9F, 0.9F, 0.9F};
-inline constexpr Color dark_gray{0.25F, 0.25F, 0.25F};
+struct RainbowParams {
+  glm::vec3 direction{1.0F, 0.0F, 0.0F};
+  float delta = 1.0F;
+};
 
-inline constexpr Color red{1.0F, 0.0F, 0.0F};
-inline constexpr Color green{0.0F, 1.0F, 0.0F};
-inline constexpr Color blue{0.0F, 0.0F, 1.0F};
-inline constexpr Color yellow{1.0F, 1.0F, 0.0F};
-inline constexpr Color cyan{0.0F, 1.0F, 1.0F};
-inline constexpr Color magenta{1.0F, 0.0F, 1.0F};
+// Combined color specification for objects
+struct ColorSpec {
+  Color base{1.0F, 1.0F, 1.0F, 1.0F};
+  ColorMode mode = ColorMode::Fixed;
+  RainbowParams rainbow{};
 
-inline constexpr Color orange{0.95F, 0.45F, 0.10F};
-inline constexpr Color teal{0.10F, 0.65F, 0.65F};
-inline constexpr Color olive{0.65F, 0.70F, 0.20F};
-inline constexpr Color violet{0.65F, 0.40F, 0.90F};
-inline constexpr Color rose{0.95F, 0.35F, 0.45F};
-inline constexpr Color sand{0.90F, 0.80F, 0.55F};
+  ColorSpec(Color c) : base(c), mode(ColorMode::Fixed), rainbow() {};
+  ColorSpec(RainbowParams rp)
+      : base{1.0F, 0.0F, 0.0F, 1.0F}, mode(ColorMode::Rainbow), rainbow(rp) {};
+};
 
-inline std::vector<Color> color_palette{
+inline const ColorSpec white{Color(1.0F, 1.0F, 1.0F)};
+inline const ColorSpec black{Color(0.0F, 0.0F, 0.0F)};
+
+inline const ColorSpec gray{Color(0.5F, 0.5F, 0.5F)};
+inline const ColorSpec light_gray{Color(0.75F, 0.75F, 0.75F)};
+inline const ColorSpec off_white{Color(0.9F, 0.9F, 0.9F)};
+inline const ColorSpec dark_gray{Color(0.25F, 0.25F, 0.25F)};
+
+inline const ColorSpec red{Color(1.0F, 0.0F, 0.0F)};
+inline const ColorSpec green{Color(0.0F, 1.0F, 0.0F)};
+inline const ColorSpec blue{Color(0.0F, 0.0F, 1.0F)};
+inline const ColorSpec yellow{Color(1.0F, 1.0F, 0.0F)};
+inline const ColorSpec cyan{Color(0.0F, 1.0F, 1.0F)};
+inline const ColorSpec magenta{Color(1.0F, 0.0F, 1.0F)};
+
+inline const ColorSpec orange{Color(0.95F, 0.45F, 0.10F)};
+inline const ColorSpec teal{Color(0.10F, 0.65F, 0.65F)};
+inline const ColorSpec olive{Color(0.65F, 0.70F, 0.20F)};
+inline const ColorSpec violet{Color(0.65F, 0.40F, 0.90F)};
+inline const ColorSpec rose{Color(0.95F, 0.35F, 0.45F)};
+inline const ColorSpec sand{Color(0.90F, 0.80F, 0.55F)};
+
+inline const ColorSpec rainbow_z{RainbowParams{{0.0F, 0.0F, 1.0F}, 0.1F}};
+
+inline std::vector<ColorSpec> color_palette{
     red, green, blue, yellow, cyan, magenta, orange, teal, olive, rose, sand};
 
 // Uniforms
 inline bgfx::UniformHandle u_color;
+inline bgfx::UniformHandle u_color_mode;
+inline bgfx::UniformHandle u_rainbow_params;
 
 // State
 inline constexpr uint64_t kAlphaState =

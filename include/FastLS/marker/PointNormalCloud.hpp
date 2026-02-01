@@ -11,10 +11,8 @@ namespace fastls {
 template <class T = Box>
 class PointNormalCloud : public ObjectBase {
  public:
-  PointNormalCloud() { color_ = utils::blue; }
-
   void Draw(bgfx::ProgramHandle& program) final {
-    obj_.SetColor(color_);
+    obj_.SetColorSpec(color_spec_);
     for (size_t i = 0; i < points_.size(); ++i) {
       const auto& point = points_[i];
       // draw point
@@ -31,7 +29,7 @@ class PointNormalCloud : public ObjectBase {
         glm::dvec3 z = glm::dvec3(0.0, 0.0, 1.0);
         glm::dvec3 v = glm::normalize(glm::dvec3(normal));
         glm::dquat quat = glm::rotation(z, v);
-        normal_obj_.SetColor(utils::red)
+        normal_obj_.SetColorSpec(utils::red)
             .SetSize(glm::dvec3(0.01, 0.01, normal_length_))
             .SetPos(box_center)
             .SetQuatRotation(quat);

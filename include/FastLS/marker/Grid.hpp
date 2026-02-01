@@ -8,7 +8,7 @@ namespace fastls {
 class Grid : public ObjectBase {
  public:
   void Draw(bgfx::ProgramHandle& program) final {
-    cylinder_.SetColor(color_);
+    cylinder_.SetColorSpec(color_spec_);
 
     // Draw grid lines along X axis
     for (double x = pos_.x - (size_.x / 2); x <= pos_.x + (size_.x / 2);

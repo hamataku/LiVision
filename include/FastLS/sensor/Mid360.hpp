@@ -1,7 +1,5 @@
 #pragma once
 
-#include <memory>
-
 #include "FastLS/Container.hpp"
 #include "FastLS/ObjectBase.hpp"
 #include "FastLS/obstacle/Cylinder.hpp"
@@ -16,13 +14,8 @@ class Mid360 : public Container {
   void InitImpl() final {
     body_.SetSize(glm::dvec3(0.06, 0.06, 0.03))
         .SetPos(glm::dvec3(0.0, 0.0, 0.015))
-        .SetColor(utils::light_gray);
+        .SetColorSpec(utils::light_gray);
     AddObject(&body_);
-
-    // mark_.SetSize(glm::dvec3(0.03, 0.03, 0.03))
-    //     .SetPos(glm::dvec3(0.03, 0.0, 0.01))
-    //     .SetColor(utils::red);
-    // AddObject(&mark_);
 
     lidar_sensor_.SetPos(glm::dvec3(0, 0, 0.04));
 
@@ -53,7 +46,6 @@ class Mid360 : public Container {
 
  private:
   Cylinder body_;
-  // Cylinder mark_;
   LidarSensor lidar_sensor_;
   bool lidar_enable_ = true;
 };

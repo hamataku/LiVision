@@ -10,11 +10,11 @@ class Odometry : public Container {
  public:
   void InitImpl() final {
     arrow_x_.SetFromTo(glm::dvec3(0.0, 0.0, 0.0), glm::dvec3(1.2, 0.0, 0.0))
-        .SetColor(utils::red);
+        .SetColorSpec(utils::red);
     arrow_y_.SetFromTo(glm::dvec3(0.0, 0.0, 0.0), glm::dvec3(0.0, 1.2, 0.0))
-        .SetColor(utils::green);
+        .SetColorSpec(utils::green);
     arrow_z_.SetFromTo(glm::dvec3(0.0, 0.0, 0.0), glm::dvec3(0.0, 0.0, 1.2))
-        .SetColor(utils::blue);
+        .SetColorSpec(utils::blue);
     AddObject(&arrow_x_);
     AddObject(&arrow_y_);
     AddObject(&arrow_z_);

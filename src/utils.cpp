@@ -10,6 +10,9 @@ namespace fastls::utils {
 void Init() {
   // common
   u_color = bgfx::createUniform("u_color", bgfx::UniformType::Vec4);
+  u_color_mode = bgfx::createUniform("u_color_mode", bgfx::UniformType::Vec4);
+  u_rainbow_params =
+      bgfx::createUniform("u_rainbow_params", bgfx::UniformType::Vec4);
 
   float_vlayout.begin()
       .add(bgfx::Attrib::Position, 1, bgfx::AttribType::Float)
@@ -61,6 +64,8 @@ void Init() {
 
 void DeInit() {
   bgfx::destroy(u_color);
+  bgfx::destroy(u_color_mode);
+  bgfx::destroy(u_rainbow_params);
   bgfx::destroy(cube_vbh);
   bgfx::destroy(cube_ibh);
   bgfx::destroy(plane_vbh);

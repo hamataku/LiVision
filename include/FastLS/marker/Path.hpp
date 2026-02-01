@@ -9,8 +9,8 @@ namespace fastls {
 class Path : public ObjectBase {
  public:
   void Draw(bgfx::ProgramHandle& program) final {
-    cylinder_.SetColor(color_);
-    sphere_.SetColor(color_);
+    cylinder_.SetColorSpec(color_spec_);
+    sphere_.SetColorSpec(color_spec_);
     for (size_t i = 1; i < path_.size(); ++i) {
       glm::dvec3 p1 = path_[i - 1];
       glm::dvec3 p2 = path_[i];

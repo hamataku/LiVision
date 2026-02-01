@@ -5,8 +5,6 @@
 
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <memory>
-#include <utility>
 
 #include "FastLS/utils.hpp"
 
@@ -30,12 +28,24 @@ class ObjectBase {
     is_initialized_ = true;
   }
 
-  ObjectBase& SetColor(const utils::Color& color) {
-    color_ = color;
+  ObjectBase& SetColorSpec(const utils::ColorSpec& s) {
+    color_spec_ = s;
     local_mtx_changed_ = true;
     return *this;
   }
-  utils::Color GetColor() const { return color_; }
+  utils::ColorSpec GetColorSpec() const { return color_spec_; }
+
+  // Apply color-related uniforms for the shader (call before submit)
+  void ApplyColorUniforms() {
+    bgfx::setUniform(utils::u_color, &color_spec_.base);
+    float mode_val[4] = {static_cast<float>(static_cast<int>(color_spec_.mode)),
+                         0.0F, 0.0F, 0.0F};
+    float rparams[4] = {
+        color_spec_.rainbow.direction.x, color_spec_.rainbow.direction.y,
+        color_spec_.rainbow.direction.z, color_spec_.rainbow.delta};
+    bgfx::setUniform(utils::u_color_mode, mode_val);
+    bgfx::setUniform(utils::u_rainbow_params, rparams);
+  }
 
   ObjectBase& SetPos(const glm::dvec3& pos) {
     pos_ = pos;
@@ -131,7 +141,7 @@ class ObjectBase {
 
  protected:
   glm::dmat4 global_mtx_;
-  utils::Color color_{1.0F, 1.0F, 1.0F, 1.0F};
+  utils::ColorSpec color_spec_ = utils::white;
   glm::dvec3 pos_ = glm::vec3(0.0, 0.0, 0.0);
   glm::dvec3 size_ = glm::vec3(1.0, 1.0, 1.0);
   glm::dquat quat_ = glm::dquat(1.0, 0.0, 0.0, 0.0);

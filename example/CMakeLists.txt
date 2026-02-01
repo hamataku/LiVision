@@ -7,6 +7,5 @@ target_include_directories(fastls_example
         ${CMAKE_CURRENT_SOURCE_DIR}/../include
 )
 
-
 # 親プロジェクトのライブラリをリンク
 target_link_libraries(fastls_example PRIVATE fastls)
