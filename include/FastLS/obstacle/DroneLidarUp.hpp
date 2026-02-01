@@ -1,9 +1,9 @@
 #pragma once
 
-#include "FastLS/obstacle/DroneBody.hpp"
-#include "FastLS/sensor/Mid360.hpp"
+#include "LiVision/obstacle/DroneBody.hpp"
+#include "LiVision/sensor/Mid360.hpp"
 
-namespace fastls {
+namespace livision {
 class DroneLidarUp : public Container {
  public:
   void InitImpl() final {
@@ -20,4 +20,4 @@ class DroneLidarUp : public Container {
   DroneBody body_;
 };
 
-}  // namespace fastls
+}  // namespace livision

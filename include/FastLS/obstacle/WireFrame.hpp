@@ -2,10 +2,10 @@
 
 #include <unordered_set>
 
-#include "FastLS/MeshParser.hpp"
-#include "FastLS/ObjectBase.hpp"
+#include "LiVision/MeshParser.hpp"
+#include "LiVision/ObjectBase.hpp"
 
-namespace fastls {
+namespace livision {
 
 class WireFrame : public ObjectBase {
  public:
@@ -74,4 +74,4 @@ class WireFrame : public ObjectBase {
   std::vector<uint32_t> indices_;
   std::vector<uint32_t> line_indices_;
 };
-}  // namespace fastls
+}  // namespace livision

@@ -4,23 +4,23 @@
 #include <cassert>
 #include <glm/gtx/quaternion.hpp>
 
-#include "FastLS/ObjectBase.hpp"
-#include "FastLS/obstacle/Cylinder.hpp"
-#include "FastLS/obstacle/Sphere.hpp"
-#include "FastLS/utils.hpp"
+#include "LiVision/ObjectBase.hpp"
+#include "LiVision/obstacle/Cylinder.hpp"
+#include "LiVision/obstacle/Sphere.hpp"
+#include "LiVision/utils.hpp"
 
-namespace fastls {
+namespace livision {
 
 class DegeneracyIndicator : public ObjectBase {
  public:
   DegeneracyIndicator() {
     for (auto& t_cyl : trans_cyl_) {
-      t_cyl.SetColorSpec(fastls::utils::yellow.Alpha(0.8))
+      t_cyl.SetColorSpec(livision::utils::yellow.Alpha(0.8))
           .SetSize(glm::dvec3(0.1, 0.1, 2));
     }
-    rot_cyl_.SetColorSpec(fastls::utils::blue.Alpha(0.8))
+    rot_cyl_.SetColorSpec(livision::utils::blue.Alpha(0.8))
         .SetSize(glm::dvec3(1.5, 1.5, 0.01));
-    rot_sphere_.SetColorSpec(fastls::utils::blue.Alpha(0.8))
+    rot_sphere_.SetColorSpec(livision::utils::blue.Alpha(0.8))
         .SetSize(glm::dvec3(1, 1, 1));
   }
 
@@ -72,4 +72,4 @@ class DegeneracyIndicator : public ObjectBase {
   Cylinder rot_cyl_;
   Sphere rot_sphere_;
 };
-}  // namespace fastls
+}  // namespace livision

@@ -6,9 +6,9 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "FastLS/utils.hpp"
+#include "LiVision/utils.hpp"
 
-namespace fastls {
+namespace livision {
 
 class ObjectBase {
  public:
@@ -155,4 +155,4 @@ class ObjectBase {
   bool is_initialized_ = false;
   bool is_lidar_dynamic_ = false;
 };
-}  // namespace fastls
+}  // namespace livision

@@ -5,11 +5,11 @@
 
 #include <cmath>
 
-#include "FastLS/ObjectBase.hpp"
+#include "LiVision/ObjectBase.hpp"
 
-namespace fastls {
+namespace livision {
 
-struct FastLSConfig {
+struct LiVisionConfig {
   bool headless = false;  // Headless mode (no window)
   bool vsync = true;      // Enable VSync
   int width = 1280;       // Window width
@@ -17,10 +17,10 @@ struct FastLSConfig {
   bool fps = false;       // Display FPS
 };
 
-class FastLS {
+class LiVision {
  public:
-  explicit FastLS(const FastLSConfig& config);
-  ~FastLS();
+  explicit LiVision(const LiVisionConfig& config);
+  ~LiVision();
 
   bool SpinOnce();
   void AddObject(ObjectBase* object);
@@ -72,4 +72,4 @@ class FastLS {
 
   bool quit_ = false;
 };
-}  // namespace fastls
+}  // namespace livision

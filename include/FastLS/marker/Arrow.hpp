@@ -2,10 +2,10 @@
 
 #include <glm/gtx/quaternion.hpp>
 
-#include "FastLS/obstacle/Cone.hpp"
-#include "FastLS/obstacle/Cylinder.hpp"
+#include "LiVision/obstacle/Cone.hpp"
+#include "LiVision/obstacle/Cylinder.hpp"
 
-namespace fastls {
+namespace livision {
 
 class Arrow : public ObjectBase {
  public:
@@ -72,8 +72,8 @@ class Arrow : public ObjectBase {
   }
 
  private:
-  fastls::Cylinder body_;
-  fastls::Cone head_;
+  livision::Cylinder body_;
+  livision::Cone head_;
 
   glm::dvec3 from_ = glm::dvec3(0.0, 0.0, 0.0);
   glm::dvec3 to_ = glm::dvec3(0.0, 0.0, 1.0);
@@ -83,4 +83,4 @@ class Arrow : public ObjectBase {
   double body_radius_ = 0.03;
 };
 
-}  // namespace fastls
+}  // namespace livision

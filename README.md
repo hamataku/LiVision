@@ -1,4 +1,4 @@
-# hamazaki_FastLS
+# hamazaki_LiVision
 Fast Lidar Simulation for multiple robots
 
 # Dependencies
@@ -22,9 +22,9 @@ sudo ninja install
 
 # Build Example Code
 ```
-git clone https://github.com/fkd-lab/hamazaki_FastLS.git --recursive
-cd hamazaki_FastLS
+git clone https://github.com/fkd-lab/hamazaki_LiVision.git --recursive
+cd hamazaki_LiVision
 ./build.sh
 ./compile-shader.sh
-./build/example/fastls_example
+./build/example/livision_example
 ```

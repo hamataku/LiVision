@@ -2,12 +2,12 @@
 
 #include <array>
 
-#include "FastLS/Container.hpp"
-#include "FastLS/obstacle/Box.hpp"
-#include "FastLS/obstacle/Cylinder.hpp"
-#include "FastLS/utils.hpp"
+#include "LiVision/Container.hpp"
+#include "LiVision/obstacle/Box.hpp"
+#include "LiVision/obstacle/Cylinder.hpp"
+#include "LiVision/utils.hpp"
 
-namespace fastls {
+namespace livision {
 class DroneBody : public Container {
  public:
   void InitImpl() final {
@@ -79,4 +79,4 @@ class DroneBody : public Container {
   Box body_;
 };
 
-}  // namespace fastls
+}  // namespace livision

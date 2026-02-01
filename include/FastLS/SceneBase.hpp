@@ -2,11 +2,11 @@
 
 #include <SDL3/SDL_events.h>
 
-#include "FastLS/sim/LidarSim.hpp"
+#include "LiVision/sim/LidarSim.hpp"
 #include "object/Container.hpp"
 #include "object/ObjectBase.hpp"
 
-namespace fastls {
+namespace livision {
 
 class Container;
 class SceneBase {
@@ -77,4 +77,4 @@ class SceneBase {
   bool is_exit_requested_ = false;
 };
 
-}  // namespace fastls
+}  // namespace livision

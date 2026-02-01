@@ -3,10 +3,10 @@
 #include <glm/gtx/quaternion.hpp>
 #include <vector>
 
-#include "FastLS/ObjectBase.hpp"
-#include "FastLS/obstacle/Box.hpp"
+#include "LiVision/ObjectBase.hpp"
+#include "LiVision/obstacle/Box.hpp"
 
-namespace fastls {
+namespace livision {
 
 template <class T = Box>
 class PointNormalCloud : public ObjectBase {
@@ -57,4 +57,4 @@ class PointNormalCloud : public ObjectBase {
   T obj_;
   Box normal_obj_;
 };
-}  // namespace fastls
+}  // namespace livision

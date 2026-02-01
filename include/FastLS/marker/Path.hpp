@@ -1,10 +1,10 @@
 #pragma once
 
-#include "FastLS/ObjectBase.hpp"
-#include "FastLS/obstacle/Cylinder.hpp"
-#include "FastLS/obstacle/Sphere.hpp"
+#include "LiVision/ObjectBase.hpp"
+#include "LiVision/obstacle/Cylinder.hpp"
+#include "LiVision/obstacle/Sphere.hpp"
 
-namespace fastls {
+namespace livision {
 
 class Path : public ObjectBase {
  public:
@@ -51,4 +51,4 @@ class Path : public ObjectBase {
   std::vector<glm::vec3> path_;
   bool is_sphere_ = true;  // Draw spheres at the end of the path
 };
-}  // namespace fastls
+}  // namespace livision

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "FastLS/ObjectBase.hpp"
+#include "LiVision/ObjectBase.hpp"
 
-namespace fastls {
+namespace livision {
 class Plane : public ObjectBase {
  public:
   utils::MeshView GetMeshView() final {
@@ -22,4 +22,4 @@ class Plane : public ObjectBase {
   }
 };
 
-}  // namespace fastls
+}  // namespace livision

@@ -4,10 +4,10 @@
 
 #include <random>
 
-#include "FastLS/ObjectBase.hpp"
-#include "FastLS/sensor/LidarSensor.hpp"
+#include "LiVision/ObjectBase.hpp"
+#include "LiVision/sensor/LidarSensor.hpp"
 
-namespace fastls {
+namespace livision {
 
 class LidarSim {
  public:
@@ -65,4 +65,4 @@ class LidarSim {
 };
 
 inline LidarSim lidar_sim;
-}  // namespace fastls
+}  // namespace livision

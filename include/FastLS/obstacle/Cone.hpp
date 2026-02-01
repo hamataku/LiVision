@@ -1,8 +1,8 @@
 #pragma once
 
-#include "FastLS/ObjectBase.hpp"
+#include "LiVision/ObjectBase.hpp"
 
-namespace fastls {
+namespace livision {
 
 class Cone : public ObjectBase {
  public:
@@ -22,4 +22,4 @@ class Cone : public ObjectBase {
     bgfx::submit(0, program);
   }
 };
-}  // namespace fastls
+}  // namespace livision

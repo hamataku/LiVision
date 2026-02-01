@@ -1,9 +1,9 @@
 #pragma once
 
-#include "FastLS/MeshParser.hpp"
-#include "FastLS/ObjectBase.hpp"
+#include "LiVision/MeshParser.hpp"
+#include "LiVision/ObjectBase.hpp"
 
-namespace fastls {
+namespace livision {
 
 class Mesh : public ObjectBase {
  public:
@@ -41,4 +41,4 @@ class Mesh : public ObjectBase {
   std::vector<glm::vec3> vertices_;
   std::vector<uint32_t> indices_;
 };
-}  // namespace fastls
+}  // namespace livision

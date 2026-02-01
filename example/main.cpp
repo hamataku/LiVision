@@ -1,13 +1,13 @@
-#include "FastLS/FastLS.hpp"
-#include "FastLS/marker/PointCloud.hpp"
-#include "FastLS/obstacle/DroneLidarUp.hpp"
-#include "FastLS/obstacle/Mesh.hpp"
-#include "FastLS/obstacle/Plane.hpp"
-#include "FastLS/obstacle/WireFrame.hpp"
-#include "FastLS/utils.hpp"
+#include "LiVision/LiVision.hpp"
+#include "LiVision/marker/PointCloud.hpp"
+#include "LiVision/obstacle/DroneLidarUp.hpp"
+#include "LiVision/obstacle/Mesh.hpp"
+#include "LiVision/obstacle/Plane.hpp"
+#include "LiVision/obstacle/WireFrame.hpp"
+#include "LiVision/utils.hpp"
 
 int main() {
-  fastls::FastLS fast_ls{{
+  livision::LiVision fast_ls{{
       .headless = false,  // Set to true for headless mode
       .vsync = false,     // Set to true to enable VSync
       .width = 1280,      // Set the window width
@@ -17,8 +17,8 @@ int main() {
 
   constexpr int kNumDrones = 5;
 
-  std::array<fastls::PointCloud<>, kNumDrones> point_clouds;
-  std::array<fastls::DroneLidarUp, kNumDrones> drones;
+  std::array<livision::PointCloud<>, kNumDrones> point_clouds;
+  std::array<livision::DroneLidarUp, kNumDrones> drones;
   std::array<double, kNumDrones> container_thetas;
 
   for (int i = 0; i < kNumDrones; ++i) {
@@ -29,27 +29,27 @@ int main() {
         .SetRadRotation(
             glm::dvec3(0.0, container_thetas[i] * 2, container_thetas[i]));
     point_clouds[i].SetPointSize(0.5F).SetColorSpec(
-        fastls::utils::color_palette[i % 10]);
+        livision::utils::color_palette[i % 10]);
     drones[i].lidar_.AddObject(&point_clouds[i]);
     fast_ls.AddObject(&drones[i]);
   }
 
-  fastls::Plane plane;
-  plane.SetSize(glm::vec2(40.0F, 40.0F)).SetColorSpec(fastls::utils::white);
+  livision::Plane plane;
+  plane.SetSize(glm::vec2(40.0F, 40.0F)).SetColorSpec(livision::utils::white);
   fast_ls.AddObject(&plane);
 
-  fastls::Mesh mesh("data/bunny/bun_zipper_res3.stl");
+  livision::Mesh mesh("data/bunny/bun_zipper_res3.stl");
   mesh.SetSize(glm::dvec3(50.0, 50.0, 50.0))
       .SetPos(glm::dvec3(0.0, 0.0, -2.0))
       .SetDegRotation(glm::dvec3(90.0, 0.0, 0.0))
-      .SetColorSpec(fastls::utils::rainbow_z);
+      .SetColorSpec(livision::utils::rainbow_z);
   fast_ls.AddObject(&mesh);
 
-  fastls::WireFrame wireframe("data/bunny/bun_zipper_res3.stl");
+  livision::WireFrame wireframe("data/bunny/bun_zipper_res3.stl");
   wireframe.SetSize(glm::dvec3(50.0, 50.0, 50.0))
       .SetPos(glm::dvec3(0.0, 0.0, -2.0))
       .SetDegRotation(glm::dvec3(90.0, 0.0, 0.0))
-      .SetColorSpec(fastls::utils::black);
+      .SetColorSpec(livision::utils::black);
   fast_ls.AddObject(&wireframe);
 
   while (fast_ls.SpinOnce()) {

@@ -2,9 +2,9 @@
 
 #include <vector>
 
-#include "FastLS/ObjectBase.hpp"
+#include "LiVision/ObjectBase.hpp"
 
-namespace fastls {
+namespace livision {
 
 class LidarSensor : public ObjectBase {
  public:
@@ -16,4 +16,4 @@ class LidarSensor : public ObjectBase {
   std::vector<glm::vec3> points_;
   float lidar_range_ = 50.0F;
 };
-}  // namespace fastls
+}  // namespace livision

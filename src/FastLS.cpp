@@ -1,5 +1,3 @@
-#include "FastLS/FastLS.hpp"
-
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_mouse.h>
@@ -11,16 +9,17 @@
 #include <cstdlib>
 #include <iostream>
 
-#include "FastLS/Container.hpp"
-#include "FastLS/sim/LidarSim.hpp"
-#include "FastLS/utils.hpp"
+#include "LiVision/Container.hpp"
+#include "LiVision/LiVision.hpp"
+#include "LiVision/sim/LidarSim.hpp"
+#include "LiVision/utils.hpp"
 #include "bgfx-imgui/imgui_impl_bgfx.h"
 #include "imgui.cmake/imgui/backends/imgui_impl_sdl3.h"
 #include "imgui.h"
 #include "implot/implot.h"
 
-namespace fastls {
-FastLS::FastLS(const FastLSConfig& config)
+namespace livision {
+LiVision::LiVision(const LiVisionConfig& config)
     : headless_(config.headless),
       vsync_(config.vsync),
       width_(config.width),
@@ -126,7 +125,7 @@ FastLS::FastLS(const FastLSConfig& config)
   utils::Init();
 }
 
-FastLS::~FastLS() {
+LiVision::~LiVision() {
   // Cleanup
   utils::DeInit();
   bgfx::destroy(program_);
@@ -145,10 +144,10 @@ FastLS::~FastLS() {
 
   SDL_DestroyWindow(window_);
   SDL_Quit();
-  std::cout << "### FastLS Exit ###" << std::endl;
+  std::cout << "### LiVision Exit ###" << std::endl;
 }
 
-void FastLS::CameraControl() {
+void LiVision::CameraControl() {
   // ImGuiがマウスを使用している場合はカメラ操作を無効化
   if (ImGui::GetIO().WantCaptureMouse) {
     SDL_GetMouseState(&prev_mouse_x_, &prev_mouse_y_);
@@ -204,7 +203,7 @@ void FastLS::CameraControl() {
   bx::mtxLookAt(view_, eye, target_, up_vec);
 }
 
-bool FastLS::SpinOnce() {
+bool LiVision::SpinOnce() {
   if (!initialized_) {
     InitMeshList();
     lidar_sim.Init();
@@ -285,7 +284,7 @@ bool FastLS::SpinOnce() {
   return !quit_;
 }
 
-void FastLS::AddObject(ObjectBase* object) {
+void LiVision::AddObject(ObjectBase* object) {
   object->Init();
   auto* container = dynamic_cast<Container*>(object);
   if (container) {
@@ -298,7 +297,7 @@ void FastLS::AddObject(ObjectBase* object) {
   }
 }
 
-void FastLS::InitMeshList() {
+void LiVision::InitMeshList() {
   for (auto* object : objects_) {
     object->UpdateMatrix();
   }
@@ -309,13 +308,13 @@ void FastLS::InitMeshList() {
   }
 }
 
-void FastLS::UpdateMatrix() {
+void LiVision::UpdateMatrix() {
   for (auto* object : objects_) {
     object->UpdateMatrix();
   }
 }
 
-void FastLS::UpdateDynamicMeshList() {
+void LiVision::UpdateDynamicMeshList() {
   for (auto* object : objects_) {
     if (object->IsLidarVisible()) {
       lidar_sim.UpdateDynamicMeshList(object);
@@ -323,13 +322,13 @@ void FastLS::UpdateDynamicMeshList() {
   }
 }
 
-void FastLS::Draw(bgfx::ProgramHandle& program) {
+void LiVision::Draw(bgfx::ProgramHandle& program) {
   for (auto* object : objects_) {
     if (object->IsVisible()) object->Draw(program);
   }
 }
 
-void FastLS::PrintFPS() {
+void LiVision::PrintFPS() {
   float elapsed_seconds = (SDL_GetTicks() - last_fps_time_) / 1000.0F;
 
   if (fps_ && elapsed_seconds > 0) {
@@ -338,7 +337,7 @@ void FastLS::PrintFPS() {
   }
 }
 
-void FastLS::PrintBackend() {
+void LiVision::PrintBackend() {
   const bgfx::Caps* caps = bgfx::getCaps();
 
   // ベンダーIDからベンダー名を特定
@@ -366,4 +365,4 @@ void FastLS::PrintBackend() {
             << bgfx::getRendererName(bgfx::getRendererType()) << std::endl;
 }
 
-}  // namespace fastls
+}  // namespace livision

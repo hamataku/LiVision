@@ -7,10 +7,10 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <vector>
 
-#include "FastLS/ObjectBase.hpp"
-#include "FastLS/obstacle/Box.hpp"
+#include "LiVision/ObjectBase.hpp"
+#include "LiVision/obstacle/Box.hpp"
 
-namespace fastls {
+namespace livision {
 
 template <class T = Box>
 class PointCloud : public ObjectBase {
@@ -116,4 +116,4 @@ class PointCloud : public ObjectBase {
   T obj_;
 };
 
-}  // namespace fastls
+}  // namespace livision

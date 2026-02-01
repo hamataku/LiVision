@@ -1,12 +1,12 @@
-#include "FastLS/utils.hpp"
+#include "LiVision/utils.hpp"
 
 #include <bgfx/defines.h>
 
 #include <iostream>
 
-#include "FastLS/file_ops.hpp"
+#include "LiVision/file_ops.hpp"
 
-namespace fastls::utils {
+namespace livision::utils {
 void Init() {
   // common
   u_color = bgfx::createUniform("u_color", bgfx::UniformType::Vec4);
@@ -254,4 +254,4 @@ bgfx::ShaderHandle CreateShader(const std::string& path, const char* name) {
   bgfx::setName(handle, name);
   return handle;
 }
-}  // namespace fastls::utils
+}  // namespace livision::utils

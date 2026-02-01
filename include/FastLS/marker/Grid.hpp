@@ -1,9 +1,9 @@
 #pragma once
 
-#include "FastLS/ObjectBase.hpp"
-#include "FastLS/obstacle/Cylinder.hpp"
+#include "LiVision/ObjectBase.hpp"
+#include "LiVision/obstacle/Cylinder.hpp"
 
-namespace fastls {
+namespace livision {
 
 class Grid : public ObjectBase {
  public:
@@ -39,4 +39,4 @@ class Grid : public ObjectBase {
   Cylinder cylinder_;
   double resolution_ = 10.0;
 };
-}  // namespace fastls
+}  // namespace livision

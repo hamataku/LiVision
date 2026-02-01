@@ -1,6 +1,6 @@
 #pragma once
 
-namespace fastls {
+namespace livision {
 struct PIDGains {
   double p = 1.0;
   double i = 0.0;
@@ -34,4 +34,4 @@ class PIDController {
   T prev_error_ = T();
 };
 
-}  // namespace fastls
+}  // namespace livision

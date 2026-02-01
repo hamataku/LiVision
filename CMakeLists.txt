@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(fastls LANGUAGES CXX)
+project(livision LANGUAGES CXX)
 
 # Options
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)

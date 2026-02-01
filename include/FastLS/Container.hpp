@@ -2,8 +2,8 @@
 
 #include <memory>
 
-#include "FastLS/ObjectBase.hpp"
-namespace fastls {
+#include "LiVision/ObjectBase.hpp"
+namespace livision {
 
 class Container : public ObjectBase {
  public:
@@ -19,4 +19,4 @@ class Container : public ObjectBase {
   std::vector<ObjectBase*> objects_;
 };
 
-}  // namespace fastls
+}  // namespace livision

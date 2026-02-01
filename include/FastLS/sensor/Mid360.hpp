@@ -1,13 +1,13 @@
 #pragma once
 
-#include "FastLS/Container.hpp"
-#include "FastLS/ObjectBase.hpp"
-#include "FastLS/obstacle/Cylinder.hpp"
-#include "FastLS/sensor/LidarSensor.hpp"
-#include "FastLS/sim/LidarSim.hpp"
-#include "FastLS/utils.hpp"
+#include "LiVision/Container.hpp"
+#include "LiVision/ObjectBase.hpp"
+#include "LiVision/obstacle/Cylinder.hpp"
+#include "LiVision/sensor/LidarSensor.hpp"
+#include "LiVision/sim/LidarSim.hpp"
+#include "LiVision/utils.hpp"
 
-namespace fastls {
+namespace livision {
 
 class Mid360 : public Container {
  public:
@@ -50,4 +50,4 @@ class Mid360 : public Container {
   bool lidar_enable_ = true;
 };
 
-}  // namespace fastls
+}  // namespace livision

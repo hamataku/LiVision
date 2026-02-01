@@ -18,7 +18,7 @@ struct hash<glm::vec3> {
 };
 }  // namespace std
 
-namespace fastls::mesh_parser {
+namespace livision::mesh_parser {
 
 // 頂点バッファとインデックスバッファを構築する関数
 inline void ParseMeshFile(const std::string& filename,
@@ -67,4 +67,4 @@ inline void ParseMeshFile(const std::string& filename,
   std::cout << "MeshParser: " << filename << ", vertices: " << vertices.size()
             << ", meshes: " << indices.size() / 3 << std::endl;
 }
-}  // namespace fastls::mesh_parser
+}  // namespace livision::mesh_parser

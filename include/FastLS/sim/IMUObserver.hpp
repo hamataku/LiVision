@@ -2,10 +2,10 @@
 
 #include <random>
 
-#include "FastLS/ObjectBase.hpp"
+#include "LiVision/ObjectBase.hpp"
 #include "common/utils.hpp"
 
-namespace fastls {
+namespace livision {
 
 class IMUObserver {
  public:
@@ -117,4 +117,4 @@ class IMUObserver {
   std::normal_distribution<> gyr_dist_;
   glm::dvec3 acc_bias_ = glm::dvec3(0.0);
 };
-}  // namespace fastls
+}  // namespace livision

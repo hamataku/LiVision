@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace fastls::utils {
+namespace livision::utils {
 
 // Declare types
 struct Color {
@@ -155,4 +155,4 @@ void CreateCylinderBuffer();
 void CreateSphereBuffer();
 void CreateConeBuffer();
 bgfx::ShaderHandle CreateShader(const std::string& path, const char* name);
-}  // namespace fastls::utils
+}  // namespace livision::utils

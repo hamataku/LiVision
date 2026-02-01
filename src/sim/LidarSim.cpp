@@ -1,10 +1,10 @@
-#include "FastLS/sim/LidarSim.hpp"
+#include "LiVision/sim/LidarSim.hpp"
 
 #include <bgfx/bgfx.h>
 
-#include "FastLS/file_ops.hpp"
+#include "LiVision/file_ops.hpp"
 
-namespace fastls {
+namespace livision {
 void LidarSim::InitMeshList(ObjectBase* object) {
   utils::MeshView view = object->GetMeshView();
   glm::mat4 mtx = object->GetGlobalMatrix();
@@ -292,4 +292,4 @@ void LidarSim::CalcPointCloud() {
   mesh_dynamic_vertices_.clear();
 }
 
-}  // namespace fastls
+}  // namespace livision
