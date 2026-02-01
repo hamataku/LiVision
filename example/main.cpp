@@ -15,26 +15,37 @@ int main() {
       .fps = true,        // Target frames per second
   }};
 
-  double container_theta = 0.0;
+  constexpr int kNumDrones = 5;
 
-  fastls::PointCloud<fastls::Plane> point_cloud;
-  fastls::DroneLidarUp drone;
-  point_cloud.SetColorSpec(fastls::utils::blue);
-  drone.lidar_.AddObject(&point_cloud);
-  fast_ls.AddObject(&drone);
+  std::array<fastls::PointCloud<>, kNumDrones> point_clouds;
+  std::array<fastls::DroneLidarUp, kNumDrones> drones;
+  std::array<double, kNumDrones> container_thetas;
+
+  for (int i = 0; i < kNumDrones; ++i) {
+    container_thetas[i] = (2.0 * M_PI) / static_cast<double>(kNumDrones) * i;
+    drones[i]
+        .SetPos(glm::dvec3(std::cos(container_thetas[i]) * 6.0,
+                           std::sin(container_thetas[i]) * 6.0, 2.0))
+        .SetRadRotation(
+            glm::dvec3(0.0, container_thetas[i] * 2, container_thetas[i]));
+    point_clouds[i].SetPointSize(0.5F).SetColorSpec(
+        fastls::utils::color_palette[i % 10]);
+    drones[i].lidar_.AddObject(&point_clouds[i]);
+    fast_ls.AddObject(&drones[i]);
+  }
 
   fastls::Plane plane;
   plane.SetSize(glm::vec2(40.0F, 40.0F)).SetColorSpec(fastls::utils::white);
   fast_ls.AddObject(&plane);
 
-  fastls::Mesh mesh("data/bunny/bun_zipper_res4.stl");
+  fastls::Mesh mesh("data/bunny/bun_zipper_res3.stl");
   mesh.SetSize(glm::dvec3(50.0, 50.0, 50.0))
       .SetPos(glm::dvec3(0.0, 0.0, -2.0))
       .SetDegRotation(glm::dvec3(90.0, 0.0, 0.0))
       .SetColorSpec(fastls::utils::rainbow_z);
   fast_ls.AddObject(&mesh);
 
-  fastls::WireFrame wireframe("data/bunny/bun_zipper_res4.stl");
+  fastls::WireFrame wireframe("data/bunny/bun_zipper_res3.stl");
   wireframe.SetSize(glm::dvec3(50.0, 50.0, 50.0))
       .SetPos(glm::dvec3(0.0, 0.0, -2.0))
       .SetDegRotation(glm::dvec3(90.0, 0.0, 0.0))
@@ -42,20 +53,14 @@ int main() {
   fast_ls.AddObject(&wireframe);
 
   while (fast_ls.SpinOnce()) {
-    drone
-        .SetPos(glm::dvec3(std::cos(container_theta) * 6.0,
-                           std::sin(container_theta) * 6.0, 2.0))
-        .SetRadRotation(glm::dvec3(0.0, container_theta * 2, container_theta));
-
-    container_theta += 0.01F;
-
-    auto& v = drone.lidar_.GetPointClouds();
-    std::cout << "Point cloud size: " << v.size() << std::endl;
-    if (v.size() < 2000) {
-      point_cloud.SetPoints(v);
-    } else {
-      std::vector<glm::vec3> sub(v.begin() + 1, v.begin() + 1500);
-      point_cloud.SetPoints(sub);
+    for (int i = 0; i < kNumDrones; ++i) {
+      drones[i]
+          .SetPos(glm::dvec3(std::cos(container_thetas[i]) * 6.0,
+                             std::sin(container_thetas[i]) * 6.0, 2.0))
+          .SetRadRotation(
+              glm::dvec3(0.0, container_thetas[i] * 2, container_thetas[i]));
+      container_thetas[i] += 0.01F;
+      point_clouds[i].SetPoints(drones[i].lidar_.GetPointClouds());
     }
   }
 

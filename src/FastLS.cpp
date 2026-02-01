@@ -114,6 +114,14 @@ FastLS::FastLS(const FastLSConfig& config)
       utils::CreateShader(shader_root + "f_simple.bin", "fshader");
   program_ = bgfx::createProgram(vsh, fsh, true);
 
+  bgfx::ShaderHandle vph =
+      utils::CreateShader(shader_root + "v_points.bin", "vshader_points");
+  bgfx::ShaderHandle fph =
+      utils::CreateShader(shader_root + "f_points.bin", "fshader_points");
+  if (bgfx::isValid(vph) && bgfx::isValid(fph)) {
+    utils::point_program = bgfx::createProgram(vph, fph, true);
+  }
+
   PrintBackend();
   utils::Init();
 }
@@ -122,6 +130,10 @@ FastLS::~FastLS() {
   // Cleanup
   utils::DeInit();
   bgfx::destroy(program_);
+  if (bgfx::isValid(utils::point_program)) {
+    bgfx::destroy(utils::point_program);
+    utils::point_program = BGFX_INVALID_HANDLE;
+  }
   lidar_sim.Destroy();
 
   ImGui_ImplSDL3_Shutdown();

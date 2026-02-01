@@ -81,6 +81,9 @@ inline bgfx::UniformHandle u_rainbow_params;
 // State
 inline constexpr uint64_t kAlphaState =
     BGFX_STATE_DEFAULT | BGFX_STATE_BLEND_ALPHA;
+inline constexpr uint64_t kPointState = kAlphaState | BGFX_STATE_PT_POINTS;
+inline constexpr uint64_t kPointSpriteState =
+    kAlphaState | BGFX_STATE_PT_TRISTRIP;
 
 // NOLINTEND
 
@@ -141,6 +144,9 @@ inline bgfx::VertexLayout vec2_vlayout;
 inline bgfx::VertexLayout vec3_vlayout;
 inline bgfx::VertexLayout vec4_vlayout;
 inline bgfx::VertexLayout mat4_vlayout;
+
+// Programs
+inline bgfx::ProgramHandle point_program = BGFX_INVALID_HANDLE;
 
 // Functions
 void Init();
