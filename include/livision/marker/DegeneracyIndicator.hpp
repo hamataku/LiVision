@@ -4,10 +4,10 @@
 #include <cassert>
 #include <glm/gtx/quaternion.hpp>
 
-#include "LiVision/ObjectBase.hpp"
-#include "LiVision/obstacle/Cylinder.hpp"
-#include "LiVision/obstacle/Sphere.hpp"
-#include "LiVision/utils.hpp"
+#include "livision/ObjectBase.hpp"
+#include "livision/obstacle/Cylinder.hpp"
+#include "livision/obstacle/Sphere.hpp"
+#include "livision/utils.hpp"
 
 namespace livision {
 

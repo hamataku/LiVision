@@ -1,6 +1,6 @@
 #!/bin/bash
 set -euo pipefail
-mkdir -p shader/build
+mkdir -p shader/bin
 
 OS=$(uname)
 
@@ -19,25 +19,25 @@ fi
 
 echo "Compiling vertex shader"
 shaderc \
--f shader/v_simple.sc -o shader/build/v_simple.bin \
+-f shader/v_simple.sc -o shader/bin/v_simple.bin \
 --platform $PLATFORM --type vertex --verbose -i ./ -p $TYPE
 
 echo "Compiling fragment shader"
 shaderc \
--f shader/f_simple.sc -o shader/build/f_simple.bin \
+-f shader/f_simple.sc -o shader/bin/f_simple.bin \
 --platform $PLATFORM --type fragment --verbose -i ./ -p $TYPE
 
 echo "Compiling vertex shader (points)"
 shaderc \
--f shader/v_points.sc -o shader/build/v_points.bin \
+-f shader/v_points.sc -o shader/bin/v_points.bin \
 --platform $PLATFORM --type vertex --verbose -i ./ -p $TYPE
 
 echo "Compiling fragment shader (points)"
 shaderc \
--f shader/f_points.sc -o shader/build/f_points.bin \
+-f shader/f_points.sc -o shader/bin/f_points.bin \
 --platform $PLATFORM --type fragment --verbose -i ./ -p $TYPE
 
 echo "Compiling compute shader"
 shaderc \
--f shader/compute_ray_cast.sc -o shader/build/compute_ray_cast.bin \
+-f shader/compute_ray_cast.sc -o shader/bin/compute_ray_cast.bin \
 --platform $PLATFORM --type compute --verbose -i ./ -p $TYPE

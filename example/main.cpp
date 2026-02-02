@@ -1,10 +1,10 @@
-#include "LiVision/LiVision.hpp"
-#include "LiVision/marker/PointCloud.hpp"
-#include "LiVision/obstacle/DroneLidarUp.hpp"
-#include "LiVision/obstacle/Mesh.hpp"
-#include "LiVision/obstacle/Plane.hpp"
-#include "LiVision/obstacle/WireFrame.hpp"
-#include "LiVision/utils.hpp"
+#include "livision/LiVision.hpp"
+#include "livision/marker/PointCloud.hpp"
+#include "livision/obstacle/DroneLidarUp.hpp"
+#include "livision/obstacle/Mesh.hpp"
+#include "livision/obstacle/Plane.hpp"
+#include "livision/obstacle/WireFrame.hpp"
+#include "livision/utils.hpp"
 
 int main() {
   livision::LiVision fast_ls{{

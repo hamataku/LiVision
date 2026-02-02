@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "LiVision/ObjectBase.hpp"
+#include "livision/ObjectBase.hpp"
 
 namespace livision {
 

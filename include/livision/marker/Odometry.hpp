@@ -1,8 +1,8 @@
 #pragma once
 
-#include "LiVision/Container.hpp"
-#include "LiVision/marker/Arrow.hpp"
-#include "LiVision/utils.hpp"
+#include "livision/Container.hpp"
+#include "livision/marker/Arrow.hpp"
+#include "livision/utils.hpp"
 
 namespace livision {
 

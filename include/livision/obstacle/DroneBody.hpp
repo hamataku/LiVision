@@ -2,10 +2,10 @@
 
 #include <array>
 
-#include "LiVision/Container.hpp"
-#include "LiVision/obstacle/Box.hpp"
-#include "LiVision/obstacle/Cylinder.hpp"
-#include "LiVision/utils.hpp"
+#include "livision/Container.hpp"
+#include "livision/obstacle/Box.hpp"
+#include "livision/obstacle/Cylinder.hpp"
+#include "livision/utils.hpp"
 
 namespace livision {
 class DroneBody : public Container {

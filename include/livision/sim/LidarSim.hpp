@@ -4,8 +4,8 @@
 
 #include <random>
 
-#include "LiVision/ObjectBase.hpp"
-#include "LiVision/sensor/LidarSensor.hpp"
+#include "livision/ObjectBase.hpp"
+#include "livision/sensor/LidarSensor.hpp"
 
 namespace livision {
 

@@ -9,14 +9,14 @@
 #include <cstdlib>
 #include <iostream>
 
-#include "LiVision/Container.hpp"
-#include "LiVision/LiVision.hpp"
-#include "LiVision/sim/LidarSim.hpp"
-#include "LiVision/utils.hpp"
 #include "bgfx-imgui/imgui_impl_bgfx.h"
 #include "imgui.cmake/imgui/backends/imgui_impl_sdl3.h"
 #include "imgui.h"
 #include "implot/implot.h"
+#include "livision/Container.hpp"
+#include "livision/LiVision.hpp"
+#include "livision/sim/LidarSim.hpp"
+#include "livision/utils.hpp"
 
 namespace livision {
 LiVision::LiVision(const LiVisionConfig& config)

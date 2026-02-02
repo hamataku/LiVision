@@ -1,7 +1,7 @@
 #pragma once
 
-#include "LiVision/obstacle/DroneBody.hpp"
-#include "LiVision/sensor/Mid360.hpp"
+#include "livision/obstacle/DroneBody.hpp"
+#include "livision/sensor/Mid360.hpp"
 
 namespace livision {
 class DroneLidarUp : public Container {

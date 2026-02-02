@@ -1,11 +1,11 @@
 #pragma once
 
-#include "LiVision/Container.hpp"
-#include "LiVision/ObjectBase.hpp"
-#include "LiVision/obstacle/Cylinder.hpp"
-#include "LiVision/sensor/LidarSensor.hpp"
-#include "LiVision/sim/LidarSim.hpp"
-#include "LiVision/utils.hpp"
+#include "livision/Container.hpp"
+#include "livision/ObjectBase.hpp"
+#include "livision/obstacle/Cylinder.hpp"
+#include "livision/sensor/LidarSensor.hpp"
+#include "livision/sim/LidarSim.hpp"
+#include "livision/utils.hpp"
 
 namespace livision {
 

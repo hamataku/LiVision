@@ -3,8 +3,8 @@
 #include <glm/gtx/quaternion.hpp>
 #include <vector>
 
-#include "LiVision/ObjectBase.hpp"
-#include "LiVision/obstacle/Box.hpp"
+#include "livision/ObjectBase.hpp"
+#include "livision/obstacle/Box.hpp"
 
 namespace livision {
 

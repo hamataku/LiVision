@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "LiVision/ObjectBase.hpp"
+#include "livision/ObjectBase.hpp"
 namespace livision {
 
 class Container : public ObjectBase {

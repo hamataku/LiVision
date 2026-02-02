@@ -1,8 +1,8 @@
-#include "LiVision/sim/LidarSim.hpp"
+#include "livision/sim/LidarSim.hpp"
 
 #include <bgfx/bgfx.h>
 
-#include "LiVision/file_ops.hpp"
+#include "livision/file_ops.hpp"
 
 namespace livision {
 void LidarSim::InitMeshList(ObjectBase* object) {

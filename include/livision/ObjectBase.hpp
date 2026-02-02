@@ -6,7 +6,7 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "LiVision/utils.hpp"
+#include "livision/utils.hpp"
 
 namespace livision {
 
@@ -18,7 +18,7 @@ class ObjectBase {
   virtual utils::MeshView GetMeshView() {
     return utils::MeshView{utils::none_vertices, utils::none_indices};
   }
-  virtual void InitImpl() {};
+  virtual void InitImpl(){};
   virtual void Draw(bgfx::ProgramHandle& program) { (void)program; };
 
   void Init() {

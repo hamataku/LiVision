@@ -1,10 +1,10 @@
-#include "LiVision/utils.hpp"
+#include "livision/utils.hpp"
 
 #include <bgfx/defines.h>
 
 #include <iostream>
 
-#include "LiVision/file_ops.hpp"
+#include "livision/file_ops.hpp"
 
 namespace livision::utils {
 void Init() {

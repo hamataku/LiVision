@@ -1,7 +1,7 @@
 #pragma once
 
-#include "LiVision/MeshParser.hpp"
-#include "LiVision/ObjectBase.hpp"
+#include "livision/MeshParser.hpp"
+#include "livision/ObjectBase.hpp"
 
 namespace livision {
 
