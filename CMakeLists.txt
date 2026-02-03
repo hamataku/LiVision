@@ -35,6 +35,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third-party/bgfx.cmake)
 # System packages
 find_package(SDL2 REQUIRED)
 find_package(glm REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 # Library target
 if(LIVISION_BUILD_SHARED)
@@ -55,17 +56,25 @@ file(GLOB_RECURSE SOURCES
 
 target_sources(${PROJECT_NAME} PRIVATE ${SOURCES})
 
-# Include directories
-target_include_directories(${PROJECT_NAME}
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/third-party
-    INTERFACE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/third-party
+# ライブラリ内部で使うヘッダ（bgfxなど）
+set(INTERNAL_INCLUDE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include_internal
+    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/bgfx-imgui
+    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/bgfx.cmake
 )
 
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+# ユーザーに公開するヘッダ（imgui と implotも含む）
+set(PUBLIC_INCLUDE
+    ${EIGEN3_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/imgui.cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/implot
+)
+
+target_include_directories(${PROJECT_NAME}
+    PRIVATE ${INTERNAL_INCLUDE}   # ライブラリ内部だけ
+    PUBLIC  ${PUBLIC_INCLUDE}     # ユーザーに公開
+)
 
 # Link libraries
 target_link_libraries(${PROJECT_NAME}
@@ -73,6 +82,7 @@ target_link_libraries(${PROJECT_NAME}
         bx
         bgfx
         glm::glm
+        Eigen3::Eigen
     PUBLIC
         SDL2::SDL2
         imgui.cmake

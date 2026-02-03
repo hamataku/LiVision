@@ -6,11 +6,6 @@ namespace livision {
 
 class Sphere : public ObjectBase {
  public:
-  utils::MeshView GetMeshView() final {
-    return utils::MeshView{.vertices = utils::sphere_vertices,
-                           .indices = utils::sphere_indices};
-  }
-
   void Draw(bgfx::ProgramHandle& program) final {
     bgfx::setState(utils::kAlphaState);
     ApplyColorUniforms();

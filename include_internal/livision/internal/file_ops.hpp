@@ -3,7 +3,7 @@
 #include <fstream>
 #include <iostream>
 
-namespace file_ops {
+namespace livision::internal::file_ops {
 
 inline std::streamoff StreamSize(std::istream& file) {
   std::istream::pos_type current_pos = file.tellg();
@@ -33,7 +33,6 @@ inline bool StreamReadString(std::istream& file, std::string& file_contents) {
 
 inline bool ReadFile(const std::string& filename, std::string& file_contents) {
   std::ifstream file(filename, std::ios::binary);
-
   if (!file.is_open()) {
     return false;
   }
@@ -45,4 +44,4 @@ inline bool ReadFile(const std::string& filename, std::string& file_contents) {
   return success;
 }
 
-}  // namespace file_ops
+}  // namespace livision::internal::file_ops

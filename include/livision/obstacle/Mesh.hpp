@@ -20,10 +20,6 @@ class Mesh : public ObjectBase {
         BGFX_BUFFER_INDEX32);
   }
 
-  utils::MeshView GetMeshView() final {
-    return utils::MeshView{vertices_, indices_};
-  }
-
   void Draw(bgfx::ProgramHandle& program) final {
     bgfx::setState(utils::kAlphaState);
     ApplyColorUniforms();

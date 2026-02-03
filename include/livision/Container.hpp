@@ -1,10 +1,8 @@
 #pragma once
 
-#include <memory>
-
 #include "livision/ObjectBase.hpp"
-namespace livision {
 
+namespace livision {
 class Container : public ObjectBase {
  public:
   Container& AddObject(ObjectBase* object) {
@@ -12,7 +10,6 @@ class Container : public ObjectBase {
     object->RegisterParentObject(this);
     return *this;
   }
-
   std::vector<ObjectBase*>& GetObjects() { return objects_; }
 
  private:

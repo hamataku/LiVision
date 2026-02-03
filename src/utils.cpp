@@ -4,15 +4,9 @@
 
 #include <iostream>
 
-#include "livision/file_ops.hpp"
-
 namespace livision::utils {
 void Init() {
   // common
-  u_color = bgfx::createUniform("u_color", bgfx::UniformType::Vec4);
-  u_color_mode = bgfx::createUniform("u_color_mode", bgfx::UniformType::Vec4);
-  u_rainbow_params =
-      bgfx::createUniform("u_rainbow_params", bgfx::UniformType::Vec4);
 
   float_vlayout.begin()
       .add(bgfx::Attrib::Position, 1, bgfx::AttribType::Float)
@@ -37,29 +31,29 @@ void Init() {
       .add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
       .end();
 
-  // cube
-  cube_vbh = bgfx::createVertexBuffer(
-      bgfx::makeRef(cube_vertices.data(),
-                    cube_vertices.size() * sizeof(glm::vec3)),
-      vec3_vlayout);
-  cube_ibh = bgfx::createIndexBuffer(
-      bgfx::makeRef(cube_indices.data(),
-                    cube_indices.size() * sizeof(uint32_t)),
-      BGFX_BUFFER_INDEX32);
+  // // cube
+  // cube_vbh = bgfx::createVertexBuffer(
+  //     bgfx::makeRef(cube_vertices.data(),
+  //                   cube_vertices.size() * sizeof(glm::vec3)),
+  //     vec3_vlayout);
+  // cube_ibh = bgfx::createIndexBuffer(
+  //     bgfx::makeRef(cube_indices.data(),
+  //                   cube_indices.size() * sizeof(uint32_t)),
+  //     BGFX_BUFFER_INDEX32);
 
-  // line
-  plane_vbh = bgfx::createVertexBuffer(
-      bgfx::makeRef(plane_vertices.data(),
-                    plane_vertices.size() * sizeof(glm::vec3)),
-      vec3_vlayout);
-  plane_ibh = bgfx::createIndexBuffer(
-      bgfx::makeRef(plane_indices.data(),
-                    plane_indices.size() * sizeof(uint32_t)),
-      BGFX_BUFFER_INDEX32);
+  // // line
+  // plane_vbh = bgfx::createVertexBuffer(
+  //     bgfx::makeRef(plane_vertices.data(),
+  //                   plane_vertices.size() * sizeof(glm::vec3)),
+  //     vec3_vlayout);
+  // plane_ibh = bgfx::createIndexBuffer(
+  //     bgfx::makeRef(plane_indices.data(),
+  //                   plane_indices.size() * sizeof(uint32_t)),
+  //     BGFX_BUFFER_INDEX32);
 
-  CreateCylinderBuffer();
-  CreateSphereBuffer();
-  CreateConeBuffer();
+  // CreateCylinderBuffer();
+  // CreateSphereBuffer();
+  // CreateConeBuffer();
 }
 
 void DeInit() {
@@ -243,15 +237,4 @@ void CreateConeBuffer() {
       BGFX_BUFFER_INDEX32);
 }
 
-bgfx::ShaderHandle CreateShader(const std::string& path, const char* name) {
-  std::string shader;
-  if (!file_ops::ReadFile(path, shader)) {
-    std::cerr << "Could not find compute shader" << std::endl;
-    return BGFX_INVALID_HANDLE;
-  }
-  const bgfx::Memory* mem = bgfx::copy(shader.data(), shader.size());
-  const bgfx::ShaderHandle handle = bgfx::createShader(mem);
-  bgfx::setName(handle, name);
-  return handle;
-}
 }  // namespace livision::utils

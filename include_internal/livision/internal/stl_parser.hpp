@@ -18,12 +18,12 @@ struct hash<glm::vec3> {
 };
 }  // namespace std
 
-namespace livision::mesh_parser {
+namespace livision::stl_parser {
 
 // 頂点バッファとインデックスバッファを構築する関数
-inline void ParseMeshFile(const std::string& filename,
-                          std::vector<glm::vec3>& vertices,
-                          std::vector<uint32_t>& indices) {
+inline void ParseSTLFile(const std::string& filename,
+                         std::vector<glm::vec3>& vertices,
+                         std::vector<uint32_t>& indices) {
   std::ifstream file(filename, std::ios::binary);
   if (!file) {
     std::cerr << "Failed to open file: " << filename << std::endl;
@@ -64,7 +64,7 @@ inline void ParseMeshFile(const std::string& filename,
         sizeof(attribute_byte_count));  // 2バイトのアトリビュートをスキップ
   }
 
-  std::cout << "MeshParser: " << filename << ", vertices: " << vertices.size()
+  std::cout << "STLParser: " << filename << ", vertices: " << vertices.size()
             << ", meshes: " << indices.size() / 3 << std::endl;
 }
-}  // namespace livision::mesh_parser
+}  // namespace livision::stl_parser

@@ -6,11 +6,6 @@ namespace livision {
 
 class Box : public ObjectBase {
  public:
-  utils::MeshView GetMeshView() final {
-    return utils::MeshView{.vertices = utils::cube_vertices,
-                           .indices = utils::cube_indices};
-  }
-
   void Draw(bgfx::ProgramHandle& program) final {
     bgfx::setState(utils::kAlphaState);
     ApplyColorUniforms();

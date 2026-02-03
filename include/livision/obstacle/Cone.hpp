@@ -6,11 +6,6 @@ namespace livision {
 
 class Cone : public ObjectBase {
  public:
-  utils::MeshView GetMeshView() final {
-    return utils::MeshView{.vertices = utils::cone_vertices,
-                           .indices = utils::cone_indices};
-  }
-
   void Draw(bgfx::ProgramHandle& program) final {
     bgfx::setState(utils::kAlphaState);
     ApplyColorUniforms();

@@ -6,11 +6,6 @@ namespace livision {
 
 class Cylinder : public ObjectBase {
  public:
-  utils::MeshView GetMeshView() final {
-    return utils::MeshView{.vertices = utils::cylinder_vertices,
-                           .indices = utils::cylinder_indices};
-  }
-
   void Draw(bgfx::ProgramHandle& program) final {
     bgfx::setState(utils::kAlphaState);
     ApplyColorUniforms();

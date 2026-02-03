@@ -11,28 +11,22 @@ namespace livision {
 class DroneBody : public Container {
  public:
   void InitImpl() final {
-    bool lidar_dynamic_observe = true;
-
     prop_.at(0)
         .SetSize(glm::dvec3(0.3, 0.3, 0.03))
         .SetPos(glm::dvec3(0.3, 0.3, 0.33))
-        .SetColorSpec(utils::magenta)
-        .SetLidarDynamicObserve(lidar_dynamic_observe);
+        .SetColorSpec(utils::magenta);
     prop_.at(1)
         .SetSize(glm::dvec3(0.3, 0.3, 0.03))
         .SetPos(glm::dvec3(-0.3, 0.3, 0.33))
-        .SetColorSpec(utils::cyan)
-        .SetLidarDynamicObserve(lidar_dynamic_observe);
+        .SetColorSpec(utils::cyan);
     prop_.at(2)
         .SetSize(glm::dvec3(0.3, 0.3, 0.03))
         .SetPos(glm::dvec3(-0.3, -0.3, 0.33))
-        .SetColorSpec(utils::cyan)
-        .SetLidarDynamicObserve(lidar_dynamic_observe);
+        .SetColorSpec(utils::cyan);
     prop_.at(3)
         .SetSize(glm::dvec3(0.3, 0.3, 0.03))
         .SetPos(glm::dvec3(0.3, -0.3, 0.33))
-        .SetColorSpec(utils::cyan)
-        .SetLidarDynamicObserve(lidar_dynamic_observe);
+        .SetColorSpec(utils::cyan);
 
     for (auto& p : prop_) {
       AddObject(&p);
@@ -41,26 +35,22 @@ class DroneBody : public Container {
         .SetSize(glm::dvec3(0.01, 0.01, 0.25))
         .SetDegRotation(glm::dvec3(15.0, 0.0, -45.0))
         .SetPos(glm::dvec3(0.2, 0.2, 0.13))
-        .SetColorSpec(utils::white)
-        .SetLidarDynamicObserve(lidar_dynamic_observe);
+        .SetColorSpec(utils::white);
     legs_.at(1)
         .SetSize(glm::dvec3(0.01, 0.01, 0.25))
         .SetDegRotation(glm::dvec3(15.0, 0.0, 45.0))
         .SetPos(glm::dvec3(-0.2, 0.2, 0.13))
-        .SetColorSpec(utils::white)
-        .SetLidarDynamicObserve(lidar_dynamic_observe);
+        .SetColorSpec(utils::white);
     legs_.at(2)
         .SetSize(glm::dvec3(0.01, 0.01, 0.25))
         .SetDegRotation(glm::dvec3(15.0, 0.0, 135.0))
         .SetPos(glm::dvec3(-0.2, -0.2, 0.13))
-        .SetColorSpec(utils::white)
-        .SetLidarDynamicObserve(lidar_dynamic_observe);
+        .SetColorSpec(utils::white);
     legs_.at(3)
         .SetSize(glm::dvec3(0.01, 0.01, 0.25))
         .SetDegRotation(glm::dvec3(15.0, 0.0, 225.0))
         .SetPos(glm::dvec3(0.2, -0.2, 0.13))
-        .SetColorSpec(utils::white)
-        .SetLidarDynamicObserve(lidar_dynamic_observe);
+        .SetColorSpec(utils::white);
 
     for (auto& l : legs_) {
       AddObject(&l);
@@ -68,8 +58,7 @@ class DroneBody : public Container {
 
     body_.SetSize(glm::dvec3(0.4, 0.4, 0.1))
         .SetPos(glm::dvec3(0, 0, 0.28))
-        .SetColorSpec(utils::dark_gray)
-        .SetLidarDynamicObserve(lidar_dynamic_observe);
+        .SetColorSpec(utils::dark_gray);
     AddObject(&body_);
   }
 
