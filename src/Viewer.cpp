@@ -1,8 +1,8 @@
 #include "livision/Viewer.hpp"
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_events.h>
-#include <SDL2/SDL_mouse.h>
+#include <SDL.h>
+#include <SDL_events.h>
+#include <SDL_mouse.h>
 #include <SDL_syswm.h>
 #include <bgfx/bgfx.h>
 #include <bgfx/defines.h>
@@ -80,12 +80,12 @@ Viewer::Viewer(const ViewerConfig& config) : pimpl_(std::make_unique<Impl>()) {
   SDL_SysWMinfo wm_info;
   SDL_VERSION(&wm_info.version);
   if (SDL_GetWindowWMInfo(pimpl_->window, &wm_info)) {
-    pd.ndt = wm_info.info.x11.display;  // Display*
 #if BX_PLATFORM_WINDOWS
     pd.nwh = wm_info.info.win.window;  // HWND
 #elif BX_PLATFORM_OSX
     pd.nwh = wm_info.info.cocoa.window;  // NSWindow*
 #elif BX_PLATFORM_LINUX
+    pd.ndt = wm_info.info.x11.display;  // Display*
     pd.nwh =
         (void*)static_cast<uintptr_t>(wm_info.info.x11.window);  // Window (XID)
 #endif

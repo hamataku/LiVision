@@ -80,10 +80,10 @@ target_link_libraries(${PROJECT_NAME}
     PRIVATE
         bx
         bgfx
-        Eigen3::Eigen
     PUBLIC
         SDL2::SDL2
         imgui.cmake
+        Eigen3::Eigen
 )
 
 # Example program

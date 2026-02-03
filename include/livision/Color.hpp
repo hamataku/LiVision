@@ -22,10 +22,10 @@ struct Color {
 
   Color(float r, float g, float b, float a = 1.0F) : base{r, g, b, a} {};
   Color(float r, float g, float b, float a, const RainbowParams& rp)
-      : base{r, g, b, a}, mode(ColorMode::Rainbow), rainbow(rp) {};
+      : base{r, g, b, a}, mode(ColorMode::Rainbow), rainbow(rp){};
   Color(float r, float g, float b, const RainbowParams& rp)
-      : base{r, g, b, 1.0F}, mode(ColorMode::Rainbow), rainbow(rp) {};
-  explicit Color(const ColorMode& m) : mode(m) {};
+      : base{r, g, b, 1.0F}, mode(ColorMode::Rainbow), rainbow(rp){};
+  explicit Color(const ColorMode& m) : mode(m){};
 };
 
 namespace color {

@@ -37,8 +37,10 @@ int main() {
   viewer.AddObject(&drone);
 
   // Sphere
-  Sphere sphere(
-      {.pos = {0.0, 4.0, 1.0}, .scale = {2.0, 2.0, 2.0}, .color = color::red});
+  Sphere sphere({.pos = {0.0, 4.0, 1.0},
+                 .scale = {2.0, 2.0, 2.0},
+                 .color = color::red,
+                 .wire_color = color::black});
   viewer.AddObject(&sphere);
 
   while (viewer.SpinOnce()) {
