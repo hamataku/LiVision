@@ -34,7 +34,6 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third-party/bgfx.cmake)
 
 # System packages
 find_package(SDL2 REQUIRED)
-find_package(glm REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 # Library target
@@ -81,7 +80,6 @@ target_link_libraries(${PROJECT_NAME}
     PRIVATE
         bx
         bgfx
-        glm::glm
         Eigen3::Eigen
     PUBLIC
         SDL2::SDL2

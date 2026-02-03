@@ -106,13 +106,13 @@ void Renderer::Submit(const MeshData& mesh_data, const Eigen::Affine3d& mtx,
   bgfx::setUniform(pimpl_->u_rainbow_params_, rparams);
 
   const Eigen::Matrix4d& eigen_mtx = mtx.matrix();
-  glm::mat4 model_mtx(1.0F);
+  float model_mtx[16];
   for (int col = 0; col < 4; ++col) {
     for (int row = 0; row < 4; ++row) {
-      model_mtx[col][row] = static_cast<float>(eigen_mtx(row, col));
+      model_mtx[(col * 4) + row] = static_cast<float>(eigen_mtx(row, col));
     }
   }
-  bgfx::setTransform(glm::value_ptr(model_mtx));
+  bgfx::setTransform(model_mtx);
 
   const auto vbh = internal::MeshDataAccess::VertexBuffer(mesh_data);
   const auto ibh = internal::MeshDataAccess::IndexBuffer(mesh_data);

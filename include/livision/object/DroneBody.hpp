@@ -10,7 +10,7 @@ class DroneBody : public Container {
  public:
   using Container::Container;
 
-  void InitImpl() final {
+  void OnInit() final {
     prop_.at(0).SetParams({.pos = {0.3, 0.3, 0.33},
                            .scale = {0.3, 0.3, 0.03},
                            .color = color::cyan});

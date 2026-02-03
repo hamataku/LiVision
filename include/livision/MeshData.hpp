@@ -1,7 +1,8 @@
 #pragma once
-#include <Eigen/Core>
 #include <memory>
 #include <vector>
+
+#include "livision/Vertex.hpp"
 
 namespace livision {
 
@@ -11,19 +12,17 @@ struct MeshDataAccess;
 
 class MeshData {
  public:
-  MeshData(std::vector<Eigen::Vector3f> vertices,
-           std::vector<uint32_t> indices);
+  MeshData(std::vector<Vertex> vertices, std::vector<uint32_t> indices);
   explicit MeshData(const std::string &stl_path);
   ~MeshData();
 
-  void Destroy();
+  void CreateBuffer();
+  void DestroyBuffer();
 
-  std::vector<Eigen::Vector3f> GetVertices();
+  std::vector<Vertex> GetVertices();
   std::vector<uint32_t> GetIndices();
 
  private:
-  void CreateBuffers(std::vector<Eigen::Vector3f> &vertices,
-                     std::vector<uint32_t> &indices);
   struct Impl;
   std::unique_ptr<Impl> pimpl_;
 

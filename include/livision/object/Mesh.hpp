@@ -14,7 +14,7 @@ class Mesh : public ObjectBase {
       : ObjectBase(std::move(params)) {
     SetFromSTL(path);
   }
-  Mesh(const std::vector<Eigen::Vector3f>& vertices,
+  Mesh(const std::vector<Vertex>& vertices,
        const std::vector<uint32_t>& indices, Params params = Params())
       : ObjectBase(std::move(params)) {
     SetMeshData(vertices, indices);
@@ -25,7 +25,7 @@ class Mesh : public ObjectBase {
   }
 
   void SetFromSTL(const std::string& path);
-  void SetMeshData(const std::vector<Eigen::Vector3f>& vertices,
+  void SetMeshData(const std::vector<Vertex>& vertices,
                    const std::vector<uint32_t>& indices);
   void SetMeshData(std::shared_ptr<MeshData> mesh_data);
 };

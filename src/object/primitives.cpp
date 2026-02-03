@@ -4,7 +4,7 @@ namespace livision {
 
 Box::Box(Params params) : ObjectBase(std::move(params)) {
   static std::shared_ptr<MeshData> mesh = std::make_shared<MeshData>(
-      std::vector<Eigen::Vector3f>{
+      std::vector<Vertex>{
           {-0.5F, 0.5F, 0.5F},
           {0.5F, 0.5F, 0.5F},
           {-0.5F, -0.5F, 0.5F},
@@ -27,7 +27,7 @@ Cone::Cone(Params params) : ObjectBase(std::move(params)) {
   constexpr float kRadius = 0.5F;
   constexpr float kHeight = 1.0F;
 
-  std::vector<Eigen::Vector3f> vertices;
+  std::vector<Vertex> vertices;
   std::vector<uint32_t> indices;
 
   // Apex at +Z/2, base center at -Z/2
@@ -73,7 +73,7 @@ Cylinder::Cylinder(Params params) : ObjectBase(std::move(params)) {
   constexpr int kPoly = 32;
   constexpr float kSize = 0.5F;
 
-  std::vector<Eigen::Vector3f> vertices;
+  std::vector<Vertex> vertices;
   std::vector<uint32_t> indices;
 
   // make top cylinder_vertices
@@ -124,7 +124,7 @@ Cylinder::Cylinder(Params params) : ObjectBase(std::move(params)) {
 
 Plane::Plane(Params params) : ObjectBase(std::move(params)) {
   static std::shared_ptr<MeshData> mesh = std::make_shared<MeshData>(
-      std::vector<Eigen::Vector3f>{
+      std::vector<Vertex>{
           {-0.5F, 0.5F, 0.0F},   // top-left
           {0.5F, 0.5F, 0.0F},    // top-right
           {-0.5F, -0.5F, 0.0F},  // bottom-left
@@ -138,17 +138,18 @@ Sphere::Sphere(Params params) : ObjectBase(std::move(params)) {
   constexpr float kRadius = 0.5F;
   constexpr int kSubdiv = 2;  // 細分化回数（0: 正二十面体）
 
-  std::vector<Eigen::Vector3f> vertices;
+  std::vector<Vertex> vertices;
   std::vector<uint32_t> indices;
 
-  auto normalize_to_radius = [](const Eigen::Vector3f& v, float r) {
-    return v.normalized() * r;
+  auto normalize_to_radius = [](const Vertex& v, float r) {
+    float len = std::sqrt((v.x * v.x) + (v.y * v.y) + (v.z * v.z));
+    return Vertex{.x = v.x * r / len, .y = v.y * r / len, .z = v.z * r / len};
   };
 
   // ----- 正二十面体の初期頂点 -----
   const float t = (1.0F + std::sqrt(5.0F)) * 0.5F;
 
-  std::vector<Eigen::Vector3f> base_vertices = {
+  std::vector<Vertex> base_vertices = {
       {-1, t, 0},  {1, t, 0},  {-1, -t, 0}, {1, -t, 0}, {0, -1, t},  {0, 1, t},
       {0, -1, -t}, {0, 1, -t}, {t, 0, -1},  {t, 0, 1},  {-t, 0, -1}, {-t, 0, 1},
   };
@@ -183,7 +184,7 @@ Sphere::Sphere(Params params) : ObjectBase(std::move(params)) {
     auto it = midpoint_cache.find(key);
     if (it != midpoint_cache.end()) return it->second;
 
-    Eigen::Vector3f mid = (vertices[i0] + vertices[i1]) * 0.5F;
+    Vertex mid = (vertices[i0] + vertices[i1]) * 0.5F;
     auto idx = static_cast<uint32_t>(vertices.size());
     vertices.emplace_back(normalize_to_radius(mid, kRadius));
 

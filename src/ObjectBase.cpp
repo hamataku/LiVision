@@ -1,21 +1,30 @@
 #include "livision/ObjectBase.hpp"
 
+#include "livision/Renderer.hpp"
+
 namespace livision {
-void ObjectBase::Draw(Renderer& renderer) {
+void ObjectBase::OnDraw(Renderer& renderer) {
   if (mesh_) renderer.Submit(*mesh_, global_mtx_, params_.color);
 }
 
 void ObjectBase::Init() {
   if (!is_initialized_) {
-    InitImpl();
+    OnInit();
   }
   is_initialized_ = true;
+}
+
+void ObjectBase::Draw(Renderer& renderer) {
+  if (mesh_) {
+    mesh_->CreateBuffer();
+  }
+  OnDraw(renderer);
 }
 
 void ObjectBase::DeInit() {
   is_initialized_ = false;
   if (mesh_) {
-    mesh_->Destroy();
+    mesh_->DestroyBuffer();
     mesh_.reset();
   }
 }

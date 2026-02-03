@@ -25,9 +25,11 @@ class ObjectBase {
 
   ~ObjectBase() { DeInit(); }
   void Init();
+  void Draw(Renderer& renderer);
   void DeInit();
-  virtual void InitImpl() {}
-  virtual void Draw(Renderer& renderer);
+
+  virtual void OnInit() {}
+  virtual void OnDraw(Renderer& renderer);
 
   ObjectBase& SetParams(const Params& params) {
     params_ = params;
