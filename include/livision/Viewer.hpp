@@ -22,6 +22,7 @@ class Viewer {
   void AddObject(ObjectBase* object);
 
  private:
+  void CameraControl();
   struct Impl;
   std::unique_ptr<Impl> pimpl_;
 };

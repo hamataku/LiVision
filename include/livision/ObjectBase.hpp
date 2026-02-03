@@ -4,7 +4,7 @@
 #include <Eigen/Geometry>
 #include <memory>
 
-#include "ColorSpec.hpp"
+#include "Color.hpp"
 #include "MeshData.hpp"
 
 namespace livision {
@@ -51,6 +51,12 @@ class ObjectBase {
     return *this;
   }
 
+  ObjectBase& SetColor(const Color& color) {
+    color_ = color;
+    return *this;
+  }
+
+  // NOLINTNEXTLINE
   bool IsVisible() const {
     if (parent_object_ && visible_) {
       // If parent object is set, visibility is determined by parent
@@ -59,10 +65,12 @@ class ObjectBase {
     return visible_;
   }
 
+  // NOLINTNEXTLINE
   void UpdateMatrix() {
     if (local_mtx_changed_) {
       // EigenではAffine3dを使って平行移動・回転・スケールを順番に合成
       Eigen::Affine3d translation = Eigen::Affine3d(Eigen::Translation3d(pos_));
+      // NOLINTNEXTLINE
       Eigen::Affine3d rotation = Eigen::Affine3d(quat_);
       Eigen::Affine3d scale = Eigen::Affine3d(Eigen::Scaling(size_));
 

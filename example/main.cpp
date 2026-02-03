@@ -2,9 +2,11 @@
 // #include "livision/marker/PointCloud.hpp"
 // #include "livision/obstacle/DroneLidarUp.hpp"
 // #include "livision/obstacle/Mesh.hpp"
-// #include "livision/obstacle/Plane.hpp"
+#include "livision/obstacle/Plane.hpp"
 // #include "livision/obstacle/WireFrame.hpp"
 // #include "livision/utils.hpp"
+
+#include <iostream>
 
 int main() {
   livision::Viewer fast_ls{{
@@ -34,9 +36,10 @@ int main() {
   //   fast_ls.AddObject(&drones[i]);
   // }
 
-  // livision::Plane plane;
-  // plane.SetSize(glm::vec2(40.0F, 40.0F)).SetColorSpec(livision::utils::white);
-  // fast_ls.AddObject(&plane);
+  livision::Plane plane;
+  plane.SetSize(Eigen::Vector3d(40.0F, 40.0F, 0.0F))
+      .SetColor(livision::color::white);
+  fast_ls.AddObject(&plane);
 
   // livision::Mesh mesh("data/bunny/bun_zipper_res3.stl");
   // mesh.SetSize(glm::dvec3(50.0, 50.0, 50.0))

@@ -9,6 +9,8 @@ namespace livision {
 
 class Renderer {
  public:
+  Renderer();
+  ~Renderer();
   void Init();
   void DeInit();
 

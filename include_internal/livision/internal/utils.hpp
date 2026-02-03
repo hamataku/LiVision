@@ -7,16 +7,6 @@
 
 namespace livision::utils {
 
-// Declare types
-
-// colors
-// NOLINTBEGIN
-// Color mode and rainbow params used by shaders
-
-// Uniforms
-
-// State
-
 // Cube
 inline bgfx::VertexBufferHandle cube_vbh = BGFX_INVALID_HANDLE;
 inline bgfx::IndexBufferHandle cube_ibh = BGFX_INVALID_HANDLE;

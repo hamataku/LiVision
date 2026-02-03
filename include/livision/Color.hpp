@@ -1,25 +1,29 @@
 #pragma once
 #include <Eigen/Core>
+#include <vector>
 
 namespace livision {
 
 struct RainbowParams {
   Eigen::Vector3f direction{1.0F, 0.0F, 0.0F};
   float delta = 1.0F;
+
+  RainbowParams() = default;
+  RainbowParams(const Eigen::Vector3f& dir, float d)
+      : direction(dir), delta(d) {}
 };
 
-// Combined color specification for objects
 struct Color {
   enum class ColorMode { Fixed = 0, Rainbow = 1 };
 
   ColorMode mode = ColorMode::Fixed;
   float base[4] = {0.0F, 0.0F, 0.0F, 1.0F};  // r, g, b, a
-  RainbowParams rainbow{};
+  RainbowParams rainbow;
 
   Color(float r, float g, float b, float a = 1.0F) : base{r, g, b, a} {};
-  Color(float r, float g, float b, float a, RainbowParams& rp)
+  Color(float r, float g, float b, float a, const RainbowParams& rp)
       : base{r, g, b, a}, mode(ColorMode::Rainbow), rainbow(rp) {};
-  Color(float r, float g, float b, RainbowParams& rp)
+  Color(float r, float g, float b, const RainbowParams& rp)
       : base{r, g, b, 1.0F}, mode(ColorMode::Rainbow), rainbow(rp) {};
 };
 
@@ -47,7 +51,8 @@ inline const Color rose{0.95F, 0.35F, 0.45F};
 inline const Color sand{0.90F, 0.80F, 0.55F};
 
 inline const Color rainbow_z{
-    RainbowParams{.direction = {0.0F, 0.0F, 1.0F}, .delta = 0.1F}};
+    1.0F, 0.0F, 0.0F, 1.0F,
+    RainbowParams(Eigen::Vector3f(0.0F, 0.0F, 1.0F), 1.0F)};
 
 inline std::vector<Color> color_palette{
     red, green, blue, yellow, cyan, magenta, orange, teal, olive, rose, sand};

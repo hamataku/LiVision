@@ -1,35 +1,33 @@
-#include "livision/utils.hpp"
+#include "livision/internal/utils.hpp"
 
 #include <bgfx/defines.h>
-
-#include <iostream>
 
 namespace livision::utils {
 void Init() {
   // common
 
-  float_vlayout.begin()
-      .add(bgfx::Attrib::Position, 1, bgfx::AttribType::Float)
-      .end();
+  // float_vlayout.begin()
+  //     .add(bgfx::Attrib::Position, 1, bgfx::AttribType::Float)
+  //     .end();
 
-  vec2_vlayout.begin()
-      .add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float)
-      .end();
+  // vec2_vlayout.begin()
+  //     .add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float)
+  //     .end();
 
-  vec3_vlayout.begin()
-      .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-      .end();
+  // vec3_vlayout.begin()
+  //     .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+  //     .end();
 
-  vec4_vlayout.begin()
-      .add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
-      .end();
+  // vec4_vlayout.begin()
+  //     .add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
+  //     .end();
 
-  mat4_vlayout.begin()
-      .add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
-      .add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
-      .add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
-      .add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
-      .end();
+  // mat4_vlayout.begin()
+  //     .add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
+  //     .add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
+  //     .add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
+  //     .add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
+  //     .end();
 
   // // cube
   // cube_vbh = bgfx::createVertexBuffer(
@@ -57,19 +55,20 @@ void Init() {
 }
 
 void DeInit() {
-  bgfx::destroy(u_color);
-  bgfx::destroy(u_color_mode);
-  bgfx::destroy(u_rainbow_params);
-  bgfx::destroy(cube_vbh);
-  bgfx::destroy(cube_ibh);
-  bgfx::destroy(plane_vbh);
-  bgfx::destroy(plane_ibh);
-  bgfx::destroy(cylinder_vbh);
-  bgfx::destroy(cylinder_ibh);
-  bgfx::destroy(sphere_vbh);
-  bgfx::destroy(sphere_ibh);
+  // bgfx::destroy(u_color);
+  // bgfx::destroy(u_color_mode);
+  // bgfx::destroy(u_rainbow_params);
+  // bgfx::destroy(cube_vbh);
+  // bgfx::destroy(cube_ibh);
+  // bgfx::destroy(plane_vbh);
+  // bgfx::destroy(plane_ibh);
+  // bgfx::destroy(cylinder_vbh);
+  // bgfx::destroy(cylinder_ibh);
+  // bgfx::destroy(sphere_vbh);
+  // bgfx::destroy(sphere_ibh);
 }
 
+/*
 void CreateSphereBuffer() {
   // 球の分割数と半径を定義
   constexpr int kLatitudeBands = 32;
@@ -236,5 +235,6 @@ void CreateConeBuffer() {
                     cone_indices.size() * sizeof(uint32_t)),
       BGFX_BUFFER_INDEX32);
 }
+ */
 
 }  // namespace livision::utils

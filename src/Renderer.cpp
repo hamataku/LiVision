@@ -5,9 +5,12 @@
 #include <bgfx/platform.h>
 #include <bx/math.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 
 #include "livision/internal/file_ops.hpp"
+#include "livision/internal/mesh_data_access.hpp"
 
 namespace livision {
 
@@ -25,6 +28,10 @@ struct Renderer::Impl {
   bgfx::UniformHandle u_color_mode_;
   bgfx::UniformHandle u_rainbow_params_;
 };
+
+Renderer::Renderer() : pimpl_(std::make_unique<Impl>()) {}
+
+Renderer::~Renderer() = default;
 
 namespace {
 inline bgfx::ShaderHandle CreateShader(const std::string& path,
@@ -77,11 +84,13 @@ void Renderer::Init() {
 
 void Renderer::DeInit() {
   bgfx::destroy(pimpl_->program_);
+  pimpl_->program_ = BGFX_INVALID_HANDLE;
   bgfx::destroy(pimpl_->point_program_);
+  pimpl_->point_program_ = BGFX_INVALID_HANDLE;
+
   bgfx::destroy(pimpl_->u_color_);
   bgfx::destroy(pimpl_->u_color_mode_);
   bgfx::destroy(pimpl_->u_rainbow_params_);
-  pimpl_->point_program_ = BGFX_INVALID_HANDLE;
 }
 
 void Renderer::Submit(const MeshData& mesh_data, const Eigen::Affine3d& mtx,
@@ -96,12 +105,20 @@ void Renderer::Submit(const MeshData& mesh_data, const Eigen::Affine3d& mtx,
   bgfx::setUniform(pimpl_->u_color_mode_, mode_val);
   bgfx::setUniform(pimpl_->u_rainbow_params_, rparams);
 
-  auto mtx = glm::mat4(global_mtx_);
-  bgfx::setTransform(glm::value_ptr(mtx));
+  const Eigen::Matrix4d& eigen_mtx = mtx.matrix();
+  glm::mat4 model_mtx(1.0F);
+  for (int col = 0; col < 4; ++col) {
+    for (int row = 0; row < 4; ++row) {
+      model_mtx[col][row] = static_cast<float>(eigen_mtx(row, col));
+    }
+  }
+  bgfx::setTransform(glm::value_ptr(model_mtx));
 
-  bgfx::setVertexBuffer(0, mesh_data.pimpl_->vbh);
-  bgfx::setIndexBuffer(utils::plane_ibh);
-  bgfx::submit(0, program);
+  const auto vbh = internal::MeshDataAccess::VertexBuffer(mesh_data);
+  const auto ibh = internal::MeshDataAccess::IndexBuffer(mesh_data);
+  bgfx::setVertexBuffer(0, vbh);
+  bgfx::setIndexBuffer(ibh);
+  bgfx::submit(0, pimpl_->program_);
 }
 
 void Renderer::PrintBackend() {
