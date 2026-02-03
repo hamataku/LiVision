@@ -3,7 +3,7 @@
 namespace livision {
 
 Box::Box(Params params) : ObjectBase(std::move(params)) {
-  static std::shared_ptr<MeshData> mesh = std::make_shared<MeshData>(
+  static std::shared_ptr<MeshBuffer> mesh = std::make_shared<MeshBuffer>(
       std::vector<Vertex>{
           {-0.5F, 0.5F, 0.5F},
           {0.5F, 0.5F, 0.5F},
@@ -18,7 +18,7 @@ Box::Box(Params params) : ObjectBase(std::move(params)) {
           0, 2, 1, 1, 2, 3, 4, 5, 6, 5, 7, 6, 0, 4, 2, 4, 6, 2,
           1, 3, 5, 5, 3, 7, 0, 1, 4, 4, 1, 5, 2, 6, 3, 6, 7, 3,
       });
-  mesh_ = mesh;
+  mesh_buf_ = mesh;
 }
 
 Cone::Cone(Params params) : ObjectBase(std::move(params)) {
@@ -64,9 +64,9 @@ Cone::Cone(Params params) : ObjectBase(std::move(params)) {
     indices.push_back(i0);
   }
 
-  static std::shared_ptr<MeshData> mesh =
-      std::make_shared<MeshData>(vertices, indices);
-  mesh_ = mesh;
+  static std::shared_ptr<MeshBuffer> mesh =
+      std::make_shared<MeshBuffer>(vertices, indices);
+  mesh_buf_ = mesh;
 }
 
 Cylinder::Cylinder(Params params) : ObjectBase(std::move(params)) {
@@ -117,13 +117,13 @@ Cylinder::Cylinder(Params params) : ObjectBase(std::move(params)) {
     indices.push_back(kPoly + ((i + 1) % kPoly));
   }
 
-  static std::shared_ptr<MeshData> mesh =
-      std::make_shared<MeshData>(vertices, indices);
-  mesh_ = mesh;
+  static std::shared_ptr<MeshBuffer> mesh =
+      std::make_shared<MeshBuffer>(vertices, indices);
+  mesh_buf_ = mesh;
 }
 
 Plane::Plane(Params params) : ObjectBase(std::move(params)) {
-  static std::shared_ptr<MeshData> mesh = std::make_shared<MeshData>(
+  static std::shared_ptr<MeshBuffer> mesh = std::make_shared<MeshBuffer>(
       std::vector<Vertex>{
           {-0.5F, 0.5F, 0.0F},   // top-left
           {0.5F, 0.5F, 0.0F},    // top-right
@@ -131,7 +131,7 @@ Plane::Plane(Params params) : ObjectBase(std::move(params)) {
           {0.5F, -0.5F, 0.0F}    // bottom-right
       },
       std::vector<uint32_t>{0, 1, 2, 1, 3, 2, 0, 2, 1, 1, 2, 3});
-  mesh_ = mesh;
+  mesh_buf_ = mesh;
 }
 
 Sphere::Sphere(Params params) : ObjectBase(std::move(params)) {
@@ -212,9 +212,9 @@ Sphere::Sphere(Params params) : ObjectBase(std::move(params)) {
     indices.swap(new_indices);
   }
 
-  static std::shared_ptr<MeshData> mesh =
-      std::make_shared<MeshData>(vertices, indices);
-  mesh_ = mesh;
+  static std::shared_ptr<MeshBuffer> mesh =
+      std::make_shared<MeshBuffer>(vertices, indices);
+  mesh_buf_ = mesh;
 }
 
 }  // namespace livision

@@ -4,7 +4,7 @@
 #include <memory>
 
 #include "Color.hpp"
-#include "MeshData.hpp"
+#include "MeshBuffer.hpp"
 
 namespace livision {
 
@@ -15,7 +15,7 @@ class Renderer {
   void Init();
   void DeInit();
 
-  void Submit(const MeshData& mesh_data, const Eigen::Affine3d& mtx,
+  void Submit(const MeshBuffer& mesh_data, const Eigen::Affine3d& mtx,
               const Color& color);
 
  private:

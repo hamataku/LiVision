@@ -4,7 +4,7 @@
 
 namespace livision {
 void ObjectBase::OnDraw(Renderer& renderer) {
-  if (mesh_) renderer.Submit(*mesh_, global_mtx_, params_.color);
+  if (mesh_buf_) renderer.Submit(*mesh_buf_, global_mtx_, params_.color);
 }
 
 void ObjectBase::Init() {
@@ -15,17 +15,17 @@ void ObjectBase::Init() {
 }
 
 void ObjectBase::Draw(Renderer& renderer) {
-  if (mesh_) {
-    mesh_->CreateBuffer();
+  if (mesh_buf_) {
+    mesh_buf_->Create();
   }
   OnDraw(renderer);
 }
 
 void ObjectBase::DeInit() {
   is_initialized_ = false;
-  if (mesh_) {
-    mesh_->DestroyBuffer();
-    mesh_.reset();
+  if (mesh_buf_) {
+    mesh_buf_->Destroy();
+    mesh_buf_.reset();
   }
 }
 

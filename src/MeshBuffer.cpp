@@ -1,4 +1,4 @@
-#include "livision/MeshData.hpp"
+#include "livision/MeshBuffer.hpp"
 
 #include <bgfx/bgfx.h>
 #include <bgfx/platform.h>
@@ -6,12 +6,12 @@
 #include <utility>
 #include <vector>
 
-#include "livision/internal/mesh_data_access.hpp"
+#include "livision/internal/mesh_buffer_access.hpp"
 #include "livision/internal/stl_parser.hpp"
 
 namespace livision {
 
-struct MeshData::Impl {
+struct MeshBuffer::Impl {
   bgfx::VertexBufferHandle vbh = BGFX_INVALID_HANDLE;
   bgfx::IndexBufferHandle ibh = BGFX_INVALID_HANDLE;
 
@@ -21,20 +21,21 @@ struct MeshData::Impl {
   bool is_created = false;
 };
 
-MeshData::MeshData(std::vector<Vertex> vertices, std::vector<uint32_t> indices)
+MeshBuffer::MeshBuffer(std::vector<Vertex> vertices,
+                       std::vector<uint32_t> indices)
     : pimpl_(std::make_unique<Impl>()) {
   pimpl_->vertices = std::move(vertices);
   pimpl_->indices = std::move(indices);
 }
 
-MeshData::MeshData(const std::string& stl_path)
+MeshBuffer::MeshBuffer(const std::string& stl_path)
     : pimpl_(std::make_unique<Impl>()) {
   stl_parser::ParseSTLFile(stl_path, pimpl_->vertices, pimpl_->indices);
 }
 
-MeshData::~MeshData() { DestroyBuffer(); }
+MeshBuffer::~MeshBuffer() { Destroy(); }
 
-void MeshData::DestroyBuffer() {
+void MeshBuffer::Destroy() {
   if (!pimpl_->is_created) {
     return;
   }
@@ -49,7 +50,7 @@ void MeshData::DestroyBuffer() {
   pimpl_->is_created = false;
 }
 
-void MeshData::CreateBuffer() {
+void MeshBuffer::Create() {
   if (pimpl_->is_created) {
     return;
   }
@@ -72,20 +73,18 @@ void MeshData::CreateBuffer() {
   pimpl_->is_created = true;
 }
 
-std::vector<Vertex> MeshData::GetVertices() { return pimpl_->vertices; }
-std::vector<uint32_t> MeshData::GetIndices() { return pimpl_->indices; }
-
 namespace internal {
 
-bgfx::VertexBufferHandle MeshDataAccess::VertexBuffer(const MeshData& mesh) {
+bgfx::VertexBufferHandle MeshBufferAccess::VertexBuffer(
+    const MeshBuffer& mesh) {
   return mesh.pimpl_->vbh;
 }
 
-bgfx::IndexBufferHandle MeshDataAccess::IndexBuffer(const MeshData& mesh) {
+bgfx::IndexBufferHandle MeshBufferAccess::IndexBuffer(const MeshBuffer& mesh) {
   return mesh.pimpl_->ibh;
 }
 
-uint32_t MeshDataAccess::IndexCount(const MeshData& mesh) {
+uint32_t MeshBufferAccess::IndexCount(const MeshBuffer& mesh) {
   return mesh.pimpl_->index_count;
 }
 

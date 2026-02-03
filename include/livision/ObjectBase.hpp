@@ -6,7 +6,7 @@
 #include <utility>
 
 #include "livision/Color.hpp"
-#include "livision/MeshData.hpp"
+#include "livision/MeshBuffer.hpp"
 #include "livision/Renderer.hpp"
 
 namespace livision {
@@ -62,6 +62,6 @@ class ObjectBase {
   bool visible_ = true;
   ObjectBase* parent_object_ = nullptr;
 
-  std::shared_ptr<MeshData> mesh_;
+  std::shared_ptr<MeshBuffer> mesh_buf_;
 };
 }  // namespace livision

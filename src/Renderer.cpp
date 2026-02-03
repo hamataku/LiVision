@@ -5,12 +5,10 @@
 #include <bgfx/platform.h>
 #include <bx/math.h>
 
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 
 #include "livision/internal/file_ops.hpp"
-#include "livision/internal/mesh_data_access.hpp"
+#include "livision/internal/mesh_buffer_access.hpp"
 
 namespace livision {
 
@@ -93,7 +91,7 @@ void Renderer::DeInit() {
   bgfx::destroy(pimpl_->u_rainbow_params_);
 }
 
-void Renderer::Submit(const MeshData& mesh_data, const Eigen::Affine3d& mtx,
+void Renderer::Submit(const MeshBuffer& mesh_data, const Eigen::Affine3d& mtx,
                       const Color& color) {
   bgfx::setState(kAlphaState);
 
@@ -114,8 +112,8 @@ void Renderer::Submit(const MeshData& mesh_data, const Eigen::Affine3d& mtx,
   }
   bgfx::setTransform(model_mtx);
 
-  const auto vbh = internal::MeshDataAccess::VertexBuffer(mesh_data);
-  const auto ibh = internal::MeshDataAccess::IndexBuffer(mesh_data);
+  const auto vbh = internal::MeshBufferAccess::VertexBuffer(mesh_data);
+  const auto ibh = internal::MeshBufferAccess::IndexBuffer(mesh_data);
   bgfx::setVertexBuffer(0, vbh);
   bgfx::setIndexBuffer(ibh);
   bgfx::submit(0, pimpl_->program_);
