@@ -2,8 +2,8 @@
 
 #include <glm/gtx/quaternion.hpp>
 
-#include "livision/obstacle/Cone.hpp"
-#include "livision/obstacle/Cylinder.hpp"
+#include "livision/object/Cone.hpp"
+#include "livision/object/Cylinder.hpp"
 
 namespace livision {
 

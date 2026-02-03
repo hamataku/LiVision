@@ -142,10 +142,10 @@ void Renderer::PrintBackend() {
     vendor = "Software Rasterizer";
   }
 
-  printf("- Vendor: %s (ID: 0x%04x)\n", vendor, caps->vendorId);
-  printf("- Device ID: 0x%04x\n", caps->deviceId);
+  printf("[LiVision] Vendor: %s (ID: 0x%04x)\n", vendor, caps->vendorId);
+  printf("[LiVision] Device ID: 0x%04x\n", caps->deviceId);
 
-  std::cout << "- Graphic Backend: "
+  std::cout << "[LiVision] Graphic Backend: "
             << bgfx::getRendererName(bgfx::getRendererType()) << std::endl;
 }
 

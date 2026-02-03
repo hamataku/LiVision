@@ -1,8 +1,8 @@
 #pragma once
 
 #include "livision/ObjectBase.hpp"
-#include "livision/obstacle/Cylinder.hpp"
-#include "livision/obstacle/Sphere.hpp"
+#include "livision/object/Cylinder.hpp"
+#include "livision/object/Sphere.hpp"
 
 namespace livision {
 

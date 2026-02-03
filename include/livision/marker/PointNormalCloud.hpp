@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "livision/ObjectBase.hpp"
-#include "livision/obstacle/Box.hpp"
+#include "livision/object/Box.hpp"
 
 namespace livision {
 

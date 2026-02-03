@@ -1,9 +1,10 @@
 #pragma once
 
+#include <Eigen/Geometry>
 #include <memory>
 
+#include "Color.hpp"
 #include "MeshData.hpp"
-#include "ObjectBase.hpp"
 
 namespace livision {
 

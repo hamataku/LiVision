@@ -133,8 +133,10 @@ Viewer::Viewer(const ViewerConfig& config) : pimpl_(std::make_unique<Impl>()) {
 
 Viewer::~Viewer() {
   // Cleanup
+  for (auto* object : pimpl_->objects) {
+    object->DeInit();
+  }
   pimpl_->renderer.DeInit();
-  // utils::DeInit();
 
   ImGui_ImplSDL2_Shutdown();
   ImGui_Implbgfx_Shutdown();

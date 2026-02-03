@@ -1,19 +1,16 @@
 #pragma once
 
-#include <cstdlib>
+#include <Eigen/Core>
 #include <fstream>
-#include <glm/glm.hpp>
 #include <iostream>
 #include <unordered_map>
-#include <utility>
-#include <vector>
 
 // Vec3用のハッシュ関数
 namespace std {
 template <>
-struct hash<glm::vec3> {
-  size_t operator()(const glm::vec3& v) const {
-    return hash<float>()(v.x) ^ hash<float>()(v.y) ^ hash<float>()(v.z);
+struct hash<Eigen::Vector3f> {
+  size_t operator()(const Eigen::Vector3f& v) const {
+    return hash<float>()(v.x()) ^ hash<float>()(v.y()) ^ hash<float>()(v.z());
   }
 };
 }  // namespace std
@@ -22,7 +19,7 @@ namespace livision::stl_parser {
 
 // 頂点バッファとインデックスバッファを構築する関数
 inline void ParseSTLFile(const std::string& filename,
-                         std::vector<glm::vec3>& vertices,
+                         std::vector<Eigen::Vector3f>& vertices,
                          std::vector<uint32_t>& indices) {
   std::ifstream file(filename, std::ios::binary);
   if (!file) {
@@ -35,7 +32,7 @@ inline void ParseSTLFile(const std::string& filename,
   uint32_t num_triangles;
   file.read(reinterpret_cast<char*>(&num_triangles), sizeof(num_triangles));
 
-  std::unordered_map<glm::vec3, uint32_t> unique_vertices;
+  std::unordered_map<Eigen::Vector3f, uint32_t> unique_vertices;
   vertices.clear();
   indices.clear();
 
@@ -44,8 +41,8 @@ inline void ParseSTLFile(const std::string& filename,
     file.read(reinterpret_cast<char*>(normal), sizeof(normal));
 
     for (int j = 0; j < 3; j++) {
-      glm::vec3 triangle;
-      file.read(reinterpret_cast<char*>(&triangle), sizeof(glm::vec3));
+      Eigen::Vector3f triangle;
+      file.read(reinterpret_cast<char*>(&triangle), sizeof(float) * 3);
       // 頂点が既に登録されているか確認
       auto it = unique_vertices.find(triangle);
       if (it == unique_vertices.end()) {
@@ -64,7 +61,7 @@ inline void ParseSTLFile(const std::string& filename,
         sizeof(attribute_byte_count));  // 2バイトのアトリビュートをスキップ
   }
 
-  std::cout << "STLParser: " << filename << ", vertices: " << vertices.size()
+  std::cout << "[LiVision] " << filename << ", vertices: " << vertices.size()
             << ", meshes: " << indices.size() / 3 << std::endl;
 }
 }  // namespace livision::stl_parser

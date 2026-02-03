@@ -1,12 +1,9 @@
+#include "livision/Color.hpp"
+#include "livision/MeshData.hpp"
 #include "livision/Viewer.hpp"
-// #include "livision/marker/PointCloud.hpp"
-// #include "livision/obstacle/DroneLidarUp.hpp"
-// #include "livision/obstacle/Mesh.hpp"
-#include "livision/obstacle/Plane.hpp"
-// #include "livision/obstacle/WireFrame.hpp"
-// #include "livision/utils.hpp"
-
-#include <iostream>
+#include "livision/object/DroneBody.hpp"
+#include "livision/object/Mesh.hpp"
+#include "livision/object/primitives.hpp"
 
 int main() {
   livision::Viewer fast_ls{{
@@ -17,54 +14,38 @@ int main() {
       .fps = true,        // Target frames per second
   }};
 
-  // constexpr int kNumDrones = 5;
-
-  // std::array<livision::PointCloud<>, kNumDrones> point_clouds;
-  // std::array<livision::DroneLidarUp, kNumDrones> drones;
-  // std::array<double, kNumDrones> container_thetas;
-
-  // for (int i = 0; i < kNumDrones; ++i) {
-  //   container_thetas[i] = (2.0 * M_PI) / static_cast<double>(kNumDrones) * i;
-  //   drones[i]
-  //       .SetPos(glm::dvec3(std::cos(container_thetas[i]) * 6.0,
-  //                          std::sin(container_thetas[i]) * 6.0, 2.0))
-  //       .SetRadRotation(
-  //           glm::dvec3(0.0, container_thetas[i] * 2, container_thetas[i]));
-  //   point_clouds[i].SetPointSize(0.5F).SetColorSpec(
-  //       livision::utils::color_palette[i % 10]);
-  //   drones[i].lidar_.AddObject(&point_clouds[i]);
-  //   fast_ls.AddObject(&drones[i]);
-  // }
-
-  livision::Plane plane;
-  plane.SetSize(Eigen::Vector3d(40.0F, 40.0F, 0.0F))
-      .SetColor(livision::color::white);
+  // Plane
+  livision::Plane plane(
+      {.scale = {40.0, 40.0, 0.0}, .color = livision::color::light_gray});
   fast_ls.AddObject(&plane);
 
-  // livision::Mesh mesh("data/bunny/bun_zipper_res3.stl");
-  // mesh.SetSize(glm::dvec3(50.0, 50.0, 50.0))
-  //     .SetPos(glm::dvec3(0.0, 0.0, -2.0))
-  //     .SetDegRotation(glm::dvec3(90.0, 0.0, 0.0))
-  //     .SetColorSpec(livision::utils::rainbow_z);
-  // fast_ls.AddObject(&mesh);
+  // Mesh bunny
+  auto bunny_res3 =
+      std::make_shared<livision::MeshData>("data/bunny/bun_zipper_res3.stl");
+  auto bunny_res2 =
+      std::make_shared<livision::MeshData>("data/bunny/bun_zipper_res2.stl");
 
-  // livision::WireFrame wireframe("data/bunny/bun_zipper_res3.stl");
-  // wireframe.SetSize(glm::dvec3(50.0, 50.0, 50.0))
-  //     .SetPos(glm::dvec3(0.0, 0.0, -2.0))
-  //     .SetDegRotation(glm::dvec3(90.0, 0.0, 0.0))
-  //     .SetColorSpec(livision::utils::black);
-  // fast_ls.AddObject(&wireframe);
+  livision::Mesh bunny(bunny_res3, {.pos = {0.0, 0.0, -2.0},
+                                    .scale = {50.0, 50.0, 50.0},
+                                    .color = livision::color::rainbow_z});
+  fast_ls.AddObject(&bunny.SetDegRotation({90.0, 0.0, 0.0}));
+
+  // Drone body
+  float theta = 0.0F;
+  livision::DroneBody drone;
+  fast_ls.AddObject(&drone);
 
   while (fast_ls.SpinOnce()) {
-    // for (int i = 0; i < kNumDrones; ++i) {
-    //   drones[i]
-    //       .SetPos(glm::dvec3(std::cos(container_thetas[i]) * 6.0,
-    //                          std::sin(container_thetas[i]) * 6.0, 2.0))
-    //       .SetRadRotation(
-    //           glm::dvec3(0.0, container_thetas[i] * 2, container_thetas[i]));
-    //   container_thetas[i] += 0.01F;
-    //   point_clouds[i].SetPoints(drones[i].lidar_.GetPointClouds());
-    // }
+    static int counter = 0;
+    counter++;
+    if (counter % 100 == 0) {
+      bunny.SetMeshData(bunny_res2);
+    } else if (counter % 100 == 50) {
+      bunny.SetMeshData(bunny_res3);
+    }
+
+    theta += 0.01F;
+    drone.SetPos(std::cos(theta) * 6.0, std::sin(theta) * 6.0, 2.0);
   }
 
   return 0;

@@ -5,6 +5,8 @@
 namespace livision {
 class Container : public ObjectBase {
  public:
+  using ObjectBase::ObjectBase;
+
   Container& AddObject(ObjectBase* object) {
     objects_.push_back(object);
     object->RegisterParentObject(this);
