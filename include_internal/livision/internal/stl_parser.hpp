@@ -63,7 +63,7 @@ inline void ParseSTLFile(const std::string& filename,
         sizeof(attribute_byte_count));  // 2バイトのアトリビュートをスキップ
   }
 
-  std::cout << "[LiVision] " << filename << ", vertices: " << vertices.size()
-            << ", meshes: " << indices.size() / 3 << std::endl;
+  std::cout << "[LiVision] STL: " << filename << ", " << indices.size() / 3
+            << " meshes" << std::endl;
 }
 }  // namespace livision::stl_parser

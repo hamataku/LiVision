@@ -34,6 +34,9 @@ struct Viewer::Impl {
   bool initialized = false;
   bool quit = false;
 
+  int frame_count = 0;
+  uint32_t last_fps_time = 0;
+
   float scroll_delta = 0.0F;  // スクロールの移動量
   int prev_mouse_x = 0;
   int prev_mouse_y = 0;
@@ -127,12 +130,9 @@ Viewer::Viewer(const ViewerConfig& config) : pimpl_(std::make_unique<Impl>()) {
   }
 
   pimpl_->renderer.Init();
-
-  // utils::Init();
 }
 
 Viewer::~Viewer() {
-  // Cleanup
   for (auto* object : pimpl_->objects) {
     object->DeInit();
   }
@@ -147,13 +147,13 @@ Viewer::~Viewer() {
 
   SDL_DestroyWindow(pimpl_->window);
   SDL_Quit();
-  std::cout << "### Viewer Exit ###" << std::endl;
+  std::cout << "[LiVision] Viewer Exit" << std::endl;
 }
 
 bool Viewer::SpinOnce() {
   if (!pimpl_->initialized) {
-    // // FPS計測開始時間の初期化
-    // last_fps_time_ = SDL_GetTicks();
+    // FPS計測開始時間の初期化
+    pimpl_->last_fps_time = SDL_GetTicks();
     pimpl_->initialized = true;
   }
   for (auto* object : pimpl_->objects) {
@@ -217,18 +217,27 @@ bool Viewer::SpinOnce() {
 
   bgfx::frame();
 
-  // フレームカウントを増やす
-  // frame_count_++;
+  // Increment frame count for FPS calculation
+  pimpl_->frame_count++;
 
-  // // 1秒ごとにFPSを表示
-  // uint64_t current_time = SDL_GetTicks();
-  // if (current_time - last_fps_time_ >= 1000) {
-  //   PrintFPS();
-  //   frame_count_ = 0;
-  //   last_fps_time_ = current_time;
-  // }
+  // 1秒ごとにFPSを表示
+  uint32_t current_time = SDL_GetTicks();
+  if (current_time - pimpl_->last_fps_time >= 1000) {
+    PrintFPS();
+    pimpl_->frame_count = 0;
+    pimpl_->last_fps_time = current_time;
+  }
 
   return !pimpl_->quit;
+}
+
+void Viewer::PrintFPS() {
+  float elapsed_seconds = (SDL_GetTicks() - pimpl_->last_fps_time) / 1000.0F;
+
+  if (pimpl_->config.fps && elapsed_seconds > 0) {
+    float current_fps = pimpl_->frame_count / elapsed_seconds;
+    std::cout << "[LiVision] FPS: " << current_fps << std::endl;
+  }
 }
 
 void Viewer::CameraControl() {
