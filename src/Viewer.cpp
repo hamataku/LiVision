@@ -162,7 +162,7 @@ bool Viewer::SpinOnce() {
 
   if (!pimpl_->config.headless) {
     for (auto* object : pimpl_->objects) {
-      if (object->IsVisible()) object->Draw(pimpl_->renderer);
+      if (object->IsVisible()) object->OnDraw(pimpl_->renderer);
     }
 
     // Camera control

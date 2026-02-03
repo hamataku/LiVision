@@ -1,10 +1,6 @@
 #include "livision/MeshBuffer.hpp"
 
-#include <bgfx/bgfx.h>
-#include <bgfx/platform.h>
-
-#include <utility>
-#include <vector>
+#include <unordered_set>
 
 #include "livision/internal/mesh_buffer_access.hpp"
 #include "livision/internal/stl_parser.hpp"
@@ -14,11 +10,10 @@ namespace livision {
 struct MeshBuffer::Impl {
   bgfx::VertexBufferHandle vbh = BGFX_INVALID_HANDLE;
   bgfx::IndexBufferHandle ibh = BGFX_INVALID_HANDLE;
+  bgfx::IndexBufferHandle wire_ibh = BGFX_INVALID_HANDLE;
 
   std::vector<Vertex> vertices;
   std::vector<uint32_t> indices;
-  uint32_t index_count = 0;
-  bool is_created = false;
 };
 
 MeshBuffer::MeshBuffer(std::vector<Vertex> vertices,
@@ -36,9 +31,6 @@ MeshBuffer::MeshBuffer(const std::string& stl_path)
 MeshBuffer::~MeshBuffer() { Destroy(); }
 
 void MeshBuffer::Destroy() {
-  if (!pimpl_->is_created) {
-    return;
-  }
   if (bgfx::isValid(pimpl_->vbh)) {
     bgfx::destroy(pimpl_->vbh);
     pimpl_->vbh = BGFX_INVALID_HANDLE;
@@ -47,11 +39,14 @@ void MeshBuffer::Destroy() {
     bgfx::destroy(pimpl_->ibh);
     pimpl_->ibh = BGFX_INVALID_HANDLE;
   }
-  pimpl_->is_created = false;
+  if (bgfx::isValid(pimpl_->wire_ibh)) {
+    bgfx::destroy(pimpl_->wire_ibh);
+    pimpl_->wire_ibh = BGFX_INVALID_HANDLE;
+  }
 }
 
-void MeshBuffer::Create() {
-  if (pimpl_->is_created) {
+void MeshBuffer::CreateVertex() {
+  if (bgfx::isValid(pimpl_->vbh)) {
     return;
   }
   bgfx::VertexLayout vec3_vlayout;
@@ -63,29 +58,71 @@ void MeshBuffer::Create() {
       bgfx::makeRef(pimpl_->vertices.data(),
                     pimpl_->vertices.size() * sizeof(Vertex)),
       vec3_vlayout);
+}
+
+void MeshBuffer::CreateIndex() {
+  if (bgfx::isValid(pimpl_->ibh)) {
+    return;
+  }
 
   pimpl_->ibh = bgfx::createIndexBuffer(
       bgfx::makeRef(pimpl_->indices.data(),
                     pimpl_->indices.size() * sizeof(uint32_t)),
       BGFX_BUFFER_INDEX32);
+}
 
-  pimpl_->index_count = static_cast<uint32_t>(pimpl_->indices.size());
-  pimpl_->is_created = true;
+void MeshBuffer::CreateWireIndex() {
+  if (bgfx::isValid(pimpl_->wire_ibh)) {
+    return;
+  }
+
+  // Build wireframe index buffer (unique edges)
+  std::vector<uint32_t> line_indices;
+  line_indices.reserve(pimpl_->indices.size() * 2);
+  std::unordered_set<uint64_t> seen_edges;
+  seen_edges.reserve(pimpl_->indices.size());
+
+  auto add_edge = [&](uint32_t a, uint32_t b) {
+    if (a == b) return;
+    uint32_t lo = (a < b) ? a : b;
+    uint32_t hi = (a < b) ? b : a;
+    uint64_t key = (static_cast<uint64_t>(lo) << 32) | hi;
+    if (seen_edges.insert(key).second) {
+      line_indices.push_back(lo);
+      line_indices.push_back(hi);
+    }
+  };
+
+  for (size_t i = 0; i + 2 < pimpl_->indices.size(); i += 3) {
+    uint32_t i0 = pimpl_->indices[i];
+    uint32_t i1 = pimpl_->indices[i + 1];
+    uint32_t i2 = pimpl_->indices[i + 2];
+    add_edge(i0, i1);
+    add_edge(i1, i2);
+    add_edge(i2, i0);
+  }
+
+  pimpl_->wire_ibh = bgfx::createIndexBuffer(
+      bgfx::makeRef(line_indices.data(),
+                    line_indices.size() * sizeof(uint32_t)),
+      BGFX_BUFFER_INDEX32);
 }
 
 namespace internal {
 
-bgfx::VertexBufferHandle MeshBufferAccess::VertexBuffer(
-    const MeshBuffer& mesh) {
+bgfx::VertexBufferHandle MeshBufferAccess::VertexBuffer(MeshBuffer& mesh) {
+  mesh.CreateVertex();
   return mesh.pimpl_->vbh;
 }
 
-bgfx::IndexBufferHandle MeshBufferAccess::IndexBuffer(const MeshBuffer& mesh) {
+bgfx::IndexBufferHandle MeshBufferAccess::IndexBuffer(MeshBuffer& mesh) {
+  mesh.CreateIndex();
   return mesh.pimpl_->ibh;
 }
 
-uint32_t MeshBufferAccess::IndexCount(const MeshBuffer& mesh) {
-  return mesh.pimpl_->index_count;
+bgfx::IndexBufferHandle MeshBufferAccess::WireIndexBuffer(MeshBuffer& mesh) {
+  mesh.CreateWireIndex();
+  return mesh.pimpl_->wire_ibh;
 }
 
 }  // namespace internal

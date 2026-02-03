@@ -15,8 +15,8 @@ class Renderer {
   void Init();
   void DeInit();
 
-  void Submit(const MeshBuffer& mesh_data, const Eigen::Affine3d& mtx,
-              const Color& color);
+  void Submit(MeshBuffer& mesh_buffer, const Eigen::Affine3d& mtx,
+              const Color& color, const Color& wire_color);
 
  private:
   static void PrintBackend();

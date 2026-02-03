@@ -4,7 +4,8 @@
 
 namespace livision {
 void ObjectBase::OnDraw(Renderer& renderer) {
-  if (mesh_buf_) renderer.Submit(*mesh_buf_, global_mtx_, params_.color);
+  if (mesh_buf_)
+    renderer.Submit(*mesh_buf_, global_mtx_, params_.color, params_.wire_color);
 }
 
 void ObjectBase::Init() {
@@ -12,13 +13,6 @@ void ObjectBase::Init() {
     OnInit();
   }
   is_initialized_ = true;
-}
-
-void ObjectBase::Draw(Renderer& renderer) {
-  if (mesh_buf_) {
-    mesh_buf_->Create();
-  }
-  OnDraw(renderer);
 }
 
 void ObjectBase::DeInit() {
@@ -62,12 +56,12 @@ ObjectBase& ObjectBase::SetDegRotation(const Eigen::Vector3d& euler_deg) {
   Eigen::Quaterniond q = yaw * pitch * roll;
   return SetQuatRotation(q);
 }
-ObjectBase& ObjectBase::SetVisible(bool visible) {
-  visible_ = visible;
-  return *this;
-}
 ObjectBase& ObjectBase::SetColor(const Color& color) {
   params_.color = color;
+  return *this;
+}
+ObjectBase& ObjectBase::SetWireColor(const Color& color) {
+  params_.wire_color = color;
   return *this;
 }
 

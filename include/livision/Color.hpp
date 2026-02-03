@@ -14,7 +14,7 @@ struct RainbowParams {
 };
 
 struct Color {
-  enum class ColorMode { Fixed = 0, Rainbow = 1 };
+  enum class ColorMode { Fixed = 0, Rainbow = 1, InVisible = 2 };
 
   ColorMode mode = ColorMode::Fixed;
   float base[4] = {0.0F, 0.0F, 0.0F, 1.0F};  // r, g, b, a
@@ -25,9 +25,11 @@ struct Color {
       : base{r, g, b, a}, mode(ColorMode::Rainbow), rainbow(rp) {};
   Color(float r, float g, float b, const RainbowParams& rp)
       : base{r, g, b, 1.0F}, mode(ColorMode::Rainbow), rainbow(rp) {};
+  explicit Color(const ColorMode& m) : mode(m) {};
 };
 
 namespace color {
+inline const Color invisible{Color::ColorMode::InVisible};
 inline const Color white{1.0F, 1.0F, 1.0F};
 inline const Color black{0.0F, 0.0F, 0.0F};
 

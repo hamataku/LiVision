@@ -6,7 +6,7 @@
 #include "livision/object/primitives.hpp"
 
 namespace livision {
-class DroneBody : public Container {
+class Drone : public Container {
  public:
   using Container::Container;
 

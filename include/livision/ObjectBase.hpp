@@ -18,6 +18,7 @@ class ObjectBase {
     Eigen::Vector3d scale = Eigen::Vector3d::Ones();
     Eigen::Quaterniond quat = Eigen::Quaterniond::Identity();
     Color color = color::white;
+    Color wire_color = color::invisible;
   };
 
   ObjectBase() = default;
@@ -25,7 +26,6 @@ class ObjectBase {
 
   ~ObjectBase() { DeInit(); }
   void Init();
-  void Draw(Renderer& renderer);
   void DeInit();
 
   virtual void OnInit() {}
@@ -44,6 +44,7 @@ class ObjectBase {
   ObjectBase& SetDegRotation(const Eigen::Vector3d& euler_deg);
   ObjectBase& SetVisible(bool visible);
   ObjectBase& SetColor(const Color& color);
+  ObjectBase& SetWireColor(const Color& color);
 
   bool IsVisible() const;
   Eigen::Vector3d GetGlobalPos();

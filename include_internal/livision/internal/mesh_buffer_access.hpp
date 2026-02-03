@@ -7,9 +7,9 @@
 namespace livision::internal {
 
 struct MeshBufferAccess {
-  static bgfx::VertexBufferHandle VertexBuffer(const MeshBuffer& mesh);
-  static bgfx::IndexBufferHandle IndexBuffer(const MeshBuffer& mesh);
-  static uint32_t IndexCount(const MeshBuffer& mesh);
+  static bgfx::VertexBufferHandle VertexBuffer(MeshBuffer& mesh);
+  static bgfx::IndexBufferHandle IndexBuffer(MeshBuffer& mesh);
+  static bgfx::IndexBufferHandle WireIndexBuffer(MeshBuffer& mesh);
 };
 
 }  // namespace livision::internal

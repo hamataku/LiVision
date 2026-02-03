@@ -1,7 +1,7 @@
 #include "livision/Color.hpp"
 #include "livision/MeshBuffer.hpp"
 #include "livision/Viewer.hpp"
-#include "livision/object/DroneBody.hpp"
+#include "livision/object/Drone.hpp"
 #include "livision/object/Mesh.hpp"
 #include "livision/object/primitives.hpp"
 
@@ -27,12 +27,13 @@ int main() {
 
   Mesh bunny(bunny_res3, {.pos = {0.0, 0.0, -2.0},
                           .scale = {50.0, 50.0, 50.0},
-                          .color = color::rainbow_z});
+                          .color = color::rainbow_z,
+                          .wire_color = color::black});
   viewer.AddObject(&bunny.SetDegRotation({90.0, 0.0, 0.0}));
 
-  // Drone body
+  // Drone
   float theta = 0.0F;
-  DroneBody drone;
+  Drone drone;
   viewer.AddObject(&drone);
 
   // Sphere

@@ -16,7 +16,10 @@ class MeshBuffer {
   explicit MeshBuffer(const std::string &stl_path);
   ~MeshBuffer();
 
-  void Create();
+  void CreateVertex();
+  void CreateIndex();
+  void CreateWireIndex();
+
   void Destroy();
 
  private:
