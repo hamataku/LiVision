@@ -1,5 +1,5 @@
 #pragma once
-#include <SDL3/SDL_events.h>
+#include <SDL2/SDL_events.h>
 #include <bgfx/bgfx.h>
 #include <bx/math.h>
 
@@ -53,8 +53,8 @@ class LiVision {
   static constexpr float kFixedDistance = 0.1F;
 
   float scroll_delta_ = 0.0F;  // スクロールの移動量
-  float prev_mouse_x_ = 0;
-  float prev_mouse_y_ = 0;
+  int prev_mouse_x_ = 0;
+  int prev_mouse_y_ = 0;
 
   bool headless_ = false;
   bool vsync_ = true;

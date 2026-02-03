@@ -1,6 +1,9 @@
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_events.h>
-#include <SDL3/SDL_mouse.h>
+#include "livision/LiVision.hpp"
+
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_events.h>
+#include <SDL2/SDL_mouse.h>
+#include <SDL_syswm.h>
 #include <bgfx/bgfx.h>
 #include <bgfx/defines.h>
 #include <bgfx/platform.h>
@@ -10,11 +13,10 @@
 #include <iostream>
 
 #include "bgfx-imgui/imgui_impl_bgfx.h"
-#include "imgui.cmake/imgui/backends/imgui_impl_sdl3.h"
+#include "imgui.cmake/imgui/backends/imgui_impl_sdl2.h"
 #include "imgui.h"
 #include "implot/implot.h"
 #include "livision/Container.hpp"
-#include "livision/LiVision.hpp"
 #include "livision/sim/LidarSim.hpp"
 #include "livision/utils.hpp"
 
@@ -30,17 +32,18 @@ LiVision::LiVision(const LiVisionConfig& config)
     height_ = 1;
   }
 
-  if (!SDL_Init(SDL_INIT_VIDEO)) {
+  if (SDL_Init(SDL_INIT_VIDEO) != 0) {
     printf("SDL could not initialize. SDL_Error: %s\n", SDL_GetError());
     std::exit(EXIT_FAILURE);
   }
 
   if (headless_) {
-    window_ = SDL_CreateWindow("Main view", width_, height_,
-                               SDL_WINDOW_HIDDEN | SDL_WINDOW_OCCLUDED);
+    window_ = SDL_CreateWindow("Main view", SDL_WINDOWPOS_UNDEFINED,
+                               SDL_WINDOWPOS_UNDEFINED, width_, height_,
+                               SDL_WINDOW_HIDDEN);
   } else {
-    window_ =
-        SDL_CreateWindow("Main view", width_, height_, SDL_WINDOW_OCCLUDED);
+    window_ = SDL_CreateWindow("Main view", SDL_WINDOWPOS_UNDEFINED,
+                               SDL_WINDOWPOS_UNDEFINED, width_, height_, 0);
   }
 
   if (window_ == nullptr) {
@@ -50,23 +53,19 @@ LiVision::LiVision(const LiVisionConfig& config)
 
   bgfx::renderFrame();  // single threaded mode
   bgfx::PlatformData pd{};
+  SDL_SysWMinfo wm_info;
+  SDL_VERSION(&wm_info.version);
+  if (SDL_GetWindowWMInfo(window_, &wm_info)) {
+    pd.ndt = wm_info.info.x11.display;  // Display*
 #if BX_PLATFORM_WINDOWS
-  pd.nwh = SDL_GetPointerProperty(SDL_GetWindowProperties(window_),
-                                  SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr);
+    pd.nwh = wm_info.info.win.window;  // HWND
 #elif BX_PLATFORM_OSX
-  pd.nwh =
-      SDL_GetPointerProperty(SDL_GetWindowProperties(window_),
-                             SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, nullptr);
+    pd.nwh = wm_info.info.cocoa.window;  // NSWindow*
 #elif BX_PLATFORM_LINUX
-  if (SDL_strcmp(SDL_GetCurrentVideoDriver(), "x11") == 0) {
-    pd.ndt =
-        SDL_GetPointerProperty(SDL_GetWindowProperties(window_),
-                               SDL_PROP_WINDOW_X11_DISPLAY_POINTER, nullptr);
-    pd.nwh = (void*)static_cast<uintptr_t>(
-        SDL_GetNumberProperty(SDL_GetWindowProperties(window_),
-                              SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0));
-  }
+    pd.nwh =
+        (void*)static_cast<uintptr_t>(wm_info.info.x11.window);  // Window (XID)
 #endif
+  }
 
   bgfx::Init bgfx_init;
   bgfx_init.type = bgfx::RendererType::Count;  // auto choose renderer
@@ -89,11 +88,11 @@ LiVision::LiVision(const LiVisionConfig& config)
 
   ImGui_Implbgfx_Init(255);
 #if BX_PLATFORM_WINDOWS
-  ImGui_ImplSDL3_InitForD3D(window_);
+  ImGui_ImplSDL2_InitForD3D(window_);
 #elif BX_PLATFORM_OSX
-  ImGui_ImplSDL3_InitForMetal(window_);
+  ImGui_ImplSDL2_InitForMetal(window_);
 #elif BX_PLATFORM_LINUX
-  ImGui_ImplSDL3_InitForVulkan(window_);
+  ImGui_ImplSDL2_InitForVulkan(window_);
 #endif
 
   const bgfx::Caps* caps = bgfx::getCaps();
@@ -106,17 +105,25 @@ LiVision::LiVision(const LiVisionConfig& config)
     std::exit(EXIT_FAILURE);
   }
 
-  const std::string shader_root = "shader/build/";
-  bgfx::ShaderHandle vsh =
-      utils::CreateShader(shader_root + "v_simple.bin", "vshader");
-  bgfx::ShaderHandle fsh =
-      utils::CreateShader(shader_root + "f_simple.bin", "fshader");
+  const std::string shader_root = "shader/bin/";
+#if BX_PLATFORM_WINDOWS
+  const std::string plt_name = "win";
+#elif BX_PLATFORM_OSX
+  const std::string plt_name = "mac";
+#elif BX_PLATFORM_LINUX
+  const std::string plt_name = "linux";
+#endif
+
+  bgfx::ShaderHandle vsh = utils::CreateShader(
+      shader_root + "v_simple_" + plt_name + ".bin", "vshader");
+  bgfx::ShaderHandle fsh = utils::CreateShader(
+      shader_root + "f_simple_" + plt_name + ".bin", "fshader");
   program_ = bgfx::createProgram(vsh, fsh, true);
 
-  bgfx::ShaderHandle vph =
-      utils::CreateShader(shader_root + "v_points.bin", "vshader_points");
-  bgfx::ShaderHandle fph =
-      utils::CreateShader(shader_root + "f_points.bin", "fshader_points");
+  bgfx::ShaderHandle vph = utils::CreateShader(
+      shader_root + "v_points_" + plt_name + ".bin", "vshader_points");
+  bgfx::ShaderHandle fph = utils::CreateShader(
+      shader_root + "f_points_" + plt_name + ".bin", "fshader_points");
   if (bgfx::isValid(vph) && bgfx::isValid(fph)) {
     utils::point_program = bgfx::createProgram(vph, fph, true);
   }
@@ -135,7 +142,7 @@ LiVision::~LiVision() {
   }
   lidar_sim.Destroy();
 
-  ImGui_ImplSDL3_Shutdown();
+  ImGui_ImplSDL2_Shutdown();
   ImGui_Implbgfx_Shutdown();
 
   ImPlot::DestroyContext();
@@ -154,8 +161,8 @@ void LiVision::CameraControl() {
     return;
   }
 
-  float mouse_x;
-  float mouse_y;
+  int mouse_x;
+  int mouse_y;
   const uint32_t buttons = SDL_GetMouseState(&mouse_x, &mouse_y);
 
   float delta_x = mouse_x - prev_mouse_x_;
@@ -231,11 +238,11 @@ bool LiVision::SpinOnce() {
     SDL_Event event = {};
     scroll_delta_ = 0.0F;
     while (SDL_PollEvent(&event)) {
-      ImGui_ImplSDL3_ProcessEvent(&event);
-      if (event.type == SDL_EVENT_QUIT) {
+      ImGui_ImplSDL2_ProcessEvent(&event);
+      if (event.type == SDL_QUIT) {
         quit_ = true;
       }
-      if (event.type == SDL_EVENT_MOUSE_WHEEL) {
+      if (event.type == SDL_MOUSEWHEEL) {
         scroll_delta_ = event.wheel.y;
       }
       // scene_->EventHandler(event);
@@ -243,7 +250,7 @@ bool LiVision::SpinOnce() {
 
     // Render ImGui
     ImGui_Implbgfx_NewFrame();
-    ImGui_ImplSDL3_NewFrame();
+    ImGui_ImplSDL2_NewFrame();
 
     ImGui::NewFrame();
 
@@ -260,8 +267,8 @@ bool LiVision::SpinOnce() {
     // Headless Event handling(Catch Ctrl+C)
     SDL_Event event = {};
     while (SDL_PollEvent(&event)) {
-      ImGui_ImplSDL3_ProcessEvent(&event);
-      if (event.type == SDL_EVENT_QUIT) {
+      ImGui_ImplSDL2_ProcessEvent(&event);
+      if (event.type == SDL_QUIT) {
         quit_ = true;
       }
     }

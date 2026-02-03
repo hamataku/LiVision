@@ -56,10 +56,18 @@ void LidarSim::Init() {
   mtx_randoms_.resize(lidar_sensors_.size());
   lidar_ranges_.resize(lidar_sensors_.size());
 
-  const std::string shader_root = "shader/build/";
+  const std::string shader_root = "shader/bin/";
+#if BX_PLATFORM_WINDOWS
+  const std::string plt_name = "win";
+#elif BX_PLATFORM_OSX
+  const std::string plt_name = "mac";
+#elif BX_PLATFORM_LINUX
+  const std::string plt_name = "linux";
+#endif
 
   std::string shader;
-  if (!file_ops::ReadFile(shader_root + "compute_ray_cast.bin", shader)) {
+  if (!file_ops::ReadFile(shader_root + "compute_ray_cast_" + plt_name + ".bin",
+                          shader)) {
     std::cout << "Could not find compute shader" << std::endl;
     return;
   }

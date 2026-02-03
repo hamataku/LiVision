@@ -15,7 +15,7 @@ cmake .. -GNinja -DBGFX_BUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Release
 ninja
 sudo ninja install
 ```
-- SDL3
+- SDL2
     - included
 - imgui.cmake
     - included
