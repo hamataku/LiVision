@@ -75,11 +75,11 @@ std::vector<std::string> CollectShaderSearchPaths(
   paths.emplace_back(LIVISION_SHADER_SOURCE_DIR);
 #endif
 
+  paths.emplace_back("shader/bin");
+
 #ifdef LIVISION_SHADER_INSTALL_DIR
   paths.emplace_back(LIVISION_SHADER_INSTALL_DIR);
 #endif
-
-  paths.emplace_back("shader/bin");
   return paths;
 }
 
@@ -92,6 +92,7 @@ bgfx::ShaderHandle CreateShaderFromPaths(
     path += "/";
     path += file_name;
     if (internal::file_ops::ReadFile(path, shader)) {
+      std::cout << "[LiVision] Loaded shader: " << path << std::endl;
       const bgfx::Memory* mem = bgfx::copy(shader.data(), shader.size());
       const bgfx::ShaderHandle handle = bgfx::createShader(mem);
       bgfx::setName(handle, name);

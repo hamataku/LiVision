@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(livision LANGUAGES CXX)
+project(livision VERSION 0.1.0 LANGUAGES CXX)
 
 include(GNUInstallDirs)
 
@@ -13,8 +13,24 @@ option(LIVISION_BUILD_EXAMPLE "Build example" ON)
 option(LIVISION_COMPILE_SHADERS "Compile shaders" ON)
 set(LIVISION_SHADER_INSTALL_SUBDIR "livision/shaders" CACHE STRING "Install subdir for shader binaries under CMAKE_INSTALL_DATADIR")
 
-# Third-party libraries
-add_subdirectory(third-party/imgui.cmake)
+# Third-party libraries (build as external project)
+include(ExternalProject)
+set(IMGUI_EXT_BINARY_DIR ${CMAKE_BINARY_DIR}/_deps/imgui_ext-build)
+ExternalProject_Add(imgui_ext
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third-party/imgui.cmake
+    BINARY_DIR ${IMGUI_EXT_BINARY_DIR}
+    CMAKE_ARGS
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+    BUILD_BYPRODUCTS ${IMGUI_EXT_BINARY_DIR}/libimgui.cmake.a
+    INSTALL_COMMAND ""
+)
+add_library(imgui.cmake STATIC IMPORTED GLOBAL)
+set_target_properties(imgui.cmake PROPERTIES
+    IMPORTED_LOCATION ${IMGUI_EXT_BINARY_DIR}/libimgui.cmake.a
+    INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/third-party/imgui.cmake/imgui
+)
+add_dependencies(imgui.cmake imgui_ext)
 
 # bgfx
 set(BGFX_AMALGAMATED      OFF CACHE INTERNAL "" FORCE)
@@ -75,14 +91,17 @@ set(PUBLIC_INCLUDE
 )
 
 target_include_directories(${PROJECT_NAME}
-    PRIVATE ${INTERNAL_INCLUDE}   # ライブラリ内部だけ
-    PUBLIC  ${PUBLIC_INCLUDE}     # ユーザーに公開
+    PRIVATE ${INTERNAL_INCLUDE}
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/third-party/implot>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/third-party/imgui.cmake>
+    $<INSTALL_INTERFACE:include>
 )
 
 target_compile_definitions(${PROJECT_NAME}
     PRIVATE
-        LIVISION_SHADER_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/shader/bin"
-        LIVISION_SHADER_INSTALL_DIR="${CMAKE_INSTALL_FULL_DATADIR}/${LIVISION_SHADER_INSTALL_SUBDIR}"
+    LIVISION_SHADER_INSTALL_DIR="${CMAKE_INSTALL_FULL_DATADIR}/${LIVISION_SHADER_INSTALL_SUBDIR}"
 )
 
 # Link libraries
@@ -95,10 +114,14 @@ target_link_libraries(${PROJECT_NAME}
         imgui.cmake
         Eigen3::Eigen
 )
+add_dependencies(${PROJECT_NAME} imgui_ext)
 
 # Example program
 if(LIVISION_BUILD_EXAMPLE)
     add_subdirectory(example)
+    if(TARGET livision_example)
+        add_dependencies(livision_example imgui_ext)
+    endif()
 endif()
 
 # Shader compilation
@@ -153,12 +176,66 @@ endif()
 # Alias
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
-install(TARGETS ${PROJECT_NAME}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+set(LIVISION_EXPORT_TARGETS ${PROJECT_NAME} bx bgfx)
+if(TARGET bimg)
+    list(APPEND LIVISION_EXPORT_TARGETS bimg)
+endif()
+
+install(TARGETS ${LIVISION_EXPORT_TARGETS}
+    EXPORT livisionTargets
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/livision
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/livision
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+install(DIRECTORY
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/livision/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/livision
+)
+
+install(DIRECTORY
+    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/imgui.cmake/imgui/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/livision/imgui
+    FILES_MATCHING
+        PATTERN "*.h"
+        PATTERN "*.hpp"
+)
+
+install(DIRECTORY
+    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/implot/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/livision/implot
+    FILES_MATCHING
+        PATTERN "*.h"
+        PATTERN "*.hpp"
+)
+
+# --- CMake package configuration for find_package(livision) ---
+include(CMakePackageConfigHelpers)
+
+set(CONFIG_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
+set(PACKAGE_NAME ${PROJECT_NAME})
+set(PACKAGE_TARGETS_FILE ${PACKAGE_NAME}Targets.cmake)
+
+install(EXPORT livisionTargets
+    FILE ${PACKAGE_TARGETS_FILE}
+    NAMESPACE ${PACKAGE_NAME}::
+    DESTINATION ${CONFIG_INSTALL_DIR}
+)
+
+configure_package_config_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/livisionConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME}Config.cmake
+    INSTALL_DESTINATION ${CONFIG_INSTALL_DIR}
+)
+
+write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME}ConfigVersion.cmake
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY AnyNewerVersion
+)
+
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME}Config.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME}ConfigVersion.cmake
+    DESTINATION ${CONFIG_INSTALL_DIR}
 )

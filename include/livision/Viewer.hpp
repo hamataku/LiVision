@@ -1,10 +1,10 @@
 #pragma once
-#include <imgui.h>
-#include <implot.h>
 
 #include <memory>
 
 #include "livision/ObjectBase.hpp"
+#include "livision/imgui/imgui.h"
+#include "livision/implot/implot.h"
 
 namespace livision {
 

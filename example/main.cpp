@@ -1,7 +1,5 @@
 #include <cmath>
 
-#include "livision/Color.hpp"
-#include "livision/MeshBuffer.hpp"
 #include "livision/Viewer.hpp"
 // objects
 #include "livision/marker/Arrow.hpp"
