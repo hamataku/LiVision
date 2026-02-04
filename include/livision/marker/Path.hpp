@@ -1,54 +1,29 @@
 #pragma once
 
-#include "livision/ObjectBase.hpp"
-#include "livision/object/Cylinder.hpp"
-#include "livision/object/Sphere.hpp"
+#include "livision/object/primitives.hpp"
 
 namespace livision {
 
 class Path : public ObjectBase {
  public:
-  void Draw(bgfx::ProgramHandle& program) final {
-    cylinder_.SetColorSpec(color_spec_);
-    sphere_.SetColorSpec(color_spec_);
-    for (size_t i = 1; i < path_.size(); ++i) {
-      glm::dvec3 p1 = path_[i - 1];
-      glm::dvec3 p2 = path_[i];
-      glm::dvec3 direction = glm::normalize(p2 - p1);
-      float length = glm::distance(p1, p2);
-      glm::dvec3 mid_point = (p1 + p2) / 2.0;
-      cylinder_.SetPos(mid_point);
-      cylinder_.SetSize(glm::dvec3(0.05, 0.05, length));
-      cylinder_.SetQuatRotation(
-          glm::quatLookAt(direction, glm::dvec3(0.0, 0.0, 1.0)));
-      cylinder_.UpdateMatrix();
-      cylinder_.Draw(program);
+  using ObjectBase::ObjectBase;
 
-      if (is_sphere_) {
-        sphere_.SetPos(p2).SetSize(glm::dvec3(0.1, 0.1, 0.1));
-        sphere_.UpdateMatrix();
-        sphere_.ForceSetGlobalMatrix(global_mtx_ * sphere_.GetGlobalMatrix());
-        sphere_.Draw(program);
-      }
-    }
-  }
+  void OnDraw(Renderer& renderer) final;
 
-  Path& SetPath(const std::vector<glm::vec3>& path) {
-    path_ = path;
-    return *this;
-  }
+  Path& SetPath(const std::vector<Eigen::Vector3d>& path);
+  std::vector<Eigen::Vector3d>& GetPath() { return path_; }
 
-  std::vector<glm::vec3>& GetPath() { return path_; }
-
-  Path& SetSphereVisible(bool is_sphere) {
-    is_sphere_ = is_sphere;
-    return *this;
-  }
+  Path& SetPathWidth(double width);
+  Path& SetSphereVisible(bool is_sphere);
+  Path& SetSphereSize(double size);
 
  private:
   Cylinder cylinder_;
   Sphere sphere_;
-  std::vector<glm::vec3> path_;
-  bool is_sphere_ = true;  // Draw spheres at the end of the path
+
+  std::vector<Eigen::Vector3d> path_;
+  double width_ = 0.1;
+  bool is_sphere_ = true;
+  double sphere_size_ = 0.1;
 };
 }  // namespace livision

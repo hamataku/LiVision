@@ -23,6 +23,12 @@ void ObjectBase::DeInit() {
   }
 }
 
+ObjectBase& ObjectBase::SetParams(const Params& params) {
+  params_ = params;
+  local_mtx_changed_ = true;
+  return *this;
+}
+
 ObjectBase& ObjectBase::SetPos(const Eigen::Vector3d& pos) {
   params_.pos = pos;
   local_mtx_changed_ = true;
@@ -65,6 +71,11 @@ ObjectBase& ObjectBase::SetWireColor(const Color& color) {
   return *this;
 }
 
+ObjectBase& ObjectBase::SetGlobalMatrix(const Eigen::Affine3d& mtx) {
+  global_mtx_ = mtx;
+  return *this;
+}
+
 // NOLINTNEXTLINE
 bool ObjectBase::IsVisible() const {
   if (parent_object_ && visible_) {
@@ -78,6 +89,8 @@ Eigen::Vector3d ObjectBase::GetGlobalPos() {
   UpdateMatrix();
   return global_mtx_.translation();
 }
+
+Eigen::Affine3d ObjectBase::GetGlobalMatrix() const { return global_mtx_; }
 
 // NOLINTNEXTLINE
 void ObjectBase::UpdateMatrix() {

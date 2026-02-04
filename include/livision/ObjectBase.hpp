@@ -31,10 +31,7 @@ class ObjectBase {
   virtual void OnInit() {}
   virtual void OnDraw(Renderer& renderer);
 
-  ObjectBase& SetParams(const Params& params) {
-    params_ = params;
-    return *this;
-  }
+  ObjectBase& SetParams(const Params& params);
 
   ObjectBase& SetPos(const Eigen::Vector3d& pos);
   ObjectBase& SetPos(double x, double y, double z);
@@ -46,11 +43,16 @@ class ObjectBase {
   ObjectBase& SetColor(const Color& color);
   ObjectBase& SetWireColor(const Color& color);
 
+  ObjectBase& SetGlobalMatrix(const Eigen::Affine3d& mtx);
+
   bool IsVisible() const;
   Eigen::Vector3d GetGlobalPos();
+  Eigen::Affine3d GetGlobalMatrix() const;
 
   void UpdateMatrix();
   void RegisterParentObject(ObjectBase* obj);
+
+  std::shared_ptr<MeshBuffer>& GetMeshBuffer() { return mesh_buf_; }
 
  protected:
   Eigen::Affine3d global_mtx_ = Eigen::Affine3d::Identity();

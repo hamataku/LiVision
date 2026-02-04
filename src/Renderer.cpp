@@ -22,12 +22,12 @@ static constexpr uint64_t kPointSpriteState =
     kAlphaState | BGFX_STATE_PT_TRISTRIP;
 
 struct Renderer::Impl {
-  bgfx::ProgramHandle program_;
-  bgfx::ProgramHandle point_program_;
+  bgfx::ProgramHandle program;
+  bgfx::ProgramHandle instancing_program;
 
-  bgfx::UniformHandle u_color_;
-  bgfx::UniformHandle u_color_mode_;
-  bgfx::UniformHandle u_rainbow_params_;
+  bgfx::UniformHandle u_color;
+  bgfx::UniformHandle u_color_mode;
+  bgfx::UniformHandle u_rainbow_params;
 
   std::vector<std::string> shader_search_paths_;
 };
@@ -124,34 +124,34 @@ void Renderer::Init() {
       "v_simple_" + plt_name + ".bin", "vshader", search_paths);
   bgfx::ShaderHandle fsh = CreateShaderFromPaths(
       "f_simple_" + plt_name + ".bin", "fshader", search_paths);
-  pimpl_->program_ = bgfx::createProgram(vsh, fsh, true);
+  pimpl_->program = bgfx::createProgram(vsh, fsh, true);
 
   bgfx::ShaderHandle vph = CreateShaderFromPaths(
       "v_points_" + plt_name + ".bin", "vshader_points", search_paths);
   bgfx::ShaderHandle fph = CreateShaderFromPaths(
       "f_points_" + plt_name + ".bin", "fshader_points", search_paths);
   if (bgfx::isValid(vph) && bgfx::isValid(fph)) {
-    pimpl_->point_program_ = bgfx::createProgram(vph, fph, true);
+    pimpl_->instancing_program = bgfx::createProgram(vph, fph, true);
   }
 
   PrintBackend();
 
-  pimpl_->u_color_ = bgfx::createUniform("u_color", bgfx::UniformType::Vec4);
-  pimpl_->u_color_mode_ =
+  pimpl_->u_color = bgfx::createUniform("u_color", bgfx::UniformType::Vec4);
+  pimpl_->u_color_mode =
       bgfx::createUniform("u_color_mode", bgfx::UniformType::Vec4);
-  pimpl_->u_rainbow_params_ =
+  pimpl_->u_rainbow_params =
       bgfx::createUniform("u_rainbow_params", bgfx::UniformType::Vec4);
 }
 
 void Renderer::DeInit() {
-  bgfx::destroy(pimpl_->program_);
-  pimpl_->program_ = BGFX_INVALID_HANDLE;
-  bgfx::destroy(pimpl_->point_program_);
-  pimpl_->point_program_ = BGFX_INVALID_HANDLE;
+  bgfx::destroy(pimpl_->program);
+  pimpl_->program = BGFX_INVALID_HANDLE;
+  bgfx::destroy(pimpl_->instancing_program);
+  pimpl_->instancing_program = BGFX_INVALID_HANDLE;
 
-  bgfx::destroy(pimpl_->u_color_);
-  bgfx::destroy(pimpl_->u_color_mode_);
-  bgfx::destroy(pimpl_->u_rainbow_params_);
+  bgfx::destroy(pimpl_->u_color);
+  bgfx::destroy(pimpl_->u_color_mode);
+  bgfx::destroy(pimpl_->u_rainbow_params);
 }
 
 void Renderer::SetShaderSearchPaths(std::vector<std::string> paths) {
@@ -162,14 +162,15 @@ void Renderer::Submit(MeshBuffer& mesh_buffer, const Eigen::Affine3d& mtx,
                       const Color& color, const Color& wire_color) {
   if (color.mode != Color::ColorMode::InVisible) {
     bgfx::setState(kAlphaState);
-    bgfx::setUniform(pimpl_->u_color_, &color.base);
+    bgfx::setUniform(pimpl_->u_color, &color.base);
     float mode_val[4] = {static_cast<float>(static_cast<int>(color.mode)), 0.0F,
                          0.0F, 0.0F};
-    float rparams[4] = {color.rainbow.direction.x(),
-                        color.rainbow.direction.y(),
-                        color.rainbow.direction.z(), color.rainbow.delta};
-    bgfx::setUniform(pimpl_->u_color_mode_, mode_val);
-    bgfx::setUniform(pimpl_->u_rainbow_params_, rparams);
+    float rparams[4] = {static_cast<float>(color.rainbow.direction.x()),
+                        static_cast<float>(color.rainbow.direction.y()),
+                        static_cast<float>(color.rainbow.direction.z()),
+                        static_cast<float>(color.rainbow.delta)};
+    bgfx::setUniform(pimpl_->u_color_mode, mode_val);
+    bgfx::setUniform(pimpl_->u_rainbow_params, rparams);
 
     const Eigen::Matrix4d& eigen_mtx = mtx.matrix();
     float model_mtx[16];
@@ -183,19 +184,20 @@ void Renderer::Submit(MeshBuffer& mesh_buffer, const Eigen::Affine3d& mtx,
     const auto ibh = internal::MeshBufferAccess::IndexBuffer(mesh_buffer);
     bgfx::setVertexBuffer(0, vbh);
     bgfx::setIndexBuffer(ibh);
-    bgfx::submit(0, pimpl_->program_);
+    bgfx::submit(0, pimpl_->program);
   }
 
   if (wire_color.mode != Color::ColorMode::InVisible) {
     bgfx::setState((kAlphaState & ~BGFX_STATE_PT_MASK) | BGFX_STATE_PT_LINES);
-    bgfx::setUniform(pimpl_->u_color_, &wire_color.base);
+    bgfx::setUniform(pimpl_->u_color, &wire_color.base);
     float mode_val[4] = {static_cast<float>(static_cast<int>(wire_color.mode)),
                          0.0F, 0.0F, 0.0F};
-    float rparams[4] = {
-        wire_color.rainbow.direction.x(), wire_color.rainbow.direction.y(),
-        wire_color.rainbow.direction.z(), wire_color.rainbow.delta};
-    bgfx::setUniform(pimpl_->u_color_mode_, mode_val);
-    bgfx::setUniform(pimpl_->u_rainbow_params_, rparams);
+    float rparams[4] = {static_cast<float>(wire_color.rainbow.direction.x()),
+                        static_cast<float>(wire_color.rainbow.direction.y()),
+                        static_cast<float>(wire_color.rainbow.direction.z()),
+                        static_cast<float>(wire_color.rainbow.delta)};
+    bgfx::setUniform(pimpl_->u_color_mode, mode_val);
+    bgfx::setUniform(pimpl_->u_rainbow_params, rparams);
 
     const Eigen::Matrix4d& eigen_mtx = mtx.matrix();
     float model_mtx[16];
@@ -209,8 +211,61 @@ void Renderer::Submit(MeshBuffer& mesh_buffer, const Eigen::Affine3d& mtx,
     const auto ibh = internal::MeshBufferAccess::WireIndexBuffer(mesh_buffer);
     bgfx::setVertexBuffer(0, vbh);
     bgfx::setIndexBuffer(ibh);
-    bgfx::submit(0, pimpl_->program_);
+    bgfx::submit(0, pimpl_->program);
   }
+}
+
+void Renderer::SubmitInstanced(MeshBuffer& mesh_buffer,
+                               const std::vector<Eigen::Vector4d>& points,
+                               const Eigen::Affine3d& mtx, const Color& color) {
+  bgfx::InstanceDataBuffer idb;
+  const auto instance_count = static_cast<uint32_t>(points.size());
+  const uint16_t instance_stride = sizeof(float) * 4;
+  if (bgfx::getAvailInstanceDataBuffer(instance_count, instance_stride) <
+      instance_count) {
+    return;
+  }
+  bgfx::allocInstanceDataBuffer(&idb, instance_count, instance_stride);
+
+  auto* data = reinterpret_cast<float*>(idb.data);
+  for (const auto& p : points) {
+    data[0] = static_cast<float>(p.x());
+    data[1] = static_cast<float>(p.y());
+    data[2] = static_cast<float>(p.z());
+    data[3] = static_cast<float>(p.w());
+    data += 4;
+  }
+
+  bgfx::setState(kAlphaState);
+  bgfx::setUniform(pimpl_->u_color, &color.base);
+  float mode_val[4] = {static_cast<float>(static_cast<int>(color.mode)), 0.0F,
+                       0.0F, 0.0F};
+  float rparams[4] = {static_cast<float>(color.rainbow.direction.x()),
+                      static_cast<float>(color.rainbow.direction.y()),
+                      static_cast<float>(color.rainbow.direction.z()),
+                      static_cast<float>(color.rainbow.delta)};
+  bgfx::setUniform(pimpl_->u_color_mode, mode_val);
+  bgfx::setUniform(pimpl_->u_rainbow_params, rparams);
+
+  const Eigen::Matrix4d& eigen_mtx = mtx.matrix();
+  float model_mtx[16];
+  for (int col = 0; col < 4; ++col) {
+    for (int row = 0; row < 4; ++row) {
+      model_mtx[(col * 4) + row] = static_cast<float>(eigen_mtx(row, col));
+    }
+  }
+  bgfx::setTransform(model_mtx);
+
+  const auto vbh = internal::MeshBufferAccess::VertexBuffer(mesh_buffer);
+  const auto ibh = internal::MeshBufferAccess::WireIndexBuffer(mesh_buffer);
+  const auto mesh_index_count =
+      internal::MeshBufferAccess::GetIndexCount(mesh_buffer);
+
+  bgfx::setVertexBuffer(0, vbh);
+  bgfx::setIndexBuffer(ibh, 0, mesh_index_count);
+  bgfx::setInstanceDataBuffer(&idb);
+
+  bgfx::submit(0, pimpl_->instancing_program);
 }
 
 void Renderer::PrintBackend() {

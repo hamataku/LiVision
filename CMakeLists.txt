@@ -50,6 +50,7 @@ endif()
 file(GLOB_RECURSE SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/object/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/marker/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/third-party/bgfx-imgui/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/third-party/implot/implot.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/third-party/implot/implot_items.cpp"

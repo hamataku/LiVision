@@ -2,23 +2,18 @@
 
 #include "livision/Container.hpp"
 #include "livision/marker/Arrow.hpp"
-#include "livision/utils.hpp"
 
 namespace livision {
 
 class Odometry : public Container {
  public:
-  void InitImpl() final {
-    arrow_x_.SetFromTo(glm::dvec3(0.0, 0.0, 0.0), glm::dvec3(1.2, 0.0, 0.0))
-        .SetColorSpec(utils::red);
-    arrow_y_.SetFromTo(glm::dvec3(0.0, 0.0, 0.0), glm::dvec3(0.0, 1.2, 0.0))
-        .SetColorSpec(utils::green);
-    arrow_z_.SetFromTo(glm::dvec3(0.0, 0.0, 0.0), glm::dvec3(0.0, 0.0, 1.2))
-        .SetColorSpec(utils::blue);
-    AddObject(&arrow_x_);
-    AddObject(&arrow_y_);
-    AddObject(&arrow_z_);
-  }
+  using Container::Container;
+  void OnInit() final;
+
+  Odometry& SetArrowParams(const Arrow::ArrowParams& params);
+  Odometry& SetHeadLength(double length);
+  Odometry& SetHeadRadius(double radius);
+  Odometry& SetBodyRadius(double radius);
 
  private:
   Arrow arrow_x_;

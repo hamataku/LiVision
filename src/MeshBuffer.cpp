@@ -125,6 +125,10 @@ bgfx::IndexBufferHandle MeshBufferAccess::WireIndexBuffer(MeshBuffer& mesh) {
   return mesh.pimpl_->wire_ibh;
 }
 
+uint32_t MeshBufferAccess::GetIndexCount(MeshBuffer& mesh) {
+  return static_cast<uint32_t>(mesh.pimpl_->indices.size());
+}
+
 }  // namespace internal
 
 }  // namespace livision

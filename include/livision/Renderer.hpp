@@ -5,8 +5,8 @@
 #include <string>
 #include <vector>
 
-#include "Color.hpp"
-#include "MeshBuffer.hpp"
+#include "livision/Color.hpp"
+#include "livision/MeshBuffer.hpp"
 
 namespace livision {
 
@@ -20,6 +20,9 @@ class Renderer {
 
   void Submit(MeshBuffer& mesh_buffer, const Eigen::Affine3d& mtx,
               const Color& color, const Color& wire_color);
+  void SubmitInstanced(MeshBuffer& mesh_buffer,
+                       const std::vector<Eigen::Vector4d>& points,
+                       const Eigen::Affine3d& mtx, const Color& color);
 
  private:
   static void PrintBackend();
