@@ -14,6 +14,7 @@ struct MeshBuffer::Impl {
 
   std::vector<Vertex> vertices;
   std::vector<uint32_t> indices;
+  std::vector<uint32_t> wire_indices;
 };
 
 MeshBuffer::MeshBuffer(std::vector<Vertex> vertices,
@@ -77,8 +78,7 @@ void MeshBuffer::CreateWireIndex() {
   }
 
   // Build wireframe index buffer (unique edges)
-  std::vector<uint32_t> line_indices;
-  line_indices.reserve(pimpl_->indices.size() * 2);
+  pimpl_->wire_indices.reserve(pimpl_->indices.size() * 2);
   std::unordered_set<uint64_t> seen_edges;
   seen_edges.reserve(pimpl_->indices.size());
 
@@ -88,8 +88,8 @@ void MeshBuffer::CreateWireIndex() {
     uint32_t hi = (a < b) ? b : a;
     uint64_t key = (static_cast<uint64_t>(lo) << 32) | hi;
     if (seen_edges.insert(key).second) {
-      line_indices.push_back(lo);
-      line_indices.push_back(hi);
+      pimpl_->wire_indices.push_back(lo);
+      pimpl_->wire_indices.push_back(hi);
     }
   };
 
@@ -103,8 +103,8 @@ void MeshBuffer::CreateWireIndex() {
   }
 
   pimpl_->wire_ibh = bgfx::createIndexBuffer(
-      bgfx::makeRef(line_indices.data(),
-                    line_indices.size() * sizeof(uint32_t)),
+      bgfx::makeRef(pimpl_->wire_indices.data(),
+                    pimpl_->wire_indices.size() * sizeof(uint32_t)),
       BGFX_BUFFER_INDEX32);
 }
 

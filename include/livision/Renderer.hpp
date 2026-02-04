@@ -2,6 +2,8 @@
 
 #include <Eigen/Geometry>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "Color.hpp"
 #include "MeshBuffer.hpp"
@@ -14,6 +16,7 @@ class Renderer {
   ~Renderer();
   void Init();
   void DeInit();
+  void SetShaderSearchPaths(std::vector<std::string> paths);
 
   void Submit(MeshBuffer& mesh_buffer, const Eigen::Affine3d& mtx,
               const Color& color, const Color& wire_color);

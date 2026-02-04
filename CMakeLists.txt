@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.21)
 project(livision LANGUAGES CXX)
 
+include(GNUInstallDirs)
+
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
 set(CMAKE_CXX_STANDARD 20)
@@ -9,6 +11,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(LIVISION_BUILD_SHARED "Build as shared library" OFF)
 option(LIVISION_BUILD_EXAMPLE "Build example" ON)
 option(LIVISION_COMPILE_SHADERS "Compile shaders" ON)
+set(LIVISION_SHADER_INSTALL_SUBDIR "livision/shaders" CACHE STRING "Install subdir for shader binaries under CMAKE_INSTALL_DATADIR")
 
 # Third-party libraries
 add_subdirectory(third-party/imgui.cmake)
@@ -75,6 +78,12 @@ target_include_directories(${PROJECT_NAME}
     PUBLIC  ${PUBLIC_INCLUDE}     # ユーザーに公開
 )
 
+target_compile_definitions(${PROJECT_NAME}
+    PRIVATE
+        LIVISION_SHADER_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/shader/bin"
+        LIVISION_SHADER_INSTALL_DIR="${CMAKE_INSTALL_FULL_DATADIR}/${LIVISION_SHADER_INSTALL_SUBDIR}"
+)
+
 # Link libraries
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
@@ -95,12 +104,20 @@ endif()
 if(LIVISION_COMPILE_SHADERS)
     set(SHADERC_EXECUTABLE ${CMAKE_BINARY_DIR}/third-party/bgfx.cmake/cmake/bgfx/shaderc)
 
+    if(WIN32)
+        set(SHADER_PLATFORM_SUFFIX "win")
+    elseif(APPLE)
+        set(SHADER_PLATFORM_SUFFIX "mac")
+    else()
+        set(SHADER_PLATFORM_SUFFIX "linux")
+    endif()
+
     set(SHADER_BINARIES
-        ${CMAKE_CURRENT_SOURCE_DIR}/shader/bin/v_simple_linux.bin
-        ${CMAKE_CURRENT_SOURCE_DIR}/shader/bin/f_simple_linux.bin
-        ${CMAKE_CURRENT_SOURCE_DIR}/shader/bin/v_points_linux.bin
-        ${CMAKE_CURRENT_SOURCE_DIR}/shader/bin/f_points_linux.bin
-        ${CMAKE_CURRENT_SOURCE_DIR}/shader/bin/compute_ray_cast_linux.bin
+        ${CMAKE_CURRENT_SOURCE_DIR}/shader/bin/v_simple_${SHADER_PLATFORM_SUFFIX}.bin
+        ${CMAKE_CURRENT_SOURCE_DIR}/shader/bin/f_simple_${SHADER_PLATFORM_SUFFIX}.bin
+        ${CMAKE_CURRENT_SOURCE_DIR}/shader/bin/v_points_${SHADER_PLATFORM_SUFFIX}.bin
+        ${CMAKE_CURRENT_SOURCE_DIR}/shader/bin/f_points_${SHADER_PLATFORM_SUFFIX}.bin
+        ${CMAKE_CURRENT_SOURCE_DIR}/shader/bin/compute_ray_cast_${SHADER_PLATFORM_SUFFIX}.bin
     )
 
     file(GLOB SHADER_SOURCES
@@ -117,7 +134,30 @@ if(LIVISION_COMPILE_SHADERS)
 
     add_custom_target(compile-shaders ALL DEPENDS ${SHADER_BINARIES})
     add_dependencies(${PROJECT_NAME} compile-shaders)
+
+    install(FILES ${SHADER_BINARIES}
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/${LIVISION_SHADER_INSTALL_SUBDIR}
+    )
+else()
+    file(GLOB SHADER_BINARIES_PREBUILT
+        ${CMAKE_CURRENT_SOURCE_DIR}/shader/bin/*.bin
+    )
+    if(SHADER_BINARIES_PREBUILT)
+        install(FILES ${SHADER_BINARIES_PREBUILT}
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/${LIVISION_SHADER_INSTALL_SUBDIR}
+        )
+    endif()
 endif()
 
 # Alias
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+
+install(TARGETS ${PROJECT_NAME}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)

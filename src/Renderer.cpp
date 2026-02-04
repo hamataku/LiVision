@@ -5,7 +5,10 @@
 #include <bgfx/platform.h>
 #include <bx/math.h>
 
+#include <cstdlib>
 #include <iostream>
+#include <string>
+#include <vector>
 
 #include "livision/internal/file_ops.hpp"
 #include "livision/internal/mesh_buffer_access.hpp"
@@ -25,6 +28,8 @@ struct Renderer::Impl {
   bgfx::UniformHandle u_color_;
   bgfx::UniformHandle u_color_mode_;
   bgfx::UniformHandle u_rainbow_params_;
+
+  std::vector<std::string> shader_search_paths_;
 };
 
 Renderer::Renderer() : pimpl_(std::make_unique<Impl>()) {}
@@ -32,23 +37,78 @@ Renderer::Renderer() : pimpl_(std::make_unique<Impl>()) {}
 Renderer::~Renderer() = default;
 
 namespace {
-inline bgfx::ShaderHandle CreateShader(const std::string& path,
-                                       const char* name) {
-  std::string shader;
-  if (!internal::file_ops::ReadFile(path, shader)) {
-    std::cerr << "Could not find shader: " << name << std::endl;
-    std::exit(EXIT_FAILURE);
+std::vector<std::string> SplitPaths(const std::string& paths) {
+#if BX_PLATFORM_WINDOWS
+  const char delimiter = ';';
+#else
+  const char delimiter = ':';
+#endif
+
+  std::vector<std::string> result;
+  std::string current;
+  for (const char ch : paths) {
+    if (ch == delimiter) {
+      if (!current.empty()) {
+        result.push_back(current);
+        current.clear();
+      }
+      continue;
+    }
+    current.push_back(ch);
   }
-  const bgfx::Memory* mem = bgfx::copy(shader.data(), shader.size());
-  const bgfx::ShaderHandle handle = bgfx::createShader(mem);
-  bgfx::setName(handle, name);
-  return handle;
+  if (!current.empty()) {
+    result.push_back(current);
+  }
+  return result;
+}
+
+std::vector<std::string> CollectShaderSearchPaths(
+    const std::vector<std::string>& user_paths) {
+  std::vector<std::string> paths = user_paths;
+
+  if (const char* env = std::getenv("LIVISION_SHADER_PATHS")) {
+    const std::vector<std::string> env_paths = SplitPaths(env);
+    paths.insert(paths.end(), env_paths.begin(), env_paths.end());
+  }
+
+#ifdef LIVISION_SHADER_SOURCE_DIR
+  paths.emplace_back(LIVISION_SHADER_SOURCE_DIR);
+#endif
+
+#ifdef LIVISION_SHADER_INSTALL_DIR
+  paths.emplace_back(LIVISION_SHADER_INSTALL_DIR);
+#endif
+
+  paths.emplace_back("shader/bin");
+  return paths;
+}
+
+bgfx::ShaderHandle CreateShaderFromPaths(
+    const std::string& file_name, const char* name,
+    const std::vector<std::string>& search_paths) {
+  std::string shader;
+  for (const std::string& base : search_paths) {
+    std::string path = base;
+    path += "/";
+    path += file_name;
+    if (internal::file_ops::ReadFile(path, shader)) {
+      const bgfx::Memory* mem = bgfx::copy(shader.data(), shader.size());
+      const bgfx::ShaderHandle handle = bgfx::createShader(mem);
+      bgfx::setName(handle, name);
+      return handle;
+    }
+  }
+
+  std::cerr << "Could not find shader: " << name << std::endl;
+  std::cerr << "Search paths:" << std::endl;
+  for (const std::string& base : search_paths) {
+    std::cerr << "  - " << base << std::endl;
+  }
+  std::exit(EXIT_FAILURE);
 }
 }  // namespace
 
 void Renderer::Init() {
-  const std::string shader_root = "shader/bin/";
-
 #if BX_PLATFORM_WINDOWS
   const std::string plt_name = "win";
 #elif BX_PLATFORM_OSX
@@ -57,16 +117,19 @@ void Renderer::Init() {
   const std::string plt_name = "linux";
 #endif
 
-  bgfx::ShaderHandle vsh =
-      CreateShader(shader_root + "v_simple_" + plt_name + ".bin", "vshader");
-  bgfx::ShaderHandle fsh =
-      CreateShader(shader_root + "f_simple_" + plt_name + ".bin", "fshader");
+  const std::vector<std::string> search_paths =
+      CollectShaderSearchPaths(pimpl_->shader_search_paths_);
+
+  bgfx::ShaderHandle vsh = CreateShaderFromPaths(
+      "v_simple_" + plt_name + ".bin", "vshader", search_paths);
+  bgfx::ShaderHandle fsh = CreateShaderFromPaths(
+      "f_simple_" + plt_name + ".bin", "fshader", search_paths);
   pimpl_->program_ = bgfx::createProgram(vsh, fsh, true);
 
-  bgfx::ShaderHandle vph = CreateShader(
-      shader_root + "v_points_" + plt_name + ".bin", "vshader_points");
-  bgfx::ShaderHandle fph = CreateShader(
-      shader_root + "f_points_" + plt_name + ".bin", "fshader_points");
+  bgfx::ShaderHandle vph = CreateShaderFromPaths(
+      "v_points_" + plt_name + ".bin", "vshader_points", search_paths);
+  bgfx::ShaderHandle fph = CreateShaderFromPaths(
+      "f_points_" + plt_name + ".bin", "fshader_points", search_paths);
   if (bgfx::isValid(vph) && bgfx::isValid(fph)) {
     pimpl_->point_program_ = bgfx::createProgram(vph, fph, true);
   }
@@ -89,6 +152,10 @@ void Renderer::DeInit() {
   bgfx::destroy(pimpl_->u_color_);
   bgfx::destroy(pimpl_->u_color_mode_);
   bgfx::destroy(pimpl_->u_rainbow_params_);
+}
+
+void Renderer::SetShaderSearchPaths(std::vector<std::string> paths) {
+  pimpl_->shader_search_paths_ = std::move(paths);
 }
 
 void Renderer::Submit(MeshBuffer& mesh_buffer, const Eigen::Affine3d& mtx,
