@@ -1,0 +1,2 @@
+usr/lib/*/liblivision.so.*
+usr/share/livision/shaders/*.bin

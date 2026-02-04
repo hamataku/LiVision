@@ -1,0 +1,28 @@
+Source: livision
+Section: libs
+Priority: optional
+Maintainer: Taku Hamazaki <hamataku07130713@gmail.com>
+Build-Depends:
+ debhelper-compat (= 13),
+ cmake,
+ ninja-build,
+ pkg-config,
+ libsdl2-dev,
+ libeigen3-dev
+Standards-Version: 4.6.2
+Rules-Requires-Root: no
+Homepage: https://github.com/fkd-lab/LiVision
+
+Package: liblivision1
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libsdl2-2.0-0
+Description: LiVision rendering library (runtime)
+ Runtime components and shader binaries for LiVision.
+
+Package: liblivision-dev
+Section: libdevel
+Architecture: any
+Depends: ${misc:Depends}, liblivision1 (= ${binary:Version}), libsdl2-dev, libeigen3-dev
+Description: LiVision rendering library (development files)
+ Headers and development files for building with LiVision.
