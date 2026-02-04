@@ -13,25 +13,6 @@ option(LIVISION_BUILD_EXAMPLE "Build example" ON)
 option(LIVISION_COMPILE_SHADERS "Compile shaders" ON)
 set(LIVISION_SHADER_INSTALL_SUBDIR "livision/shaders" CACHE STRING "Install subdir for shader binaries under CMAKE_INSTALL_DATADIR")
 
-# Third-party libraries (build as external project)
-include(ExternalProject)
-set(IMGUI_EXT_BINARY_DIR ${CMAKE_BINARY_DIR}/_deps/imgui_ext-build)
-ExternalProject_Add(imgui_ext
-    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third-party/imgui.cmake
-    BINARY_DIR ${IMGUI_EXT_BINARY_DIR}
-    CMAKE_ARGS
-        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-        -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-    BUILD_BYPRODUCTS ${IMGUI_EXT_BINARY_DIR}/libimgui.cmake.a
-    INSTALL_COMMAND ""
-)
-add_library(imgui.cmake STATIC IMPORTED GLOBAL)
-set_target_properties(imgui.cmake PROPERTIES
-    IMPORTED_LOCATION ${IMGUI_EXT_BINARY_DIR}/libimgui.cmake.a
-    INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/third-party/imgui.cmake/imgui
-)
-add_dependencies(imgui.cmake imgui_ext)
-
 # bgfx
 set(BGFX_AMALGAMATED      OFF CACHE INTERNAL "" FORCE)
 set(BGFX_BUILD_EXAMPLES   OFF CACHE INTERNAL "" FORCE)
@@ -68,9 +49,13 @@ file(GLOB_RECURSE SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/object/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/marker/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/third-party/bgfx-imgui/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/implot/implot.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/implot/implot_items.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/imgui.cmake/imgui/backends/imgui_impl_sdl2.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/implot/implot.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/implot/implot_items.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/imgui/imgui.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/imgui/imgui_draw.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/imgui/imgui_tables.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/imgui/imgui_widgets.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/imgui/backends/imgui_impl_sdl2.cpp"
 )
 
 target_sources(${PROJECT_NAME} PRIVATE ${SOURCES})
@@ -82,21 +67,11 @@ set(INTERNAL_INCLUDE
     ${CMAKE_CURRENT_SOURCE_DIR}/third-party/bgfx.cmake
 )
 
-# ユーザーに公開するヘッダ（imgui と implotも含む）
-set(PUBLIC_INCLUDE
-    ${EIGEN3_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/imgui.cmake
-    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/implot
-)
-
 target_include_directories(${PROJECT_NAME}
     PRIVATE ${INTERNAL_INCLUDE}
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/third-party/implot>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/third-party/imgui.cmake>
-    $<INSTALL_INTERFACE:include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/third-party>
 )
 
 target_compile_definitions(${PROJECT_NAME}
@@ -111,17 +86,12 @@ target_link_libraries(${PROJECT_NAME}
         bgfx
     PUBLIC
         SDL2::SDL2
-        imgui.cmake
         Eigen3::Eigen
 )
-add_dependencies(${PROJECT_NAME} imgui_ext)
 
 # Example program
 if(LIVISION_BUILD_EXAMPLE)
     add_subdirectory(example)
-    if(TARGET livision_example)
-        add_dependencies(livision_example imgui_ext)
-    endif()
 endif()
 
 # Shader compilation
@@ -193,20 +163,20 @@ install(DIRECTORY
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/livision
 )
 
-install(DIRECTORY
-    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/imgui.cmake/imgui/
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/livision/imgui
-    FILES_MATCHING
-        PATTERN "*.h"
-        PATTERN "*.hpp"
+install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/implot/implot.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/implot/implot_internal.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/livision/implot
 )
 
-install(DIRECTORY
-    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/implot/
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/livision/implot
-    FILES_MATCHING
-        PATTERN "*.h"
-        PATTERN "*.hpp"
+install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/imgui/imgui.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/imgui/imconfig.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/imgui/imgui_internal.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/imgui/imstb_textedit.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/imgui/imstb_rectpack.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/imgui/imstb_truetype.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/livision/imgui
 )
 
 # --- CMake package configuration for find_package(livision) ---
