@@ -10,11 +10,10 @@
 #include <bx/math.h>
 
 #include <iostream>
+#include <utility>
 
-#include "imgui.h"
 #include "imgui/backends/imgui_impl_sdl2.h"
 #include "imgui_impl_bgfx.h"
-#include "implot.h"
 #include "livision/Container.hpp"
 #include "livision/Renderer.hpp"
 
@@ -30,6 +29,7 @@ struct Viewer::Impl {
   std::vector<ObjectBase*> objects;
   ViewerConfig config;
   Renderer renderer;
+  std::function<void()> ui_callback = []() {};
 
   bool initialized = false;
   bool quit = false;
@@ -194,12 +194,9 @@ bool Viewer::SpinOnce() {
     ImGui_ImplSDL2_NewFrame();
 
     ImGui::NewFrame();
-
-    // ImGui::Begin("Control panel", nullptr,
-    // ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::Begin("Control panel", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
-    // scene_->GuiCustomize();
+    pimpl_->ui_callback();
 
     ImGui::End();
     ImGui::Render();
@@ -300,6 +297,8 @@ void Viewer::CameraControl() {
   bx::mtxLookAt(pimpl_->view, eye, pimpl_->target, up_vec);
 }
 
+void Viewer::Close() { pimpl_->quit = true; }
+
 void Viewer::AddObject(ObjectBase* object) {
   object->Init();
   auto* container = dynamic_cast<Container*>(object);
@@ -311,6 +310,10 @@ void Viewer::AddObject(ObjectBase* object) {
   } else {
     pimpl_->objects.push_back(object);
   }
+}
+
+void Viewer::RegisterUICallback(std::function<void()> ui_callback) {
+  pimpl_->ui_callback = std::move(ui_callback);
 }
 
 }  // namespace livision

@@ -56,7 +56,7 @@ inline const Color sand{0.90F, 0.80F, 0.55F};
 
 inline const Color rainbow_z{
     1.0F, 0.0F, 0.0F, 1.0F,
-    RainbowParams(Eigen::Vector3f(0.0F, 0.0F, 1.0F), 1.0F)};
+    RainbowParams(Eigen::Vector3f(0.0F, 0.0F, 1.0F), 0.1F)};
 
 inline std::vector<Color> color_palette{
     red, green, blue, yellow, cyan, magenta, orange, teal, olive, rose, sand};

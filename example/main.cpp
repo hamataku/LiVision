@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include "livision/Color.hpp"
 #include "livision/MeshBuffer.hpp"
 #include "livision/Viewer.hpp"
@@ -6,8 +8,8 @@
 #include "livision/object/primitives.hpp"
 
 int main() {
-  using namespace livision;
-  Viewer viewer{{
+  namespace lv = livision;
+  lv::Viewer viewer{{
       .headless = false,  // Set to true for headless mode
       .vsync = true,      // Set to true to enable VSync
       .width = 1280,      // Set the window width
@@ -15,33 +17,56 @@ int main() {
       .fps = true,        // Target frames per second
   }};
 
+  // UI callback
+  viewer.RegisterUICallback([&viewer]() {
+    if (ImGui::Button("Close")) {
+      viewer.Close();
+    }
+  });
+
   // Plane
-  Plane plane({.scale = {40.0, 40.0, 0.0}, .color = color::light_gray});
+  lv::Plane plane({.scale = {40.0, 40.0, 0.0}, .color = lv::color::light_gray});
   viewer.AddObject(&plane);
 
   // Mesh bunny
   auto bunny_res3 =
-      std::make_shared<livision::MeshBuffer>("data/bunny/bun_zipper_res3.stl");
+      std::make_shared<lv::MeshBuffer>("data/bunny/bun_zipper_res3.stl");
   auto bunny_res2 =
-      std::make_shared<livision::MeshBuffer>("data/bunny/bun_zipper_res2.stl");
-
-  Mesh bunny(bunny_res3, {.pos = {0.0, 0.0, -2.0},
-                          .scale = {50.0, 50.0, 50.0},
-                          .color = color::rainbow_z,
-                          .wire_color = color::black});
+      std::make_shared<lv::MeshBuffer>("data/bunny/bun_zipper_res2.stl");
+  lv::Mesh bunny(bunny_res3, {.pos = {0.0, 0.0, -2.0},
+                              .scale = {50.0, 50.0, 50.0},
+                              .color = lv::color::rainbow_z,
+                              .wire_color = lv::color::black});
   viewer.AddObject(&bunny.SetDegRotation({90.0, 0.0, 0.0}));
+
+  // Box
+  lv::Box box({.scale = {2.0, 2.0, 2.0},
+               .color = lv::color::blue,
+               .wire_color = lv::color::black});
+  viewer.AddObject(&box);
+
+  // Cone
+  lv::Cone cone({.scale = {1.5, 1.5, 3.0},
+                 .color = lv::color::green,
+                 .wire_color = lv::color::black});
+  viewer.AddObject(&cone);
+
+  // Cylinder
+  lv::Cylinder cylinder({.scale = {1.5, 1.5, 3.0},
+                         .color = lv::color::orange,
+                         .wire_color = lv::color::black});
+  viewer.AddObject(&cylinder);
+
+  // Sphere
+  lv::Sphere sphere({.scale = {2.0, 2.0, 2.0},
+                     .color = lv::color::red,
+                     .wire_color = lv::color::black});
+  viewer.AddObject(&sphere);
 
   // Drone
   float theta = 0.0F;
-  Drone drone;
+  lv::Drone drone;
   viewer.AddObject(&drone);
-
-  // Sphere
-  Sphere sphere({.pos = {0.0, 4.0, 1.0},
-                 .scale = {2.0, 2.0, 2.0},
-                 .color = color::red,
-                 .wire_color = color::black});
-  viewer.AddObject(&sphere);
 
   while (viewer.SpinOnce()) {
     static int counter = 0;
@@ -54,6 +79,14 @@ int main() {
 
     theta += 0.01F;
     drone.SetPos(std::cos(theta) * 6.0, std::sin(theta) * 6.0, 2.0);
+    box.SetPos(std::cos(theta + M_PI_4) * 6.0, std::sin(theta + M_PI_4) * 6.0,
+               2.0);
+    cone.SetPos(std::cos(theta + M_PI_4 * 2) * 6.0,
+                std::sin(theta + M_PI_4 * 2) * 6.0, 2.0);
+    cylinder.SetPos(std::cos(theta + M_PI_4 * 3) * 6.0,
+                    std::sin(theta + M_PI_4 * 3) * 6.0, 2.0);
+    sphere.SetPos(std::cos(theta + M_PI_4 * 4) * 6.0,
+                  std::sin(theta + M_PI_4 * 4) * 6.0, 2.0);
   }
 
   return 0;

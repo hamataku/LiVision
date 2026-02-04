@@ -234,11 +234,9 @@ void Renderer::PrintBackend() {
     vendor = "Software Rasterizer";
   }
 
-  printf("[LiVision] Vendor: %s (ID: 0x%04x)\n", vendor, caps->vendorId);
-  printf("[LiVision] Device ID: 0x%04x\n", caps->deviceId);
-
-  std::cout << "[LiVision] Graphic Backend: "
-            << bgfx::getRendererName(bgfx::getRendererType()) << std::endl;
+  printf("[LiVision] Vendor: %s (ID: 0x%04x), Device ID: 0x%04x, Backend: %s\n",
+         vendor, caps->vendorId, caps->deviceId,
+         bgfx::getRendererName(bgfx::getRendererType()));
 }
 
 }  // namespace livision

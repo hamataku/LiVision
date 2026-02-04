@@ -1,4 +1,7 @@
 #pragma once
+#include <imgui.h>
+#include <implot.h>
+
 #include <memory>
 
 #include "livision/ObjectBase.hpp"
@@ -19,7 +22,9 @@ class Viewer {
   ~Viewer();
 
   bool SpinOnce();
+  void Close();
   void AddObject(ObjectBase* object);
+  void RegisterUICallback(std::function<void()> ui_callback);
 
  private:
   void PrintFPS();

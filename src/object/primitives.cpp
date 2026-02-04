@@ -101,19 +101,49 @@ Cylinder::Cylinder(Params params) : ObjectBase(std::move(params)) {
                             -kSize);
     }
 
-    // make top_indices
-    for (int i = 0; i < kPoly; i++) {
-      indices.push_back(0);
-      indices.push_back(i);
-      indices.push_back((i + 1) % kPoly);
-    }
+    auto append_cap = [&](uint32_t offset, bool flip_winding) {
+      if (kPoly < 3) return;
 
-    // make bottom_indices
-    for (int i = 0; i < kPoly; i++) {
-      indices.push_back(kPoly);
-      indices.push_back(kPoly + ((i + 1) % kPoly));
-      indices.push_back(kPoly + i);
-    }
+      std::vector<uint32_t> strip;
+      strip.reserve(kPoly);
+
+      strip.push_back(offset + 1);
+      strip.push_back(offset + 0);
+
+      int left = 2;
+      int right = kPoly - 1;
+      bool take_left = true;
+
+      while (left <= right) {
+        if (take_left) {
+          strip.push_back(offset + static_cast<uint32_t>(left));
+          ++left;
+        } else {
+          strip.push_back(offset + static_cast<uint32_t>(right));
+          --right;
+        }
+        take_left = !take_left;
+      }
+
+      for (size_t i = 0; i + 2 < strip.size(); ++i) {
+        uint32_t a = strip[i];
+        uint32_t b = strip[i + 2];
+        uint32_t c = strip[i + 1];
+
+        if ((i % 2) == 1) std::swap(a, b);
+        if (flip_winding) std::swap(b, c);
+
+        indices.push_back(a);
+        indices.push_back(b);
+        indices.push_back(c);
+      }
+    };
+
+    // make top_indices (zigzag strip triangulation)
+    append_cap(0, false);
+
+    // make bottom_indices (reverse winding)
+    append_cap(kPoly, true);
 
     // make side_indices
     for (int i = 0; i < kPoly; i++) {
