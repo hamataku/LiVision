@@ -1,0 +1,21 @@
+site_name: LiVision User Guide
+site_description: User guide and API reference for LiVision.
+site_dir: site
+docs_dir: docs
+use_directory_urls: false
+
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - User Guide: user_guide.md
+  - API Reference: api/index.html

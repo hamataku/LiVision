@@ -4,6 +4,9 @@
 
 namespace livision {
 
+/**
+ * @brief Parameters for rainbow color mapping.
+ */
 struct RainbowParams {
   Eigen::Vector3d direction{1.0F, 0.0F, 0.0F};
   float delta = 1.0F;
@@ -13,45 +16,81 @@ struct RainbowParams {
       : direction(dir), delta(d) {}
 };
 
+/**
+ * @brief RGBA color with optional rainbow mapping.
+ */
 struct Color {
+  /**
+   * @brief Color mode selection.
+   */
   enum class ColorMode { Fixed = 0, Rainbow = 1, InVisible = 2 };
 
   ColorMode mode = ColorMode::Fixed;
   float base[4] = {0.0F, 0.0F, 0.0F, 1.0F};  // r, g, b, a
   RainbowParams rainbow;
 
+  /**
+   * @brief Construct a fixed RGBA color.
+   */
   Color(float r, float g, float b, float a = 1.0F) : base{r, g, b, a} {};
+  /**
+   * @brief Construct a rainbow color with explicit alpha.
+   */
   Color(float r, float g, float b, float a, const RainbowParams& rp)
       : base{r, g, b, a}, mode(ColorMode::Rainbow), rainbow(rp) {};
+  /**
+   * @brief Construct a rainbow color with alpha = 1.
+   */
   Color(float r, float g, float b, const RainbowParams& rp)
       : base{r, g, b, 1.0F}, mode(ColorMode::Rainbow), rainbow(rp) {};
+  /**
+   * @brief Construct a color from a mode.
+   */
   explicit Color(const ColorMode& m) : mode(m) {};
 
+  /**
+   * @brief Return a copy with updated red channel.
+   */
   Color Red(float r) const {
     Color c = *this;
     c.base[0] = r;
     return c;
   }
+  /**
+   * @brief Return a copy with updated green channel.
+   */
   Color Green(float g) const {
     Color c = *this;
     c.base[1] = g;
     return c;
   }
+  /**
+   * @brief Return a copy with updated blue channel.
+   */
   Color Blue(float b) const {
     Color c = *this;
     c.base[2] = b;
     return c;
   }
+  /**
+   * @brief Return a copy with updated alpha channel.
+   */
   Color Alpha(float a) const {
     Color c = *this;
     c.base[3] = a;
     return c;
   }
+  /**
+   * @brief Return a copy with updated color mode.
+   */
   Color SetMode(ColorMode m) const {
     Color c = *this;
     c.mode = m;
     return c;
   }
+  /**
+   * @brief Return a copy with updated rainbow parameters.
+   */
   Color SetRainbowParams(const RainbowParams& rp) const {
     Color c = *this;
     c.rainbow = rp;
@@ -59,6 +98,9 @@ struct Color {
   }
 };
 
+/**
+ * @brief Predefined colors and palettes.
+ */
 namespace color {
 inline const Color invisible{Color::ColorMode::InVisible};
 inline const Color transparent{Color::ColorMode::InVisible};

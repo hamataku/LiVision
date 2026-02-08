@@ -8,6 +8,9 @@
 
 namespace livision {
 
+/**
+ * @brief Viewer configuration options.
+ */
 struct ViewerConfig {
   bool headless = false;  // Headless mode (no window)
   bool vsync = true;      // Enable VSync
@@ -16,14 +19,36 @@ struct ViewerConfig {
   bool fps = false;       // Display FPS
 };
 
+/**
+ * @brief Main rendering window and event loop controller.
+ */
 class Viewer {
  public:
+  /**
+   * @brief Construct a viewer with the given configuration.
+   */
   explicit Viewer(const ViewerConfig& config);
+  /**
+   * @brief Clean up resources.
+   */
   ~Viewer();
 
+  /**
+   * @brief Run a single frame.
+   * @return True while the viewer should continue running.
+   */
   bool SpinOnce();
+  /**
+   * @brief Request viewer shutdown.
+   */
   void Close();
+  /**
+   * @brief Add an object to be rendered.
+   */
   void AddObject(ObjectBase* object);
+  /**
+   * @brief Register a UI callback (ImGui).
+   */
   void RegisterUICallback(std::function<void()> ui_callback);
 
  private:

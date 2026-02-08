@@ -1,0 +1,23 @@
+PROJECT_NAME           = "LiVision"
+PROJECT_BRIEF          = "Fast Lidar Simulation for multiple robots"
+OUTPUT_DIRECTORY       = docs
+INPUT                  = include
+RECURSIVE              = YES
+FILE_PATTERNS          = *.hpp *.h
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = YES
+FULL_PATH_NAMES        = YES
+STRIP_FROM_PATH        = include
+
+GENERATE_HTML          = YES
+HTML_OUTPUT            = api
+HTML_EXTRA_STYLESHEET  = docs/assets/doxygen-awesome.css
+GENERATE_TREEVIEW      = YES
+DISABLE_INDEX          = NO
+SEARCHENGINE           = YES
+
+GENERATE_LATEX         = NO
+QUIET                  = YES
+WARN_IF_UNDOCUMENTED   = NO
+WARN_IF_DOC_ERROR      = YES

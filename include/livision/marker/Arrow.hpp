@@ -6,10 +6,16 @@
 
 namespace livision {
 
+/**
+ * @brief Arrow marker composed of a cylinder body and cone head.
+ */
 class Arrow : public ObjectBase {
  public:
   using ObjectBase::ObjectBase;
 
+  /**
+   * @brief Parameters describing arrow geometry.
+   */
   struct ArrowParams {
     Eigen::Vector3d from_ = Eigen::Vector3d(0.0, 0.0, 0.0);
     Eigen::Vector3d to_ = Eigen::Vector3d(0.0, 0.0, 0.0);
@@ -18,13 +24,31 @@ class Arrow : public ObjectBase {
     double body_radius_ = 0.03;
   };
 
+  /**
+   * @brief Draw the arrow.
+   */
   void OnDraw(Renderer& renderer) override;
 
+  /**
+   * @brief Set the arrow start and end points.
+   */
   Arrow& SetFromTo(const Eigen::Vector3d& from, const Eigen::Vector3d& to);
 
+  /**
+   * @brief Set all arrow parameters.
+   */
   Arrow& SetArrowParams(const ArrowParams& params);
+  /**
+   * @brief Set head length.
+   */
   Arrow& SetHeadLength(double length);
+  /**
+   * @brief Set head radius.
+   */
   Arrow& SetHeadRadius(double radius);
+  /**
+   * @brief Set body radius.
+   */
   Arrow& SetBodyRadius(double radius);
 
  private:

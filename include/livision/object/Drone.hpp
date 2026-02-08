@@ -6,10 +6,16 @@
 #include "livision/object/primitives.hpp"
 
 namespace livision {
+/**
+ * @brief Simple quadrotor model assembled from primitives.
+ */
 class Drone : public Container {
  public:
   using Container::Container;
 
+  /**
+   * @brief Build the drone body parts.
+   */
   void OnInit() final {
     prop_.at(0).SetParams({.pos = {0.3, 0.3, 0.33},
                            .scale = {0.3, 0.3, 0.03},

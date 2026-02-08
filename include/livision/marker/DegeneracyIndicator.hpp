@@ -5,12 +5,24 @@
 
 namespace livision {
 
+/**
+ * @brief Visualizes degeneracy directions for translation and rotation.
+ */
 class DegeneracyIndicator : public ObjectBase {
  public:
   using ObjectBase::ObjectBase;
+  /**
+   * @brief Initialize indicator primitives.
+   */
   void OnInit() final;
+  /**
+   * @brief Draw the indicator.
+   */
   void OnDraw(Renderer& renderer) final;
 
+  /**
+   * @brief Set degeneracy vectors for translation and rotation.
+   */
   DegeneracyIndicator& SetDegeneracyInfo(
       const std::vector<Eigen::Vector3d>& degen_trans,
       const std::vector<Eigen::Vector3d>& degen_rot);

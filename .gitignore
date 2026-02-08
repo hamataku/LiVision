@@ -6,3 +6,6 @@ imgui.ini
 .vscode/
 .cache
 test_livision/
+docs/api/
+site/
+.venv/

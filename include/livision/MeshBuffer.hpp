@@ -10,16 +10,40 @@ namespace internal {
 struct MeshBufferAccess;
 }  // namespace internal
 
+/**
+ * @brief GPU mesh buffers for vertices and indices.
+ */
 class MeshBuffer {
  public:
+  /**
+   * @brief Construct from vertices and indices.
+   */
   MeshBuffer(std::vector<Vertex> vertices, std::vector<uint32_t> indices);
+  /**
+   * @brief Construct from an STL file path.
+   */
   explicit MeshBuffer(const std::string &stl_path);
+  /**
+   * @brief Destroy the mesh buffer.
+   */
   ~MeshBuffer();
 
+  /**
+   * @brief Create vertex buffer on GPU.
+   */
   void CreateVertex();
+  /**
+   * @brief Create index buffer on GPU.
+   */
   void CreateIndex();
+  /**
+   * @brief Create wireframe index buffer on GPU.
+   */
   void CreateWireIndex();
 
+  /**
+   * @brief Destroy GPU resources.
+   */
   void Destroy();
 
  private:

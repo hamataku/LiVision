@@ -4,11 +4,20 @@
 
 namespace livision {
 
+/**
+ * @brief Ground grid marker.
+ */
 class Grid : public ObjectBase {
  public:
   using ObjectBase::ObjectBase;
+  /**
+   * @brief Draw the grid.
+   */
   void OnDraw(Renderer& renderer) final;
 
+  /**
+   * @brief Set grid resolution (line spacing).
+   */
   Grid& SetResolution(double resolution);
 
  private:
