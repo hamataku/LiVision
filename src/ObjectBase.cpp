@@ -56,11 +56,18 @@ ObjectBase& ObjectBase::SetQuatRotation(const Eigen::Quaterniond& q) {
 }
 ObjectBase& ObjectBase::SetDegRotation(const Eigen::Vector3d& euler_deg) {
   Eigen::Vector3d euler_rad = euler_deg * M_PI / 180.0;
-  Eigen::AngleAxisd roll(euler_rad.x(), Eigen::Vector3d::UnitX());
-  Eigen::AngleAxisd pitch(euler_rad.y(), Eigen::Vector3d::UnitY());
-  Eigen::AngleAxisd yaw(euler_rad.z(), Eigen::Vector3d::UnitZ());
-  Eigen::Quaterniond q = yaw * pitch * roll;
+  return SetRadRotation(euler_rad);
+}
+ObjectBase& ObjectBase::SetRadRotation(const Eigen::Vector3d& euler_rad) {
+  Eigen::Quaterniond q =
+      Eigen::AngleAxisd(euler_rad[2], Eigen::Vector3d::UnitZ()) *
+      Eigen::AngleAxisd(euler_rad[1], Eigen::Vector3d::UnitY()) *
+      Eigen::AngleAxisd(euler_rad[0], Eigen::Vector3d::UnitX());
   return SetQuatRotation(q);
+}
+ObjectBase& ObjectBase::SetVisible(bool visible) {
+  visible_ = visible;
+  return *this;
 }
 ObjectBase& ObjectBase::SetColor(const Color& color) {
   params_.color = color;
@@ -95,13 +102,11 @@ Eigen::Affine3d ObjectBase::GetGlobalMatrix() const { return global_mtx_; }
 // NOLINTNEXTLINE
 void ObjectBase::UpdateMatrix() {
   if (local_mtx_changed_) {
-    // EigenではAffine3dを使って平行移動・回転・スケールを順番に合成
-    Eigen::Affine3d translation =
-        Eigen::Affine3d(Eigen::Translation3d(params_.pos));
-    // NOLINTNEXTLINE
-    Eigen::Affine3d rotation = Eigen::Affine3d(params_.quat);
-    Eigen::Affine3d scale = Eigen::Affine3d(Eigen::Scaling(params_.scale));
+    Eigen::Affine3d translation(Eigen::Translation3d(params_.pos));
+    Eigen::Affine3d rotation(params_.quat);
+    Eigen::Affine3d scale(Eigen::Scaling(params_.scale));
 
+    // GLM と同じ掛け算順
     local_mtx_ = translation * rotation * scale;
     local_mtx_changed_ = false;
   }

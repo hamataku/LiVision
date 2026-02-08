@@ -39,6 +39,7 @@ class ObjectBase {
   ObjectBase& SetScale(double x, double y, double z);
   ObjectBase& SetQuatRotation(const Eigen::Quaterniond& q);
   ObjectBase& SetDegRotation(const Eigen::Vector3d& euler_deg);
+  ObjectBase& SetRadRotation(const Eigen::Vector3d& euler_rad);
   ObjectBase& SetVisible(bool visible);
   ObjectBase& SetColor(const Color& color);
   ObjectBase& SetWireColor(const Color& color);
