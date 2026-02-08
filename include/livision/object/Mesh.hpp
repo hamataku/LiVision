@@ -9,6 +9,7 @@ namespace livision {
 
 /**
  * @brief Renderable mesh object.
+ * @ingroup object
  */
 class Mesh : public ObjectBase {
  public:

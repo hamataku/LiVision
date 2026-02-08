@@ -16,6 +16,7 @@ HTML_EXTRA_STYLESHEET  = docs/assets/doxygen-awesome.css
 GENERATE_TREEVIEW      = YES
 DISABLE_INDEX          = NO
 SEARCHENGINE           = YES
+GROUP_NESTED_SUBGROUPS = YES
 
 GENERATE_LATEX         = NO
 QUIET                  = YES

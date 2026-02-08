@@ -7,7 +7,14 @@
 
 namespace livision {
 /**
+ * @defgroup object Object
+ * @brief Renderable objects (Mesh, Drone, primitives).
+ * @{
+ */
+
+/**
  * @brief Simple quadrotor model assembled from primitives.
+ * @ingroup object
  */
 class Drone : public Container {
  public:
@@ -69,5 +76,7 @@ class Drone : public Container {
   std::array<Cylinder, 4> legs_;
   Box body_;
 };
+
+/** @} */
 
 }  // namespace livision

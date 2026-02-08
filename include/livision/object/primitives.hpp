@@ -6,6 +6,7 @@ namespace livision {
 
 /**
  * @brief Box primitive.
+ * @ingroup object
  */
 class Box : public ObjectBase {
  public:
@@ -17,6 +18,7 @@ class Box : public ObjectBase {
 
 /**
  * @brief Cone primitive.
+ * @ingroup object
  */
 class Cone : public ObjectBase {
  public:
@@ -28,6 +30,7 @@ class Cone : public ObjectBase {
 
 /**
  * @brief Cylinder primitive.
+ * @ingroup object
  */
 class Cylinder : public ObjectBase {
  public:
@@ -39,6 +42,7 @@ class Cylinder : public ObjectBase {
 
 /**
  * @brief Plane primitive.
+ * @ingroup object
  */
 class Plane : public ObjectBase {
  public:
@@ -50,6 +54,7 @@ class Plane : public ObjectBase {
 
 /**
  * @brief Sphere primitive.
+ * @ingroup object
  */
 class Sphere : public ObjectBase {
  public:

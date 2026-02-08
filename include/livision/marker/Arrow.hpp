@@ -7,7 +7,14 @@
 namespace livision {
 
 /**
+ * @defgroup marker Marker
+ * @brief Marker objects (Arrow, Grid, Path, etc.).
+ * @{
+ */
+
+/**
  * @brief Arrow marker composed of a cylinder body and cone head.
+ * @ingroup marker
  */
 class Arrow : public ObjectBase {
  public:
@@ -57,5 +64,7 @@ class Arrow : public ObjectBase {
 
   ArrowParams arrow_params_;
 };
+
+/** @} */
 
 }  // namespace livision

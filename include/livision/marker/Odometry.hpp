@@ -7,6 +7,7 @@ namespace livision {
 
 /**
  * @brief XYZ axis arrows representing odometry pose.
+ * @ingroup marker
  */
 class Odometry : public Container {
  public:

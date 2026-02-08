@@ -7,13 +7,31 @@ use_directory_urls: false
 theme:
   name: material
   features:
-    - navigation.instant
     - navigation.tracking
     - navigation.sections
     - navigation.expand
 
+extra:
+  alternate:
+    - name: English
+      link: /
+      lang: en
+    - name: 日本語
+      link: /ja/
+      lang: ja
+
 plugins:
   - search
+  - i18n:
+      docs_structure: folder
+      languages:
+        - locale: en
+          name: English
+          default: true
+          build: true
+        - locale: ja
+          name: 日本語
+          build: true
 
 nav:
   - Home: index.md

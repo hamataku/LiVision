@@ -8,6 +8,7 @@ namespace livision {
 /**
  * @brief Point cloud marker rendered as instanced primitives.
  * @tparam T Primitive type used for each point.
+ * @ingroup marker
  */
 template <class T = Box>
 class PointCloud : public ObjectBase {

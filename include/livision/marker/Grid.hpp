@@ -6,6 +6,7 @@ namespace livision {
 
 /**
  * @brief Ground grid marker.
+ * @ingroup marker
  */
 class Grid : public ObjectBase {
  public:
