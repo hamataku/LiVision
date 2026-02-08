@@ -1,5 +1,5 @@
 PROJECT_NAME           = "LiVision"
-PROJECT_BRIEF          = "Fast Lidar Simulation for multiple robots"
+PROJECT_BRIEF          = "Object-based 3D visualizer for rapid prototyping (C++)"
 OUTPUT_DIRECTORY       = docs
 INPUT                  = include
 RECURSIVE              = YES

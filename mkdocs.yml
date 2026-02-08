@@ -32,6 +32,10 @@ plugins:
         - locale: ja
           name: 日本語
           build: true
+          nav_translations:
+            Home: ホーム
+            User Guide: ユーザーガイド
+            API Reference: APIリファレンス
 
 nav:
   - Home: index.md
