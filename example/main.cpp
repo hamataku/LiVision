@@ -7,7 +7,6 @@
 #include "livision/marker/Grid.hpp"
 #include "livision/marker/Odometry.hpp"
 #include "livision/marker/Path.hpp"
-#include "livision/marker/PointCloud.hpp"
 #include "livision/object/Drone.hpp"
 #include "livision/object/Mesh.hpp"
 #include "livision/object/primitives.hpp"

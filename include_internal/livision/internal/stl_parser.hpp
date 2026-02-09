@@ -3,6 +3,7 @@
 #include <Eigen/Core>
 #include <fstream>
 #include <iostream>
+#include <stdexcept>
 #include <unordered_map>
 
 #include "livision/Vertex.hpp"
@@ -25,8 +26,7 @@ inline void ParseSTLFile(const std::string& filename,
                          std::vector<uint32_t>& indices) {
   std::ifstream file(filename, std::ios::binary);
   if (!file) {
-    std::cerr << "Failed to open file: " << filename << std::endl;
-    std::exit(EXIT_FAILURE);
+    throw std::runtime_error("Failed to open file: " + filename);
   }
 
   file.seekg(80);  // ヘッダー（80バイト）をスキップ

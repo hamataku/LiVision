@@ -1,0 +1,10 @@
+LiVision includes third-party software components. Their licenses are provided in the source tree.
+
+Included components (not exhaustive):
+- bgfx, bx, bimg (see `third-party/bgfx.cmake/*/LICENSE`)
+- Dear ImGui (see `third-party/livision/imgui/LICENSE.txt`)
+- ImPlot (see `third-party/livision/implot/LICENSE`)
+- bgfx-imgui (see `third-party/bgfx-imgui` and embedded license files)
+- Other bgfx dependencies in `third-party/bgfx.cmake/bgfx/3rdparty` and `third-party/bgfx.cmake/bimg/3rdparty`
+
+Please review the license files in the listed directories for full terms.

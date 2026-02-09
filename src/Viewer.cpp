@@ -10,6 +10,7 @@
 #include <bx/math.h>
 
 #include <iostream>
+#include <stdexcept>
 #include <utility>
 
 #include "imgui_impl_bgfx.h"
@@ -56,8 +57,8 @@ Viewer::Viewer(const ViewerConfig& config) : pimpl_(std::make_unique<Impl>()) {
   }
 
   if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-    printf("SDL could not initialize. SDL_Error: %s\n", SDL_GetError());
-    std::exit(EXIT_FAILURE);
+    throw std::runtime_error(std::string("SDL could not initialize. SDL_Error: ") +
+                             SDL_GetError());
   }
 
   if (pimpl_->config.headless) {
@@ -71,8 +72,8 @@ Viewer::Viewer(const ViewerConfig& config) : pimpl_(std::make_unique<Impl>()) {
   }
 
   if (pimpl_->window == nullptr) {
-    printf("Window could not be created. SDL_Error: %s\n", SDL_GetError());
-    std::exit(EXIT_FAILURE);
+    throw std::runtime_error(std::string("Window could not be created. SDL_Error: ") +
+                             SDL_GetError());
   }
 
   bgfx::renderFrame();  // single threaded mode
@@ -85,9 +86,19 @@ Viewer::Viewer(const ViewerConfig& config) : pimpl_(std::make_unique<Impl>()) {
 #elif BX_PLATFORM_OSX
     pd.nwh = wm_info.info.cocoa.window;  // NSWindow*
 #elif BX_PLATFORM_LINUX
-    pd.ndt = wm_info.info.x11.display;  // Display*
-    pd.nwh =
-        (void*)static_cast<uintptr_t>(wm_info.info.x11.window);  // Window (XID)
+    switch (wm_info.subsystem) {
+      case SDL_SYSWM_X11:
+        pd.ndt = wm_info.info.x11.display;  // Display*
+        pd.nwh =
+            (void*)static_cast<uintptr_t>(wm_info.info.x11.window);  // Window (XID)
+        break;
+      case SDL_SYSWM_WAYLAND:
+        pd.ndt = wm_info.info.wl.display;  // wl_display*
+        pd.nwh = wm_info.info.wl.surface;  // wl_surface*
+        break;
+      default:
+        throw std::runtime_error("Unsupported SDL window subsystem on Linux");
+    }
 #endif
   }
 
@@ -125,8 +136,7 @@ Viewer::Viewer(const ViewerConfig& config) : pimpl_(std::make_unique<Impl>()) {
                       (BGFX_CAPS_TEXTURE_2D_ARRAY |
                        BGFX_CAPS_TEXTURE_READ_BACK | BGFX_CAPS_COMPUTE)) == 0U);
   if (!supported) {
-    std::cerr << "Not supported machine" << std::endl;
-    std::exit(EXIT_FAILURE);
+    throw std::runtime_error("Not supported machine");
   }
 
   pimpl_->renderer.Init();

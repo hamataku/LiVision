@@ -4,13 +4,16 @@ project(livision VERSION 0.1.0 LANGUAGES CXX)
 include(GNUInstallDirs)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
+set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type")
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(LIVISION_BUILD_SHARED "Build as shared library" OFF)
 option(LIVISION_BUILD_EXAMPLE "Build example" ON)
-option(LIVISION_COMPILE_SHADERS "Compile shaders" ON)
+option(LIVISION_COMPILE_SHADERS "Compile shaders at build time" ON)
+option(LIVISION_INSTALL_PRECOMPILED_SHADERS
+       "Install precompiled shaders from shader/bin when not compiling"
+       ON)
 set(LIVISION_SHADER_INSTALL_SUBDIR "livision/shaders" CACHE STRING "Install subdir for shader binaries under CMAKE_INSTALL_DATADIR")
 
 # bgfx
@@ -136,10 +139,14 @@ else()
     file(GLOB SHADER_BINARIES_PREBUILT
         ${CMAKE_CURRENT_SOURCE_DIR}/shader/bin/*.bin
     )
-    if(SHADER_BINARIES_PREBUILT)
-        install(FILES ${SHADER_BINARIES_PREBUILT}
-            DESTINATION ${CMAKE_INSTALL_DATADIR}/${LIVISION_SHADER_INSTALL_SUBDIR}
-        )
+    if(LIVISION_INSTALL_PRECOMPILED_SHADERS)
+        if(SHADER_BINARIES_PREBUILT)
+            install(FILES ${SHADER_BINARIES_PREBUILT}
+                DESTINATION ${CMAKE_INSTALL_DATADIR}/${LIVISION_SHADER_INSTALL_SUBDIR}
+            )
+        else()
+            message(WARNING "LIVISION_COMPILE_SHADERS=OFF but no precompiled shaders found in shader/bin")
+        endif()
     endif()
 endif()
 

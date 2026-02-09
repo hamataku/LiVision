@@ -7,6 +7,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -100,12 +101,14 @@ bgfx::ShaderHandle CreateShaderFromPaths(
     }
   }
 
-  std::cerr << "Could not find shader: " << name << std::endl;
-  std::cerr << "Search paths:" << std::endl;
+  std::string msg = "Could not find shader: ";
+  msg += name;
+  msg += "\nSearch paths:";
   for (const std::string& base : search_paths) {
-    std::cerr << "  - " << base << std::endl;
+    msg += "\n  - ";
+    msg += base;
   }
-  std::exit(EXIT_FAILURE);
+  throw std::runtime_error(msg);
 }
 }  // namespace
 

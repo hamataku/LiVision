@@ -1,3 +1,4 @@
 #!/bin/bash
+set -euo pipefail
 
-sudo cmake --build build --target install
+cmake --build build --target install
