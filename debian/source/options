@@ -1,0 +1,16 @@
+tar-ignore = third-party/bgfx.cmake/bx/tools/bin
+extend-diff-ignore = (^|/)third-party/bgfx\.cmake/bx/tools/bin(/|$)
+
+tar-ignore = docs/api
+tar-ignore = site
+tar-ignore = build
+tar-ignore = obj-*
+tar-ignore = .cache
+tar-ignore = .venv
+
+extend-diff-ignore = (^|/)docs/api(/|$)
+extend-diff-ignore = (^|/)site(/|$)
+extend-diff-ignore = (^|/)build(/|$)
+extend-diff-ignore = (^|/)obj-[^/]+(/|$)
+extend-diff-ignore = (^|/)\.cache(/|$)
+extend-diff-ignore = (^|/)\.venv(/|$)

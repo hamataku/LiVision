@@ -9,7 +9,7 @@ License: MIT
 
 Files: third-party/bgfx.cmake/* third-party/bgfx-imgui/*
 Copyright: 2011-2024 Branimir Karadzic
-License: BSD-2-claused
+License: BSD-2-clause
 
 Files: third-party/livision/implot/*
 Copyright: 2020 Evan Pezent

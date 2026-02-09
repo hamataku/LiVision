@@ -1,4 +1,10 @@
-livision (0.1.0-1~ppa1) unstable; urgency=medium
+livision (0.1.0-1~ppa2) jammy; urgency=medium
+
+  * re-upload 
+
+ -- Taku Hamazaki <hamataku07130713@gmail.com>  Mon, 09 Feb 2026 18:43:04 +0900
+
+livision (0.1.0-1~ppa1) jammy; urgency=medium
 
   * Initial release.
 
