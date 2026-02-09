@@ -47,4 +47,3 @@ compile_shader shader/v_simple.sc shader/bin/v_simple vertex
 compile_shader shader/f_simple.sc shader/bin/f_simple fragment
 compile_shader shader/v_points.sc shader/bin/v_points vertex
 compile_shader shader/f_points.sc shader/bin/f_points fragment
-compile_shader shader/compute_ray_cast.sc shader/bin/compute_ray_cast compute

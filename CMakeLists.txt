@@ -46,6 +46,11 @@ else()
     add_library(${PROJECT_NAME} STATIC)
 endif()
 
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_VERSION_MAJOR}
+)
+
 # Source files
 file(GLOB_RECURSE SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
@@ -65,7 +70,7 @@ target_sources(${PROJECT_NAME} PRIVATE ${SOURCES})
 
 # ライブラリ内部で使うヘッダ（bgfxなど）
 set(INTERNAL_INCLUDE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include_internal
+    ${CMAKE_CURRENT_SOURCE_DIR}/internal
     ${CMAKE_CURRENT_SOURCE_DIR}/third-party/bgfx-imgui
     ${CMAKE_CURRENT_SOURCE_DIR}/third-party/bgfx.cmake
 )
@@ -123,7 +128,7 @@ if(LIVISION_COMPILE_SHADERS)
 
     add_custom_command(
         OUTPUT ${SHADER_BINARIES}
-        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/compile_shaders.sh ${SHADERC_EXECUTABLE}
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/compile_shaders.sh ${SHADERC_EXECUTABLE}
         DEPENDS ${SHADER_SOURCES} ${SHADERC_EXECUTABLE}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMENT "Compiling shaders..."
@@ -160,8 +165,8 @@ endif()
 
 install(TARGETS ${LIVISION_EXPORT_TARGETS}
     EXPORT livisionTargets
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/livision
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/livision
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 

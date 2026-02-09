@@ -1,0 +1,14 @@
+.debhelper/
+*.debhelper
+*.log
+*.substvars
+files
+*~
+
+# Package output directories
+/liblivision1/
+/liblivision-dev/
+/obj-*/
+
+# Temporary install staging
+/tmp/

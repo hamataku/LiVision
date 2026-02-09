@@ -2,11 +2,11 @@
 
 LiVision is a lightweight C++ 3D visualizer for rapid prototyping with imgui & implot.
 
+[![build](https://github.com/hamataku/LiVision/actions/workflows/build.yml/badge.svg)](https://github.com/hamataku/LiVision/actions/workflows/build.yml)
 
-## Docs
-* Documentation: `https://hamataku.github.io/LiVision/`
-* ドキュメント: `https://hamataku.github.io/LiVision/ja/`
-* API: `https://hamataku.github.io/LiVision/api/`
+* [Documentation(en)](https://hamataku.github.io/LiVision/)
+* [ドキュメント(日本語)](https://hamataku.github.io/LiVision/ja/)
+* [API Reference](https://hamataku.github.io/LiVision/api/)
 
 ## Features
 - Simple object hierarchy with transforms and visibility control

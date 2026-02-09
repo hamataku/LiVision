@@ -1,2 +1,3 @@
 usr/include/livision/
 usr/lib/*/liblivision.so
+usr/lib/*/cmake/livision/*.cmake
