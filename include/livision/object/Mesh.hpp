@@ -18,13 +18,6 @@ class Mesh : public ObjectBase {
    */
   explicit Mesh(Params params = Params()) : ObjectBase(std::move(params)) {}
   /**
-   * @brief Construct from STL file path.
-   */
-  explicit Mesh(const std::string& path, Params params = Params())
-      : ObjectBase(std::move(params)) {
-    SetFromSTL(path);
-  }
-  /**
    * @brief Construct from vertex and index arrays.
    */
   Mesh(const std::vector<Vertex>& vertices,
@@ -41,10 +34,6 @@ class Mesh : public ObjectBase {
     SetMeshBuffer(std::move(mesh_buffer));
   }
 
-  /**
-   * @brief Load mesh data from an STL file.
-   */
-  void SetFromSTL(const std::string& path);
   /**
    * @brief Set mesh data from vertices and indices.
    */

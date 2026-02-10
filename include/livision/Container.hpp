@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "livision/ObjectBase.hpp"
 
 namespace livision {
@@ -22,6 +24,10 @@ class Container : public ObjectBase {
    * @brief Get the list of child objects.
    */
   std::vector<ObjectBase*>& GetObjects() { return objects_; }
+  /**
+   * @brief Clear the list of child objects.
+   */
+  void ClearObjects() { objects_.clear(); }
 
  private:
   std::vector<ObjectBase*> objects_;

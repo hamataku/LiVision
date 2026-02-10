@@ -17,7 +17,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build libsdl2-dev libeigen3-dev ccache
+          sudo apt-get install -y ninja-build libsdl2-dev libeigen3-dev libsdformat14-dev libassimp-dev ccache
 
       - name: Set up ccache
         uses: actions/cache@v4

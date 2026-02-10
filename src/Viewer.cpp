@@ -312,14 +312,13 @@ void Viewer::Close() { pimpl_->quit = true; }
 
 void Viewer::AddObject(ObjectBase* object) {
   object->Init();
+  pimpl_->objects.push_back(object);
   auto* container = dynamic_cast<Container*>(object);
   if (container) {
     for (auto* obj : container->GetObjects()) {
       obj->Init();
       AddObject(obj);
     }
-  } else {
-    pimpl_->objects.push_back(object);
   }
 }
 

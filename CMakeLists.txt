@@ -21,6 +21,7 @@ option(LIVISION_COMPILE_SHADERS "Compile shaders at build time" ON)
 option(LIVISION_INSTALL_PRECOMPILED_SHADERS
        "Install precompiled shaders from shader/bin when not compiling"
        ON)
+option(LIVISION_ENABLE_SDF "Enable SDF mesh loading via sdformat and assimp" ON)
 set(LIVISION_SHADER_INSTALL_SUBDIR "livision/shaders" CACHE STRING "Install subdir for shader binaries under CMAKE_INSTALL_DATADIR")
 
 # bgfx
@@ -45,6 +46,10 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third-party/bgfx.cmake)
 # System packages
 find_package(SDL2 REQUIRED)
 find_package(Eigen3 REQUIRED)
+if(LIVISION_ENABLE_SDF)
+    find_package(sdformat14 REQUIRED)
+    find_package(assimp REQUIRED)
+endif()
 
 # Library target
 if(LIVISION_BUILD_SHARED)
@@ -87,6 +92,9 @@ target_compile_definitions(${PROJECT_NAME}
     PRIVATE
     LIVISION_SHADER_INSTALL_DIR="${CMAKE_INSTALL_FULL_DATADIR}/${LIVISION_SHADER_INSTALL_SUBDIR}"
 )
+if(LIVISION_ENABLE_SDF)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE LIVISION_ENABLE_SDF=1)
+endif()
 
 # Link libraries
 target_link_libraries(${PROJECT_NAME}
@@ -97,10 +105,13 @@ target_link_libraries(${PROJECT_NAME}
         SDL2::SDL2
         Eigen3::Eigen
 )
+if(LIVISION_ENABLE_SDF)
+    target_link_libraries(${PROJECT_NAME} PUBLIC sdformat14::core assimp::assimp)
+endif()
 
 # Example program
 if(LIVISION_BUILD_EXAMPLE)
-    add_subdirectory(example)
+    add_subdirectory(examples)
 endif()
 
 # Shader compilation

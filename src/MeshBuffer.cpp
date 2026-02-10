@@ -3,7 +3,6 @@
 #include <unordered_set>
 
 #include "livision/internal/mesh_buffer_access.hpp"
-#include "livision/internal/stl_parser.hpp"
 
 namespace livision {
 
@@ -22,11 +21,6 @@ MeshBuffer::MeshBuffer(std::vector<Vertex> vertices,
     : pimpl_(std::make_unique<Impl>()) {
   pimpl_->vertices = std::move(vertices);
   pimpl_->indices = std::move(indices);
-}
-
-MeshBuffer::MeshBuffer(const std::string& stl_path)
-    : pimpl_(std::make_unique<Impl>()) {
-  stl_parser::ParseSTLFile(stl_path, pimpl_->vertices, pimpl_->indices);
 }
 
 MeshBuffer::~MeshBuffer() { Destroy(); }

@@ -4,10 +4,6 @@
 
 namespace livision {
 
-void Mesh::SetFromSTL(const std::string& path) {
-  mesh_buf_ = std::make_shared<MeshBuffer>(path);
-}
-
 void Mesh::SetMeshData(const std::vector<Vertex>& vertices,
                        const std::vector<uint32_t>& indices) {
   mesh_buf_ = std::make_shared<MeshBuffer>(vertices, indices);
@@ -16,4 +12,5 @@ void Mesh::SetMeshData(const std::vector<Vertex>& vertices,
 void Mesh::SetMeshBuffer(std::shared_ptr<MeshBuffer> mesh_buffer) {
   mesh_buf_ = std::move(mesh_buffer);
 }
+
 }  // namespace livision

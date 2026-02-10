@@ -20,10 +20,6 @@ class MeshBuffer {
    */
   MeshBuffer(std::vector<Vertex> vertices, std::vector<uint32_t> indices);
   /**
-   * @brief Construct from an STL file path.
-   */
-  explicit MeshBuffer(const std::string &stl_path);
-  /**
    * @brief Destroy the mesh buffer.
    */
   ~MeshBuffer();
