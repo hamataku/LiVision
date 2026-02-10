@@ -12,8 +12,7 @@
 #include "livision/object/primitives.hpp"
 
 int main() {
-  namespace lv = livision;
-  lv::Viewer viewer{{
+  livision::Viewer viewer{{
       .headless = false,  // Set to true for headless mode
       .vsync = true,      // Set to true to enable VSync
       .width = 1280,      // Set the window width
@@ -29,68 +28,71 @@ int main() {
   });
 
   // Plane
-  lv::Plane plane({.scale = {40.0, 40.0, 0.0}, .color = lv::color::light_gray});
+  livision::Plane plane(
+      {.scale = {40.0, 40.0, 0.0}, .color = livision::color::light_gray});
   viewer.AddObject(&plane);
 
   // Grid
-  lv::Grid grid;
+  livision::Grid grid;
   grid.SetResolution(1.0).SetScale(Eigen::Vector3d(40.0, 40.0, 0.0));
   viewer.AddObject(&grid);
 
   // Mesh bunny
-  lv::Mesh bunny("data/bunny/bun_zipper_res2.stl",
-                 {.pos = {0.0, 0.0, -2.0},
-                  .scale = {50.0, 50.0, 50.0},
-                  .color = lv::color::rainbow_z,
-                  .wire_color = lv::color::black});
+  constexpr const char* ex_dir = LIVISION_EXAMPLE_DIR;
+  livision::Mesh bunny(std::string(ex_dir) + "/bunny.stl",
+                       {.pos = {0.0, 0.0, -2.0},
+                        .scale = {50.0, 50.0, 50.0},
+                        .color = livision::color::rainbow_z,
+                        .wire_color = livision::color::black});
   viewer.AddObject(&bunny.SetDegRotation({90.0, 0.0, 0.0}));
 
   // Box
-  lv::Box box({.scale = {2.0, 2.0, 2.0}, .color = lv::color::rainbow_z});
+  livision::Box box(
+      {.scale = {2.0, 2.0, 2.0}, .color = livision::color::rainbow_z});
   viewer.AddObject(&box);
 
   // Cone
-  lv::Cone cone({.scale = {1.5, 1.5, 3.0},
-                 .color = lv::color::green,
-                 .wire_color = lv::color::black});
+  livision::Cone cone({.scale = {1.5, 1.5, 3.0},
+                       .color = livision::color::green,
+                       .wire_color = livision::color::black});
   viewer.AddObject(&cone);
 
   // Cylinder
-  lv::Cylinder cylinder({.scale = {1.5, 1.5, 3.0},
-                         .color = lv::color::orange,
-                         .wire_color = lv::color::black});
+  livision::Cylinder cylinder({.scale = {1.5, 1.5, 3.0},
+                               .color = livision::color::orange,
+                               .wire_color = livision::color::black});
   viewer.AddObject(&cylinder);
 
   // Sphere
-  lv::Sphere sphere({.scale = {2.0, 2.0, 2.0},
-                     .color = lv::color::red,
-                     .wire_color = lv::color::black});
+  livision::Sphere sphere({.scale = {2.0, 2.0, 2.0},
+                           .color = livision::color::red,
+                           .wire_color = livision::color::black});
   viewer.AddObject(&sphere);
 
   // Drone
   float theta = 0.0F;
-  lv::Drone drone;
+  livision::Drone drone;
   viewer.AddObject(&drone);
 
   // Arrow
-  lv::Arrow arrow;
+  livision::Arrow arrow;
   arrow
       .SetArrowParams({.from_ = Eigen::Vector3d(0.0, 0.0, 0.0),
                        .to_ = Eigen::Vector3d(0.0, 0.0, 5.0),
                        .head_length_ = 1.0,
                        .head_radius_ = 0.2,
                        .body_radius_ = 0.1})
-      .SetColor(lv::color::yellow);
+      .SetColor(livision::color::yellow);
   viewer.AddObject(&arrow);
 
   // Degenerate Indicator
-  lv::DegeneracyIndicator degen_indicator;
+  livision::DegeneracyIndicator degen_indicator;
   degen_indicator.SetDegeneracyInfo({Eigen::Vector3d(1.0, 0.0, 0.0)},
                                     {Eigen::Vector3d(1.0, 0.0, 0.0)});
   viewer.AddObject(&degen_indicator);
 
   // Odometry
-  lv::Odometry odom;
+  livision::Odometry odom;
   viewer.AddObject(&odom);
 
   // Path 3D sin wave
@@ -100,8 +102,10 @@ int main() {
     float z = std::cos(x) + 5.0F;
     path_points.emplace_back(x, y, z);
   }
-  lv::Path path;
-  path.SetPath(path_points).SetPathWidth(0.1).SetColor(lv::color::rainbow_x);
+  livision::Path path;
+  path.SetPath(path_points)
+      .SetPathWidth(0.1)
+      .SetColor(livision::color::rainbow_x);
   viewer.AddObject(&path);
 
   while (viewer.SpinOnce()) {

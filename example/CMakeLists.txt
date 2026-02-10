@@ -7,5 +7,9 @@ target_include_directories(livision_example
         ${CMAKE_CURRENT_SOURCE_DIR}/../include
 )
 
+target_compile_definitions(livision_example
+    PRIVATE LIVISION_EXAMPLE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
 # 親プロジェクトのライブラリをリンク
 target_link_libraries(livision_example PRIVATE livision)

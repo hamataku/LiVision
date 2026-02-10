@@ -5,18 +5,17 @@ Maintainer: Taku Hamazaki <hamataku07130713@gmail.com>
 Build-Depends:
  debhelper-compat (= 13),
  cmake,
- ninja-build,
  pkg-config,
  libsdl2-dev,
  libeigen3-dev
 Standards-Version: 4.6.0.1
 Rules-Requires-Root: no
-Homepage: https://github.com/fkd-lab/LiVision
+Homepage: https://github.com/hamataku/LiVision
 
 Package: liblivision1
 Section: libs
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, libsdl2-2.0-0
+Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: LiVision rendering library (runtime)
  Runtime components and shader binaries for LiVision.
 

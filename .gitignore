@@ -9,3 +9,11 @@ test_livision/
 docs/api/
 site/
 .venv/
+dist/
+*.orig.tar.xz
+*.debian.tar.xz
+*.build
+*.buildinfo
+*.changes
+*.dsc
+*.upload

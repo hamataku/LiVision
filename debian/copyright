@@ -1,7 +1,7 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: LiVision
 Upstream-Contact: Taku Hamazaki <hamataku07130713@gmail.com>
-Source: https://github.com/fkd-lab/LiVision
+Source: https://github.com/hamataku/LiVision
 
 Files: *
 Copyright: 2025-2026 Taku Hamazaki
@@ -11,11 +11,11 @@ Files: third-party/bgfx.cmake/* third-party/bgfx-imgui/*
 Copyright: 2011-2024 Branimir Karadzic
 License: BSD-2-clause
 
-Files: third-party/livision/implot/*
+Files: include/livision/implot/*
 Copyright: 2020 Evan Pezent
 License: MIT
 
-Files: third-party/livision/imgui/*
+Files: include/livision/imgui/*
 Copyright: 2014-2026 Omar Cornut
 License: MIT
 

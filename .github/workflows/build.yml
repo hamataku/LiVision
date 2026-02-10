@@ -31,6 +31,7 @@ jobs:
         run: |
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
+            -DLIVISION_BUILD_SHARED=OFF \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DLIVISION_COMPILE_SHADERS=OFF \
             -DLIVISION_INSTALL_PRECOMPILED_SHADERS=ON

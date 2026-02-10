@@ -1,16 +1,30 @@
-tar-ignore = third-party/bgfx.cmake/bx/tools/bin
-extend-diff-ignore = (^|/)third-party/bgfx\.cmake/bx/tools/bin(/|$)
-
-tar-ignore = docs/api
+tar-ignore = docs
 tar-ignore = site
 tar-ignore = build
-tar-ignore = obj-*
 tar-ignore = .cache
 tar-ignore = .venv
+tar-ignore = third-party/bgfx.cmake/bx/tools
+tar-ignore = third-party/bgfx.cmake/bx/tests
+tar-ignore = third-party/bgfx.cmake/bimg/tools
+tar-ignore = third-party/bgfx.cmake/bgfx/tools
+tar-ignore = third-party/bgfx.cmake/bgfx/bindings
+tar-ignore = third-party/bgfx.cmake/bgfx/examples
+tar-ignore = .github
+tar-ignore = example
+tar-ignore = scripts
 
-extend-diff-ignore = (^|/)docs/api(/|$)
+
+extend-diff-ignore = (^|/)docs(/|$)
 extend-diff-ignore = (^|/)site(/|$)
 extend-diff-ignore = (^|/)build(/|$)
-extend-diff-ignore = (^|/)obj-[^/]+(/|$)
 extend-diff-ignore = (^|/)\.cache(/|$)
 extend-diff-ignore = (^|/)\.venv(/|$)
+extend-diff-ignore = (^|/)third-party/bgfx\.cmake/bx/tools(/|$)
+extend-diff-ignore = (^|/)third-party/bgfx\.cmake/bx/tests(/|$)
+extend-diff-ignore = (^|/)third-party/bgfx\.cmake/bimg/tools(/|$)
+extend-diff-ignore = (^|/)third-party/bgfx\.cmake/bgfx/tools(/|$)
+extend-diff-ignore = (^|/)third-party/bgfx\.cmake/bgfx/bindings(/|$)
+extend-diff-ignore = (^|/)third-party/bgfx\.cmake/bgfx/examples(/|$)
+extend-diff-ignore = (^|/)\.github(/|$)
+extend-diff-ignore = (^|/)example(/|$)
+extend-diff-ignore = (^|/)scripts(/|$)

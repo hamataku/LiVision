@@ -3,12 +3,19 @@ project(livision VERSION 0.1.0 LANGUAGES CXX)
 
 include(GNUInstallDirs)
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type")
+if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+  # Only set default when user didn't specify anything
+  if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "RelWithDebInfo" "MinSizeRel")
+  endif()
+endif()
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-option(LIVISION_BUILD_SHARED "Build as shared library" OFF)
+set(LIVISION_BUILD_SHARED ON CACHE BOOL "Build as shared library" FORCE)
 option(LIVISION_BUILD_EXAMPLE "Build example" ON)
 option(LIVISION_COMPILE_SHADERS "Compile shaders at build time" ON)
 option(LIVISION_INSTALL_PRECOMPILED_SHADERS
@@ -17,9 +24,9 @@ option(LIVISION_INSTALL_PRECOMPILED_SHADERS
 set(LIVISION_SHADER_INSTALL_SUBDIR "livision/shaders" CACHE STRING "Install subdir for shader binaries under CMAKE_INSTALL_DATADIR")
 
 # bgfx
+set(BGFX_LIBRARY_TYPE "STATIC" CACHE STRING "" FORCE)
 set(BGFX_AMALGAMATED      OFF CACHE INTERNAL "" FORCE)
 set(BGFX_BUILD_EXAMPLES   OFF CACHE INTERNAL "" FORCE)
-set(BGFX_CONFIG_DEBUG     OFF CACHE INTERNAL "" FORCE)
 set(BGFX_CUSTOM_TARGETS   OFF CACHE INTERNAL "" FORCE)
 set(BGFX_INSTALL          OFF CACHE INTERNAL "" FORCE)
 set(BGFX_INSTALL_EXAMPLES OFF CACHE INTERNAL "" FORCE)
@@ -52,18 +59,13 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 )
 
 # Source files
-file(GLOB_RECURSE SOURCES
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/object/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/marker/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/imgui/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/implot/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/third-party/bgfx-imgui/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/implot/implot.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/implot/implot_items.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/imgui/imgui.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/imgui/imgui_draw.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/imgui/imgui_tables.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/imgui/imgui_widgets.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/imgui/backends/imgui_impl_sdl2.cpp"
 )
 
 target_sources(${PROJECT_NAME} PRIVATE ${SOURCES})
@@ -79,7 +81,6 @@ target_include_directories(${PROJECT_NAME}
     PRIVATE ${INTERNAL_INCLUDE}
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/third-party>
 )
 
 target_compile_definitions(${PROJECT_NAME}
@@ -90,8 +91,8 @@ target_compile_definitions(${PROJECT_NAME}
 # Link libraries
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
-        bx
-        bgfx
+        $<BUILD_INTERFACE:bx>
+        $<BUILD_INTERFACE:bgfx>
     PUBLIC
         SDL2::SDL2
         Eigen3::Eigen
@@ -119,7 +120,6 @@ if(LIVISION_COMPILE_SHADERS)
         ${CMAKE_CURRENT_SOURCE_DIR}/shader/bin/f_simple_${SHADER_PLATFORM_SUFFIX}.bin
         ${CMAKE_CURRENT_SOURCE_DIR}/shader/bin/v_points_${SHADER_PLATFORM_SUFFIX}.bin
         ${CMAKE_CURRENT_SOURCE_DIR}/shader/bin/f_points_${SHADER_PLATFORM_SUFFIX}.bin
-        ${CMAKE_CURRENT_SOURCE_DIR}/shader/bin/compute_ray_cast_${SHADER_PLATFORM_SUFFIX}.bin
     )
 
     file(GLOB SHADER_SOURCES
@@ -158,10 +158,7 @@ endif()
 # Alias
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
-set(LIVISION_EXPORT_TARGETS ${PROJECT_NAME} bx bgfx)
-if(TARGET bimg)
-    list(APPEND LIVISION_EXPORT_TARGETS bimg)
-endif()
+set(LIVISION_EXPORT_TARGETS ${PROJECT_NAME})
 
 install(TARGETS ${LIVISION_EXPORT_TARGETS}
     EXPORT livisionTargets
@@ -173,22 +170,6 @@ install(TARGETS ${LIVISION_EXPORT_TARGETS}
 install(DIRECTORY
     ${CMAKE_CURRENT_SOURCE_DIR}/include/livision/
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/livision
-)
-
-install(FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/implot/implot.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/implot/implot_internal.h
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/livision/implot
-)
-
-install(FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/imgui/imgui.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/imgui/imconfig.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/imgui/imgui_internal.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/imgui/imstb_textedit.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/imgui/imstb_rectpack.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/livision/imgui/imstb_truetype.h
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/livision/imgui
 )
 
 # --- CMake package configuration for find_package(livision) ---

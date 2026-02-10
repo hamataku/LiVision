@@ -16,7 +16,7 @@
 #include "imgui_impl_bgfx.h"
 #include "livision/Container.hpp"
 #include "livision/Renderer.hpp"
-#include "livision/imgui/backends/imgui_impl_sdl2.h"
+#include "livision/imgui/imgui_impl_sdl2.h"
 
 namespace livision {
 
@@ -57,8 +57,8 @@ Viewer::Viewer(const ViewerConfig& config) : pimpl_(std::make_unique<Impl>()) {
   }
 
   if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-    throw std::runtime_error(std::string("SDL could not initialize. SDL_Error: ") +
-                             SDL_GetError());
+    throw std::runtime_error(
+        std::string("SDL could not initialize. SDL_Error: ") + SDL_GetError());
   }
 
   if (pimpl_->config.headless) {
@@ -72,8 +72,9 @@ Viewer::Viewer(const ViewerConfig& config) : pimpl_(std::make_unique<Impl>()) {
   }
 
   if (pimpl_->window == nullptr) {
-    throw std::runtime_error(std::string("Window could not be created. SDL_Error: ") +
-                             SDL_GetError());
+    throw std::runtime_error(
+        std::string("Window could not be created. SDL_Error: ") +
+        SDL_GetError());
   }
 
   bgfx::renderFrame();  // single threaded mode
@@ -89,8 +90,8 @@ Viewer::Viewer(const ViewerConfig& config) : pimpl_(std::make_unique<Impl>()) {
     switch (wm_info.subsystem) {
       case SDL_SYSWM_X11:
         pd.ndt = wm_info.info.x11.display;  // Display*
-        pd.nwh =
-            (void*)static_cast<uintptr_t>(wm_info.info.x11.window);  // Window (XID)
+        pd.nwh = (void*)static_cast<uintptr_t>(
+            wm_info.info.x11.window);  // Window (XID)
         break;
       case SDL_SYSWM_WAYLAND:
         pd.ndt = wm_info.info.wl.display;  // wl_display*

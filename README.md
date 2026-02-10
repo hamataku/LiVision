@@ -22,7 +22,11 @@ LiVision is a lightweight C++ 3D visualizer for rapid prototyping with imgui & i
 
 ## Installation
 ### Install from PPA
-Now preparing
+```bash
+sudo add-apt-repository ppa:hamatakuzaq/livision
+sudo apt update
+sudo apt install -y liblivision-dev
+```
 
 ### Install from source
 ```bash
