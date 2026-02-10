@@ -2,12 +2,15 @@
 
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
+#include <functional>
 #include <sstream>
 #include <string_view>
 
 #include <Eigen/Geometry>
 
 #ifdef LIVISION_ENABLE_SDF
+#include <curl/curl.h>
 #include <assimp/Importer.hpp>
 #include <assimp/material.h>
 #include <assimp/postprocess.h>
@@ -91,13 +94,106 @@ std::vector<fs::path> CollectSearchRoots(const fs::path& sdf_dir) {
   return roots;
 }
 
-fs::path ResolveMeshUri(const std::string& uri, const fs::path& sdf_dir,
-                        const fs::path& base_dir) {
+#ifdef LIVISION_ENABLE_SDF
+size_t CurlWriteToFile(void* contents, size_t size, size_t nmemb,
+                     void* userp) {
+  std::ofstream* stream = static_cast<std::ofstream*>(userp);
+  if (!stream || !stream->good()) {
+    return 0;
+  }
+  const size_t total = size * nmemb;
+  stream->write(static_cast<const char*>(contents),
+                static_cast<std::streamsize>(total));
+  return stream->good() ? total : 0;
+}
+
+std::string DownloadMeshToCache(const std::string& uri,
+                                std::string* error_message) {
+  fs::path cache_dir = fs::temp_directory_path() / "livision_mesh_cache";
+  std::error_code ec;
+  fs::create_directories(cache_dir, ec);
+  if (ec) {
+    if (error_message) {
+      *error_message = "Failed to create mesh cache directory: " +
+                       cache_dir.string();
+    }
+    return {};
+  }
+
+  std::string_view view(uri);
+  const size_t query_pos = view.find('?');
+  const std::string_view path_part =
+      (query_pos == std::string_view::npos) ? view : view.substr(0, query_pos);
+  const size_t dot_pos = path_part.find_last_of('.');
+  const std::string ext =
+      (dot_pos == std::string_view::npos) ? std::string() :
+                                            std::string(path_part.substr(dot_pos));
+
+  const size_t uri_hash = std::hash<std::string>{}(uri);
+  fs::path cached_path = cache_dir / (std::to_string(uri_hash) + ext);
+  if (fs::exists(cached_path)) {
+    return cached_path.string();
+  }
+
+  std::ofstream stream(cached_path, std::ios::binary);
+  if (!stream) {
+    if (error_message) {
+      *error_message = "Failed to open cache file for mesh download: " +
+                       cached_path.string();
+    }
+    return {};
+  }
+
+  CURL* curl = curl_easy_init();
+  if (!curl) {
+    if (error_message) {
+      *error_message = "Failed to initialize curl for mesh download: " + uri;
+    }
+    fs::remove(cached_path, ec);
+    return {};
+  }
+
+  char curl_error[CURL_ERROR_SIZE] = {0};
+  curl_easy_setopt(curl, CURLOPT_URL, uri.c_str());
+  curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+  curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToFile);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &stream);
+  curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_error);
+  curl_easy_setopt(curl, CURLOPT_USERAGENT, "livision-sdf-loader/1.0");
+
+  const CURLcode res = curl_easy_perform(curl);
+  curl_easy_cleanup(curl);
+  stream.close();
+
+  if (res != CURLE_OK) {
+    fs::remove(cached_path, ec);
+    if (error_message) {
+      std::ostringstream oss;
+      oss << "Failed to download mesh URI: " << uri;
+      if (curl_error[0] != '\0') {
+        oss << " (" << curl_error << ")";
+      }
+      *error_message = oss.str();
+    }
+    return {};
+  }
+
+  return cached_path.string();
+}
+
+std::string ResolveMeshUri(const std::string& uri, const fs::path& sdf_dir,
+                           const fs::path& base_dir,
+                           std::string* error_message) {
   if (uri.empty()) {
     return {};
   }
 
   std::string_view view(uri);
+  if (StartsWith(view, "http://") || StartsWith(view, "https://")) {
+    return DownloadMeshToCache(uri, error_message);
+  }
+
   if (StartsWith(view, "file://")) {
     view = view.substr(7);
   }
@@ -105,7 +201,7 @@ fs::path ResolveMeshUri(const std::string& uri, const fs::path& sdf_dir,
   fs::path candidate(view);
   if (candidate.is_absolute()) {
     if (fs::exists(candidate)) {
-      return candidate;
+      return candidate.string();
     }
     return {};
   }
@@ -121,7 +217,7 @@ fs::path ResolveMeshUri(const std::string& uri, const fs::path& sdf_dir,
     if (!model_name.empty() && sdf_dir.filename() == model_name) {
       fs::path direct = sdf_dir / rel_path;
       if (fs::exists(direct)) {
-        return direct;
+        return direct.string();
       }
     }
 
@@ -132,7 +228,7 @@ fs::path ResolveMeshUri(const std::string& uri, const fs::path& sdf_dir,
       }
       fs::path path = root / model_name / rel_path;
       if (fs::exists(path)) {
-        return path;
+        return path.string();
       }
     }
 
@@ -141,16 +237,18 @@ fs::path ResolveMeshUri(const std::string& uri, const fs::path& sdf_dir,
 
   fs::path relative = base_dir / view;
   if (fs::exists(relative)) {
-    return relative;
+    return relative.string();
   }
 
   fs::path fallback = sdf_dir / view;
   if (fs::exists(fallback)) {
-    return fallback;
+    return fallback.string();
   }
 
   return {};
 }
+
+#endif
 
 #ifdef LIVISION_ENABLE_SDF
 Eigen::Affine3d PoseToEigen(const gz::math::Pose3d& pose) {
@@ -224,18 +322,18 @@ bool GetAssimpVertexColor(const aiMesh* mesh, Color& out) {
   return true;
 }
 
-bool LoadAssimpMeshes(const fs::path& mesh_path,
+bool LoadAssimpMeshes(const std::string& mesh_source,
                       std::vector<AssimpMeshData>& meshes,
                       std::string* error_message) {
   Assimp::Importer importer;
   const aiScene* scene = importer.ReadFile(
-      mesh_path.string(),
+      mesh_source,
       aiProcess_Triangulate | aiProcess_JoinIdenticalVertices |
           aiProcess_PreTransformVertices);
   if (!scene || !scene->HasMeshes()) {
     if (error_message) {
       std::ostringstream oss;
-      oss << "Assimp failed to load mesh: " << mesh_path.string();
+      oss << "Assimp failed to load mesh: " << mesh_source;
       if (importer.GetErrorString() && importer.GetErrorString()[0] != '\0') {
         oss << " (" << importer.GetErrorString() << ")";
       }
@@ -386,7 +484,7 @@ bool BuildVisualNode(const sdf::Visual& visual, const fs::path& sdf_dir,
     base_dir = fs::path(mesh->FilePath()).parent_path();
   }
 
-  const fs::path resolved = ResolveMeshUri(mesh->Uri(), sdf_dir, base_dir);
+  const std::string resolved = ResolveMeshUri(mesh->Uri(), sdf_dir, base_dir, error_message);
   if (resolved.empty()) {
     if (error_message) {
       std::ostringstream oss;
@@ -509,7 +607,8 @@ void AppendModelMeshes(const sdf::Model& model, const fs::path& sdf_dir,
         base_dir = fs::path(mesh->FilePath()).parent_path();
       }
 
-      const fs::path resolved = ResolveMeshUri(mesh->Uri(), sdf_dir, base_dir);
+      const std::string resolved =
+          ResolveMeshUri(mesh->Uri(), sdf_dir, base_dir, error_message);
       if (resolved.empty()) {
         if (error_message) {
           std::ostringstream oss;

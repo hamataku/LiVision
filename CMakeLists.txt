@@ -49,6 +49,7 @@ find_package(Eigen3 REQUIRED)
 if(LIVISION_ENABLE_SDF)
     find_package(sdformat14 REQUIRED)
     find_package(assimp REQUIRED)
+    find_package(CURL REQUIRED)
 endif()
 
 # Library target
@@ -106,7 +107,7 @@ target_link_libraries(${PROJECT_NAME}
         Eigen3::Eigen
 )
 if(LIVISION_ENABLE_SDF)
-    target_link_libraries(${PROJECT_NAME} PUBLIC sdformat14::core assimp::assimp)
+    target_link_libraries(${PROJECT_NAME} PUBLIC sdformat14::core assimp::assimp CURL::libcurl)
 endif()
 
 # Example program
