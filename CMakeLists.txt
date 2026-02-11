@@ -49,6 +49,7 @@ find_package(Eigen3 REQUIRED)
 if(LIVISION_ENABLE_SDF)
     find_package(sdformat14 REQUIRED)
     find_package(assimp REQUIRED)
+    find_package(CURL REQUIRED)
 endif()
 
 # Library target
@@ -80,6 +81,8 @@ set(INTERNAL_INCLUDE
     ${CMAKE_CURRENT_SOURCE_DIR}/internal
     ${CMAKE_CURRENT_SOURCE_DIR}/third-party/bgfx-imgui
     ${CMAKE_CURRENT_SOURCE_DIR}/third-party/bgfx.cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/bgfx.cmake/bimg/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/bgfx.cmake/bx/include
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -100,13 +103,15 @@ endif()
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
         $<BUILD_INTERFACE:bx>
+        $<BUILD_INTERFACE:bimg>
+        $<BUILD_INTERFACE:bimg_decode>
         $<BUILD_INTERFACE:bgfx>
     PUBLIC
         SDL2::SDL2
         Eigen3::Eigen
 )
 if(LIVISION_ENABLE_SDF)
-    target_link_libraries(${PROJECT_NAME} PUBLIC sdformat14::core assimp::assimp)
+    target_link_libraries(${PROJECT_NAME} PUBLIC sdformat14::core assimp::assimp CURL::libcurl)
 endif()
 
 # Example program
@@ -129,6 +134,8 @@ if(LIVISION_COMPILE_SHADERS)
     set(SHADER_BINARIES
         ${CMAKE_CURRENT_SOURCE_DIR}/shader/bin/v_simple_${SHADER_PLATFORM_SUFFIX}.bin
         ${CMAKE_CURRENT_SOURCE_DIR}/shader/bin/f_simple_${SHADER_PLATFORM_SUFFIX}.bin
+        ${CMAKE_CURRENT_SOURCE_DIR}/shader/bin/v_textured_${SHADER_PLATFORM_SUFFIX}.bin
+        ${CMAKE_CURRENT_SOURCE_DIR}/shader/bin/f_textured_${SHADER_PLATFORM_SUFFIX}.bin
         ${CMAKE_CURRENT_SOURCE_DIR}/shader/bin/v_points_${SHADER_PLATFORM_SUFFIX}.bin
         ${CMAKE_CURRENT_SOURCE_DIR}/shader/bin/f_points_${SHADER_PLATFORM_SUFFIX}.bin
     )

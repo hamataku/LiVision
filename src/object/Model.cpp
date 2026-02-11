@@ -73,9 +73,8 @@ void Model::SetFromFile(const std::string& path) {
     return;
   }
 
-  std::vector<Vertex> vertices;
-  std::vector<uint32_t> indices;
-  if (!internal::sdf_loader::LoadMeshFile(path, vertices, indices, &error)) {
+  std::vector<internal::sdf_loader::MeshPart> mesh_parts;
+  if (!internal::sdf_loader::LoadMeshFileParts(path, mesh_parts, &error)) {
     std::cerr << "[LiVision] Failed to load mesh file: " << path;
     if (!error.empty()) {
       std::cerr << "\n" << error;
@@ -84,11 +83,16 @@ void Model::SetFromFile(const std::string& path) {
     return;
   }
 
-  auto mesh = std::make_unique<Mesh>();
-  mesh->SetMeshData(vertices, indices);
-  mesh->SetColor(params_.color);
-  mesh->SetWireColor(params_.wire_color);
-  AddOwned(std::move(mesh));
+  for (auto& part : mesh_parts) {
+    auto mesh = std::make_unique<Mesh>();
+    mesh->SetMeshData(part.vertices, part.indices, part.has_uv);
+    mesh->SetColor(part.has_color ? part.color : params_.color);
+    if (!part.texture_uri.empty()) {
+      mesh->SetTexture(part.texture_uri);
+    }
+    mesh->SetWireColor(params_.wire_color);
+    AddOwned(std::move(mesh));
+  }
 }
 
 void Model::ClearChildren() {
@@ -108,8 +112,11 @@ void Model::BuildFromNode(const internal::sdf_loader::SdfNode& node) {
 
   if (node.HasMesh()) {
     auto mesh = std::make_unique<Mesh>();
-    mesh->SetMeshData(node.vertices, node.indices);
+    mesh->SetMeshData(node.vertices, node.indices, node.has_uv);
     mesh->SetColor(node.color);
+    if (!node.texture.empty()) {
+      mesh->SetTexture(node.texture);
+    }
     AddOwned(std::move(mesh));
   } else if (node.HasPrimitive()) {
     auto buffer = BufferFromPrimitive(node.primitive);

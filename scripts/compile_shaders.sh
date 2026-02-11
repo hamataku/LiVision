@@ -45,5 +45,7 @@ compile_shader() {
 # shaders
 compile_shader shader/v_simple.sc shader/bin/v_simple vertex
 compile_shader shader/f_simple.sc shader/bin/f_simple fragment
+compile_shader shader/v_textured.sc shader/bin/v_textured vertex
+compile_shader shader/f_textured.sc shader/bin/f_textured fragment
 compile_shader shader/v_points.sc shader/bin/v_points vertex
 compile_shader shader/f_points.sc shader/bin/f_points fragment

@@ -40,7 +40,8 @@ class Renderer {
    * @brief Submit a mesh with transform and colors.
    */
   void Submit(MeshBuffer& mesh_buffer, const Eigen::Affine3d& mtx,
-              const Color& color, const Color& wire_color);
+              const Color& color, const std::string& texture,
+              const Color& wire_color);
   /**
    * @brief Submit instanced draws with per-instance positions.
    */

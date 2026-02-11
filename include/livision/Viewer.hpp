@@ -1,8 +1,10 @@
 #pragma once
 
+#include <cstdint>
 #include <functional>
 #include <memory>
 
+#include "livision/Color.hpp"
 #include "livision/ObjectBase.hpp"
 #include "livision/imgui/imgui.h"
 #include "livision/implot/implot.h"
@@ -13,11 +15,12 @@ namespace livision {
  * @brief Viewer configuration options.
  */
 struct ViewerConfig {
-  bool headless = false;  // Headless mode (no window)
-  bool vsync = true;      // Enable VSync
-  int width = 1280;       // Window width
-  int height = 720;       // Window height
-  bool fps = false;       // Display FPS
+  bool headless = false;                 // Headless mode (no window)
+  bool vsync = true;                     // Enable VSync
+  int width = 1280;                      // Window width
+  int height = 720;                      // Window height
+  bool fps = false;                      // Display FPS
+  Color background = color::light_gray;  // Background color (RGB is used)
 };
 
 /**

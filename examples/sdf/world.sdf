@@ -2,7 +2,7 @@
 <sdf version="1.7">
   <world name="default">
     <include>
-      <uri>ht01.sdf</uri>
+      <uri>ht01/ht01.sdf</uri>
     </include>
 
     <model name="primitive_scene">

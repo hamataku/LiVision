@@ -5,7 +5,8 @@
 namespace livision {
 void ObjectBase::OnDraw(Renderer& renderer) {
   if (mesh_buf_)
-    renderer.Submit(*mesh_buf_, global_mtx_, params_.color, params_.wire_color);
+    renderer.Submit(*mesh_buf_, global_mtx_, params_.color, params_.texture,
+                    params_.wire_color);
 }
 
 void ObjectBase::Init() {
@@ -71,6 +72,14 @@ ObjectBase& ObjectBase::SetVisible(bool visible) {
 }
 ObjectBase& ObjectBase::SetColor(const Color& color) {
   params_.color = color;
+  return *this;
+}
+ObjectBase& ObjectBase::SetTexture(const std::string& texture) {
+  params_.texture = texture;
+  return *this;
+}
+ObjectBase& ObjectBase::ClearTexture() {
+  params_.texture.clear();
   return *this;
 }
 ObjectBase& ObjectBase::SetWireColor(const Color& color) {

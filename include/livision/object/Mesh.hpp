@@ -38,7 +38,7 @@ class Mesh : public ObjectBase {
    * @brief Set mesh data from vertices and indices.
    */
   void SetMeshData(const std::vector<Vertex>& vertices,
-                   const std::vector<uint32_t>& indices);
+                   const std::vector<uint32_t>& indices, bool has_uv = false);
   /**
    * @brief Set the mesh buffer directly.
    */

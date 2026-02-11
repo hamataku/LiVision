@@ -18,7 +18,8 @@ class MeshBuffer {
   /**
    * @brief Construct from vertices and indices.
    */
-  MeshBuffer(std::vector<Vertex> vertices, std::vector<uint32_t> indices);
+  MeshBuffer(std::vector<Vertex> vertices, std::vector<uint32_t> indices,
+             bool has_uv = false);
   /**
    * @brief Destroy the mesh buffer.
    */

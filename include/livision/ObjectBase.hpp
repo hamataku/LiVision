@@ -3,6 +3,7 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <memory>
+#include <string>
 #include <utility>
 
 #include "livision/Color.hpp"
@@ -24,6 +25,7 @@ class ObjectBase {
     Eigen::Vector3d scale = Eigen::Vector3d::Ones();
     Eigen::Quaterniond quat = Eigen::Quaterniond::Identity();
     Color color = color::white;
+    std::string texture;
     Color wire_color = color::invisible;
   };
 
@@ -99,6 +101,14 @@ class ObjectBase {
    * @brief Set base color.
    */
   ObjectBase& SetColor(const Color& color);
+  /**
+   * @brief Set texture path / URI.
+   */
+  ObjectBase& SetTexture(const std::string& texture);
+  /**
+   * @brief Clear texture.
+   */
+  ObjectBase& ClearTexture();
   /**
    * @brief Set wireframe color.
    */

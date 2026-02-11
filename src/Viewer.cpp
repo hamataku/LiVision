@@ -25,6 +25,26 @@ static constexpr float kPanScale = 0.02F;
 static constexpr float kScrollScale = 1.2F;
 static constexpr float kFixedDistance = 0.1F;
 
+namespace {
+uint8_t ToU8(float x) {
+  if (x < 0.0F) {
+    return 0;
+  }
+  if (x > 1.0F) {
+    return 255;
+  }
+  return static_cast<uint8_t>(x * 255.0F + 0.5F);
+}
+
+uint32_t ToRgba8(const Color& color) {
+  const uint8_t r = ToU8(color.base[0]);
+  const uint8_t g = ToU8(color.base[1]);
+  const uint8_t b = ToU8(color.base[2]);
+  return (static_cast<uint32_t>(r) << 24) | (static_cast<uint32_t>(g) << 16) |
+         (static_cast<uint32_t>(b) << 8) | 0xFFU;
+}
+}  // namespace
+
 struct Viewer::Impl {
   SDL_Window* window = nullptr;
   std::vector<ObjectBase*> objects;
@@ -115,8 +135,8 @@ Viewer::Viewer(const ViewerConfig& config) : pimpl_(std::make_unique<Impl>()) {
   bgfx_init.platformData = pd;
   bgfx::init(bgfx_init);
 
-  bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x00000000, 1.0F,
-                     0);
+  bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH,
+                     ToRgba8(pimpl_->config.background), 1.0F, 0);
   bgfx::setViewRect(0, 0, 0, pimpl_->config.width, pimpl_->config.height);
 
   ImGui::CreateContext();

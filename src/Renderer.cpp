@@ -3,10 +3,14 @@
 #include <bgfx/bgfx.h>
 #include <bgfx/defines.h>
 #include <bgfx/platform.h>
+#include <bimg/decode.h>
+#include <bx/allocator.h>
 #include <bx/math.h>
 
 #include <cstdlib>
 #include <iostream>
+#include <unordered_map>
+#include <unordered_set>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -24,11 +28,16 @@ static constexpr uint64_t kPointSpriteState =
 
 struct Renderer::Impl {
   bgfx::ProgramHandle program;
+  bgfx::ProgramHandle textured_program;
   bgfx::ProgramHandle instancing_program;
 
   bgfx::UniformHandle u_color;
   bgfx::UniformHandle u_color_mode;
   bgfx::UniformHandle u_rainbow_params;
+  bgfx::UniformHandle s_texture;
+
+  std::unordered_map<std::string, bgfx::TextureHandle> texture_cache;
+  std::unordered_set<std::string> warned_no_uv_textures;
 
   std::vector<std::string> shader_search_paths_;
 };
@@ -110,6 +119,67 @@ bgfx::ShaderHandle CreateShaderFromPaths(
   }
   throw std::runtime_error(msg);
 }
+
+bgfx::TextureHandle LoadTexture(const std::string& path, bool srgb) {
+  std::string texture_file;
+  if (!internal::file_ops::ReadFile(path, texture_file)) {
+    std::cerr << "[LiVision] Failed to read texture: " << path << std::endl;
+    return BGFX_INVALID_HANDLE;
+  }
+
+  bx::DefaultAllocator allocator;
+  bimg::ImageContainer* image = bimg::imageParse(
+      &allocator,
+      reinterpret_cast<const void*>(texture_file.data()),
+      static_cast<uint32_t>(texture_file.size()));
+  if (!image) {
+    std::cerr << "[LiVision] Failed to decode texture: " << path << std::endl;
+    return BGFX_INVALID_HANDLE;
+  }
+
+  uint64_t flags = BGFX_TEXTURE_NONE | BGFX_SAMPLER_MIN_ANISOTROPIC |
+                   BGFX_SAMPLER_MAG_ANISOTROPIC;
+  if (srgb) {
+    flags |= BGFX_TEXTURE_SRGB;
+  }
+
+  const auto create2d = [&](const bimg::ImageContainer& img)
+      -> bgfx::TextureHandle {
+    const auto format = static_cast<bgfx::TextureFormat::Enum>(img.m_format);
+    if (!bgfx::isTextureValid(0, img.m_cubeMap, static_cast<uint16_t>(img.m_numLayers),
+                              format, flags)) {
+      return BGFX_INVALID_HANDLE;
+    }
+    const bgfx::Memory* mem = bgfx::copy(img.m_data, img.m_size);
+    return bgfx::createTexture2D(
+        static_cast<uint16_t>(img.m_width), static_cast<uint16_t>(img.m_height),
+        img.m_numMips > 1, static_cast<uint16_t>(img.m_numLayers), format, flags,
+        mem);
+  };
+
+  bgfx::TextureHandle handle = create2d(*image);
+  if (bgfx::isValid(handle)) {
+    bimg::imageFree(image);
+    return handle;
+  }
+
+  // Fallback: convert unsupported source format (e.g. RGB8 PNG) to RGBA8.
+  bimg::ImageContainer* converted =
+      bimg::imageConvert(&allocator, bimg::TextureFormat::RGBA8, *image, true);
+  bimg::imageFree(image);
+  if (!converted) {
+    std::cerr << "[LiVision] Failed to create texture: " << path << std::endl;
+    return BGFX_INVALID_HANDLE;
+  }
+
+  handle = create2d(*converted);
+  bimg::imageFree(converted);
+  if (!bgfx::isValid(handle)) {
+    std::cerr << "[LiVision] Failed to create texture: " << path << std::endl;
+    return BGFX_INVALID_HANDLE;
+  }
+  return handle;
+}
 }  // namespace
 
 void Renderer::Init() {
@@ -130,6 +200,12 @@ void Renderer::Init() {
       "f_simple_" + plt_name + ".bin", "fshader", search_paths);
   pimpl_->program = bgfx::createProgram(vsh, fsh, true);
 
+  bgfx::ShaderHandle vtsh = CreateShaderFromPaths(
+      "v_textured_" + plt_name + ".bin", "vshader_textured", search_paths);
+  bgfx::ShaderHandle ftsh = CreateShaderFromPaths(
+      "f_textured_" + plt_name + ".bin", "fshader_textured", search_paths);
+  pimpl_->textured_program = bgfx::createProgram(vtsh, ftsh, true);
+
   bgfx::ShaderHandle vph = CreateShaderFromPaths(
       "v_points_" + plt_name + ".bin", "vshader_points", search_paths);
   bgfx::ShaderHandle fph = CreateShaderFromPaths(
@@ -145,17 +221,30 @@ void Renderer::Init() {
       bgfx::createUniform("u_color_mode", bgfx::UniformType::Vec4);
   pimpl_->u_rainbow_params =
       bgfx::createUniform("u_rainbow_params", bgfx::UniformType::Vec4);
+  pimpl_->s_texture =
+      bgfx::createUniform("s_texture", bgfx::UniformType::Sampler);
 }
 
 void Renderer::DeInit() {
   bgfx::destroy(pimpl_->program);
   pimpl_->program = BGFX_INVALID_HANDLE;
+  bgfx::destroy(pimpl_->textured_program);
+  pimpl_->textured_program = BGFX_INVALID_HANDLE;
   bgfx::destroy(pimpl_->instancing_program);
   pimpl_->instancing_program = BGFX_INVALID_HANDLE;
+
+  for (auto& [_, handle] : pimpl_->texture_cache) {
+    if (bgfx::isValid(handle)) {
+      bgfx::destroy(handle);
+    }
+  }
+  pimpl_->texture_cache.clear();
+  pimpl_->warned_no_uv_textures.clear();
 
   bgfx::destroy(pimpl_->u_color);
   bgfx::destroy(pimpl_->u_color_mode);
   bgfx::destroy(pimpl_->u_rainbow_params);
+  bgfx::destroy(pimpl_->s_texture);
 }
 
 void Renderer::SetShaderSearchPaths(std::vector<std::string> paths) {
@@ -163,7 +252,8 @@ void Renderer::SetShaderSearchPaths(std::vector<std::string> paths) {
 }
 
 void Renderer::Submit(MeshBuffer& mesh_buffer, const Eigen::Affine3d& mtx,
-                      const Color& color, const Color& wire_color) {
+                      const Color& color, const std::string& texture,
+                      const Color& wire_color) {
   if (color.mode != Color::ColorMode::InVisible) {
     bgfx::setState(kAlphaState);
     bgfx::setUniform(pimpl_->u_color, &color.base);
@@ -186,9 +276,28 @@ void Renderer::Submit(MeshBuffer& mesh_buffer, const Eigen::Affine3d& mtx,
     bgfx::setTransform(model_mtx);
     const auto vbh = internal::MeshBufferAccess::VertexBuffer(mesh_buffer);
     const auto ibh = internal::MeshBufferAccess::IndexBuffer(mesh_buffer);
+    const bool has_uv = internal::MeshBufferAccess::HasUV(mesh_buffer);
     bgfx::setVertexBuffer(0, vbh);
     bgfx::setIndexBuffer(ibh);
-    bgfx::submit(0, pimpl_->program);
+    bool use_textured = false;
+    if (!texture.empty()) {
+      if (has_uv) {
+        auto it = pimpl_->texture_cache.find(texture);
+        if (it == pimpl_->texture_cache.end()) {
+          const bgfx::TextureHandle loaded = LoadTexture(texture, true);
+          it = pimpl_->texture_cache.emplace(texture, loaded).first;
+        }
+        if (it != pimpl_->texture_cache.end() && bgfx::isValid(it->second)) {
+          bgfx::setTexture(0, pimpl_->s_texture, it->second);
+          use_textured = true;
+        }
+      } else if (pimpl_->warned_no_uv_textures.insert(texture).second) {
+        std::cerr << "[LiVision] Texture specified but mesh has no UV. "
+                     "Falling back to color: "
+                  << texture << std::endl;
+      }
+    }
+    bgfx::submit(0, use_textured ? pimpl_->textured_program : pimpl_->program);
   }
 
   if (wire_color.mode != Color::ColorMode::InVisible) {

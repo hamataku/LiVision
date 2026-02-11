@@ -11,6 +11,15 @@
 
 namespace livision::internal::sdf_loader {
 
+struct MeshPart {
+  std::vector<Vertex> vertices;
+  std::vector<uint32_t> indices;
+  bool has_uv = false;
+  std::string texture_uri;
+  bool has_color = false;
+  Color color = color::white;
+};
+
 // Load all mesh visuals from an SDF file and append them into vertices/indices.
 // Returns true on success, false on failure. When false, error_message (if
 // provided) is filled with a human-readable description.
@@ -20,8 +29,14 @@ bool LoadSdfMeshes(const std::string& sdf_path, std::vector<Vertex>& vertices,
 
 // Load a mesh file with assimp (STL/DAE/OBJ, etc.) and merge submeshes.
 bool LoadMeshFile(const std::string& mesh_path, std::vector<Vertex>& vertices,
-                  std::vector<uint32_t>& indices,
+                  std::vector<uint32_t>& indices, bool* has_uv = nullptr,
+                  std::string* texture_uri = nullptr,
                   std::string* error_message = nullptr);
+
+// Load a mesh file with assimp and keep submesh/material boundaries.
+bool LoadMeshFileParts(const std::string& mesh_path,
+                       std::vector<MeshPart>& parts,
+                       std::string* error_message = nullptr);
 
 struct SdfNode {
   enum class PrimitiveType { None, Box, Sphere, Cylinder, Cone, Plane };
@@ -31,6 +46,8 @@ struct SdfNode {
   Eigen::Vector3d scale = Eigen::Vector3d::Ones();
   Color color = color::white;
   PrimitiveType primitive = PrimitiveType::None;
+  std::string texture;
+  bool has_uv = false;
   std::vector<Vertex> vertices;
   std::vector<uint32_t> indices;
   std::vector<SdfNode> children;
@@ -41,7 +58,7 @@ struct SdfNode {
 
 // Load an SDF file into a node hierarchy. Each node stores local transform and
 // optional mesh data (for visuals). Colors are taken from material diffuse or
-// ambient values (textures are ignored).
+// ambient/script values, and mesh diffuse textures are propagated when found.
 bool LoadSdfScene(const std::string& sdf_path, SdfNode& root,
                   std::string* error_message = nullptr);
 

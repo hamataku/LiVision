@@ -11,6 +11,7 @@ struct MeshBufferAccess {
   static bgfx::IndexBufferHandle IndexBuffer(MeshBuffer& mesh);
   static bgfx::IndexBufferHandle WireIndexBuffer(MeshBuffer& mesh);
   static uint32_t GetIndexCount(MeshBuffer& mesh);
+  static bool HasUV(MeshBuffer& mesh);
 };
 
 }  // namespace livision::internal

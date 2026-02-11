@@ -14,13 +14,15 @@ struct MeshBuffer::Impl {
   std::vector<Vertex> vertices;
   std::vector<uint32_t> indices;
   std::vector<uint32_t> wire_indices;
+  bool has_uv = false;
 };
 
 MeshBuffer::MeshBuffer(std::vector<Vertex> vertices,
-                       std::vector<uint32_t> indices)
+                       std::vector<uint32_t> indices, bool has_uv)
     : pimpl_(std::make_unique<Impl>()) {
   pimpl_->vertices = std::move(vertices);
   pimpl_->indices = std::move(indices);
+  pimpl_->has_uv = has_uv;
 }
 
 MeshBuffer::~MeshBuffer() { Destroy(); }
@@ -47,6 +49,7 @@ void MeshBuffer::CreateVertex() {
   bgfx::VertexLayout vec3_vlayout;
   vec3_vlayout.begin()
       .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+      .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
       .end();
 
   pimpl_->vbh = bgfx::createVertexBuffer(
@@ -122,6 +125,8 @@ bgfx::IndexBufferHandle MeshBufferAccess::WireIndexBuffer(MeshBuffer& mesh) {
 uint32_t MeshBufferAccess::GetIndexCount(MeshBuffer& mesh) {
   return static_cast<uint32_t>(mesh.pimpl_->indices.size());
 }
+
+bool MeshBufferAccess::HasUV(MeshBuffer& mesh) { return mesh.pimpl_->has_uv; }
 
 }  // namespace internal
 
