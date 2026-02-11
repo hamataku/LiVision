@@ -11,20 +11,17 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <algorithm>
 #include <utility>
 
 #include "imgui_impl_bgfx.h"
 #include "livision/Container.hpp"
+#include "livision/Camera.hpp"
 #include "livision/Log.hpp"
 #include "livision/Renderer.hpp"
 #include "livision/imgui/imgui_impl_sdl2.h"
 
 namespace livision {
-
-static constexpr float kRotScale = 0.002F;
-static constexpr float kPanScale = 0.02F;
-static constexpr float kScrollScale = 1.2F;
-static constexpr float kFixedDistance = 0.1F;
 
 namespace {
 uint8_t ToU8(float x) {
@@ -58,15 +55,11 @@ struct Viewer::Impl {
 
   int frame_count = 0;
   uint32_t last_fps_time = 0;
+  uint32_t last_frame_time = 0;
 
-  float scroll_delta = 0.0F;  // スクロールの移動量
-  int prev_mouse_x = 0;
-  int prev_mouse_y = 0;
-  float view[16];
+  std::unique_ptr<CameraBase> camera = std::make_unique<MouseOrbitCamera>();
+  float view[16] = {};
   float proj[16];
-  bx::Vec3 target = {0.0F, 0.0F, 5.0F};  // カメラの注視点
-  float cam_yaw = -M_PI_2;               // ヨー角
-  float cam_pitch = M_PI_2 - 0.02F;      // ピッチ角
 };
 
 Viewer::Viewer(const ViewerConfig& config) : pimpl_(std::make_unique<Impl>()) {
@@ -187,6 +180,7 @@ bool Viewer::SpinOnce() {
   if (!pimpl_->initialized) {
     // FPS計測開始時間の初期化
     pimpl_->last_fps_time = SDL_GetTicks();
+    pimpl_->last_frame_time = pimpl_->last_fps_time;
     pimpl_->initialized = true;
   }
   for (auto* object : pimpl_->objects) {
@@ -194,6 +188,23 @@ bool Viewer::SpinOnce() {
   }
 
   if (!pimpl_->config.headless) {
+    // Event handling
+    SDL_Event event = {};
+    while (SDL_PollEvent(&event)) {
+      ImGui_ImplSDL2_ProcessEvent(&event);
+      if (event.type == SDL_QUIT) {
+        pimpl_->quit = true;
+      }
+      if (pimpl_->camera) {
+        pimpl_->camera->HandleEvent(event);
+      }
+    }
+
+    const uint32_t now = SDL_GetTicks();
+    const float delta_time_sec =
+        static_cast<float>(now - pimpl_->last_frame_time) / 1000.0F;
+    pimpl_->last_frame_time = now;
+
     // Camera control
     bx::mtxProj(pimpl_->proj, 60.0F,
                 static_cast<float>(pimpl_->config.width) /
@@ -201,26 +212,20 @@ bool Viewer::SpinOnce() {
                 0.1F, 1000.0F, bgfx::getCaps()->homogeneousDepth,
                 bx::Handedness::Right);
 
-    CameraControl();
+    if (pimpl_->camera) {
+      CameraInputContext input_context;
+      input_context.want_capture_mouse = ImGui::GetIO().WantCaptureMouse;
+      input_context.want_capture_keyboard = ImGui::GetIO().WantCaptureKeyboard;
+      input_context.delta_time_sec = delta_time_sec;
+      const float* view = pimpl_->camera->Update(input_context);
+      std::copy(view, view + 16, pimpl_->view);
+    }
+
     pimpl_->renderer.SetCameraViewMatrix(pimpl_->view);
     bgfx::setViewTransform(0, pimpl_->view, pimpl_->proj);
 
     for (auto* object : pimpl_->objects) {
       if (object->IsVisible()) object->OnDraw(pimpl_->renderer);
-    }
-
-    // Event handling
-    SDL_Event event = {};
-    pimpl_->scroll_delta = 0.0F;
-    while (SDL_PollEvent(&event)) {
-      ImGui_ImplSDL2_ProcessEvent(&event);
-      if (event.type == SDL_QUIT) {
-        pimpl_->quit = true;
-      }
-      if (event.type == SDL_MOUSEWHEEL) {
-        pimpl_->scroll_delta = event.wheel.y;
-      }
-      // scene_->EventHandler(event);
     }
 
     // Render ImGui
@@ -269,66 +274,6 @@ void Viewer::PrintFPS() {
   LogMessage(LogLevel::Debug, "FPS: ", current_fps);
 }
 
-void Viewer::CameraControl() {
-  // ImGuiがマウスを使用している場合はカメラ操作を無効化
-  if (ImGui::GetIO().WantCaptureMouse) {
-    SDL_GetMouseState(&pimpl_->prev_mouse_x, &pimpl_->prev_mouse_y);
-    return;
-  }
-
-  int mouse_x;
-  int mouse_y;
-  const uint32_t buttons = SDL_GetMouseState(&mouse_x, &mouse_y);
-
-  int delta_x = mouse_x - pimpl_->prev_mouse_x;
-  int delta_y = mouse_y - pimpl_->prev_mouse_y;
-
-  // 回転
-  if ((buttons & SDL_BUTTON_LMASK) != 0) {
-    pimpl_->cam_yaw += delta_x * kRotScale;
-    pimpl_->cam_pitch -= delta_y * kRotScale;
-    pimpl_->cam_pitch =
-        bx::clamp(pimpl_->cam_pitch, -M_PI_2 + 0.01F, M_PI_2 - 0.01F);
-  }
-
-  // パン
-  if ((buttons & SDL_BUTTON_MMASK) != 0 || (buttons & SDL_BUTTON_RMASK) != 0) {
-    float inv_view[16];
-    bx::mtxInverse(inv_view, pimpl_->view);
-
-    bx::Vec3 right = {inv_view[0], inv_view[1], inv_view[2]};
-    bx::Vec3 up = {inv_view[4], inv_view[5], inv_view[6]};
-
-    pimpl_->target = bx::mad(right, -delta_x * kPanScale, pimpl_->target);
-    pimpl_->target = bx::mad(up, delta_y * kPanScale, pimpl_->target);
-  }
-
-  // スクロールで視線方向に target_ を移動
-  if (pimpl_->scroll_delta != 0.0F) {
-    // 現在のカメラ方向を計算
-    bx::Vec3 forward = {bx::cos(pimpl_->cam_pitch) * bx::cos(pimpl_->cam_yaw),
-                        bx::cos(pimpl_->cam_pitch) * bx::sin(pimpl_->cam_yaw),
-                        bx::sin(pimpl_->cam_pitch)};
-
-    // 視線方向に target_ を移動
-    pimpl_->target =
-        bx::mad(forward, pimpl_->scroll_delta * kScrollScale, pimpl_->target);
-  }
-
-  pimpl_->prev_mouse_x = mouse_x;
-  pimpl_->prev_mouse_y = mouse_y;
-
-  bx::Vec3 eye = {
-      pimpl_->target.x - (kFixedDistance * bx::cos(pimpl_->cam_pitch) *
-                          bx::cos(pimpl_->cam_yaw)),
-      pimpl_->target.y - (kFixedDistance * bx::cos(pimpl_->cam_pitch) *
-                          bx::sin(pimpl_->cam_yaw)),
-      pimpl_->target.z - (kFixedDistance * bx::sin(pimpl_->cam_pitch))};
-
-  const bx::Vec3 up_vec = {0.0F, 0.0F, 1.0F};
-  bx::mtxLookAt(pimpl_->view, eye, pimpl_->target, up_vec);
-}
-
 void Viewer::Close() { pimpl_->quit = true; }
 
 void Viewer::AddObject(ObjectBase* object) {
@@ -345,6 +290,12 @@ void Viewer::AddObject(ObjectBase* object) {
 
 void Viewer::RegisterUICallback(std::function<void()> ui_callback) {
   pimpl_->ui_callback = std::move(ui_callback);
+}
+
+void Viewer::SetCameraController(std::unique_ptr<CameraBase> camera) {
+  if (camera) {
+    pimpl_->camera = std::move(camera);
+  }
 }
 
 }  // namespace livision

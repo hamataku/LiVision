@@ -1,9 +1,9 @@
 #pragma once
 
-#include <cstdint>
 #include <functional>
 #include <memory>
 
+#include "livision/Camera.hpp"
 #include "livision/Color.hpp"
 #include "livision/Log.hpp"
 #include "livision/ObjectBase.hpp"
@@ -55,10 +55,13 @@ class Viewer {
    * @brief Register a UI callback (ImGui).
    */
   void RegisterUICallback(std::function<void()> ui_callback);
+  /**
+   * @brief Set camera controller implementation.
+   */
+  void SetCameraController(std::unique_ptr<CameraBase> camera);
 
  private:
   void PrintFPS();
-  void CameraControl();
   struct Impl;
   std::unique_ptr<Impl> pimpl_;
 };
