@@ -15,6 +15,7 @@
 
 #include "imgui_impl_bgfx.h"
 #include "livision/Container.hpp"
+#include "livision/Log.hpp"
 #include "livision/Renderer.hpp"
 #include "livision/imgui/imgui_impl_sdl2.h"
 
@@ -70,6 +71,7 @@ struct Viewer::Impl {
 
 Viewer::Viewer(const ViewerConfig& config) : pimpl_(std::make_unique<Impl>()) {
   pimpl_->config = config;
+  SetLogLevel(pimpl_->config.log_level);
 
   if (pimpl_->config.headless) {
     pimpl_->config.width = 1;
@@ -178,7 +180,7 @@ Viewer::~Viewer() {
 
   SDL_DestroyWindow(pimpl_->window);
   SDL_Quit();
-  std::cout << "[LiVision] Viewer Exit" << std::endl;
+  LogMessage(LogLevel::Info, "Viewer Exit");
 }
 
 bool Viewer::SpinOnce() {
@@ -263,10 +265,8 @@ bool Viewer::SpinOnce() {
 void Viewer::PrintFPS() {
   float elapsed_seconds = (SDL_GetTicks() - pimpl_->last_fps_time) / 1000.0F;
 
-  if (pimpl_->config.fps && elapsed_seconds > 0) {
-    float current_fps = pimpl_->frame_count / elapsed_seconds;
-    std::cout << "[LiVision] FPS: " << current_fps << std::endl;
-  }
+  float current_fps = pimpl_->frame_count / elapsed_seconds;
+  LogMessage(LogLevel::Debug, "FPS: ", current_fps);
 }
 
 void Viewer::CameraControl() {

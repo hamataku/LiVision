@@ -9,7 +9,6 @@ int main() {
       .vsync = true,
       .width = 1280,
       .height = 720,
-      .fps = true,
   }};
 
   viewer.RegisterUICallback([&viewer]() {

@@ -20,6 +20,7 @@
 #include "livision/internal/file_ops.hpp"
 #include "livision/internal/mesh_buffer_access.hpp"
 #include "livision/imgui/imstb_truetype.h"
+#include "livision/Log.hpp"
 
 namespace livision {
 
@@ -113,11 +114,11 @@ bgfx::ShaderHandle CreateShaderFromPaths(
     const std::vector<std::string>& search_paths) {
   std::string shader;
   for (const std::string& base : search_paths) {
-    std::string path = base;
-    path += "/";
-    path += file_name;
-    if (internal::file_ops::ReadFile(path, shader)) {
-      std::cout << "[LiVision] Loaded shader: " << path << std::endl;
+      std::string path = base;
+      path += "/";
+      path += file_name;
+      if (internal::file_ops::ReadFile(path, shader)) {
+      LogMessage(LogLevel::Debug, "Loaded shader: ", path);
       const bgfx::Memory* mem = bgfx::copy(shader.data(), shader.size());
       const bgfx::ShaderHandle handle = bgfx::createShader(mem);
       bgfx::setName(handle, name);
@@ -138,7 +139,7 @@ bgfx::ShaderHandle CreateShaderFromPaths(
 bgfx::TextureHandle LoadTexture(const std::string& path, bool srgb) {
   std::string texture_file;
   if (!internal::file_ops::ReadFile(path, texture_file)) {
-    std::cerr << "[LiVision] Failed to read texture: " << path << std::endl;
+    LogMessage(LogLevel::Error, "Failed to read texture: ", path);
     return BGFX_INVALID_HANDLE;
   }
 
@@ -148,7 +149,7 @@ bgfx::TextureHandle LoadTexture(const std::string& path, bool srgb) {
       reinterpret_cast<const void*>(texture_file.data()),
       static_cast<uint32_t>(texture_file.size()));
   if (!image) {
-    std::cerr << "[LiVision] Failed to decode texture: " << path << std::endl;
+    LogMessage(LogLevel::Error, "Failed to decode texture: ", path);
     return BGFX_INVALID_HANDLE;
   }
 
@@ -183,14 +184,14 @@ bgfx::TextureHandle LoadTexture(const std::string& path, bool srgb) {
       bimg::imageConvert(&allocator, bimg::TextureFormat::RGBA8, *image, true);
   bimg::imageFree(image);
   if (!converted) {
-    std::cerr << "[LiVision] Failed to create texture: " << path << std::endl;
+    LogMessage(LogLevel::Error, "Failed to create texture: ", path);
     return BGFX_INVALID_HANDLE;
   }
 
   handle = create2d(*converted);
   bimg::imageFree(converted);
   if (!bgfx::isValid(handle)) {
-    std::cerr << "[LiVision] Failed to create texture: " << path << std::endl;
+    LogMessage(LogLevel::Error, "Failed to create texture: ", path);
     return BGFX_INVALID_HANDLE;
   }
   return handle;
@@ -384,9 +385,10 @@ void Renderer::Submit(MeshBuffer& mesh_buffer, const Eigen::Affine3d& mtx,
           use_textured = true;
         }
       } else if (pimpl_->warned_no_uv_textures.insert(texture).second) {
-        std::cerr << "[LiVision] Texture specified but mesh has no UV. "
-                     "Falling back to color: "
-                  << texture << std::endl;
+        LogMessage(LogLevel::Warn,
+                   "Texture specified but mesh has no UV. Falling back to "
+                   "color: ",
+                   texture);
       }
     }
     bgfx::submit(0, use_textured ? pimpl_->textured_program : pimpl_->program);
@@ -486,15 +488,14 @@ void Renderer::SubmitText(const std::string& text, const Eigen::Affine3d& mtx,
     resolved_font = ResolveDefaultFontPath();
     if (resolved_font.empty()) {
       if (pimpl_->warned_missing_fonts.insert("<default>").second) {
-        std::cerr << "[LiVision] No default font found for text rendering."
-                  << std::endl;
+        LogMessage(LogLevel::Warn, "No default font found for text rendering.");
       }
       return;
     }
   }
   if (!std::filesystem::exists(resolved_font)) {
     if (pimpl_->warned_missing_fonts.insert(resolved_font).second) {
-      std::cerr << "[LiVision] Font not found: " << resolved_font << std::endl;
+      LogMessage(LogLevel::Warn, "Font not found: ", resolved_font);
     }
     return;
   }
@@ -507,8 +508,7 @@ void Renderer::SubmitText(const std::string& text, const Eigen::Affine3d& mtx,
     if (!LoadFontAtlas(atlas.texture, atlas.width, atlas.height, atlas.glyphs,
                        resolved_font, pixel_height)) {
       if (pimpl_->warned_missing_fonts.insert(font_key).second) {
-        std::cerr << "[LiVision] Failed to bake font atlas: " << resolved_font
-                  << std::endl;
+        LogMessage(LogLevel::Warn, "Failed to bake font atlas: ", resolved_font);
       }
       return;
     }
@@ -699,9 +699,10 @@ void Renderer::PrintBackend() {
     vendor = "Software Rasterizer";
   }
 
-  printf("[LiVision] Vendor: %s (ID: 0x%04x), Device ID: 0x%04x, Backend: %s\n",
-         vendor, caps->vendorId, caps->deviceId,
-         bgfx::getRendererName(bgfx::getRendererType()));
+  LogMessage(LogLevel::Info, "Vendor: ", vendor, " (ID: 0x",
+             std::hex, caps->vendorId, "), Device ID: 0x", caps->deviceId,
+             std::dec, ", Backend: ",
+             bgfx::getRendererName(bgfx::getRendererType()));
 }
 
 }  // namespace livision

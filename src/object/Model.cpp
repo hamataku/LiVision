@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "livision/internal/sdf_loader.hpp"
+#include "livision/Log.hpp"
 #include "livision/object/primitives.hpp"
 
 namespace livision {
@@ -68,11 +69,8 @@ void Model::SetFromFile(const std::string& path) {
   if (HasExtension(path, "sdf")) {
     internal::sdf_loader::SdfNode root;
     if (!internal::sdf_loader::LoadSdfScene(path, root, &error)) {
-      std::cerr << "[LiVision] Failed to load SDF: " << path;
-      if (!error.empty()) {
-        std::cerr << "\n" << error;
-      }
-      std::cerr << std::endl;
+      LogMessage(LogLevel::Error, "Failed to load SDF: ", path,
+                 error.empty() ? "" : "\n", error);
       return;
     }
     BuildFromNode(root);
@@ -81,11 +79,8 @@ void Model::SetFromFile(const std::string& path) {
 
   std::vector<internal::sdf_loader::MeshPart> mesh_parts;
   if (!internal::sdf_loader::LoadMeshFileParts(path, mesh_parts, &error)) {
-    std::cerr << "[LiVision] Failed to load mesh file: " << path;
-    if (!error.empty()) {
-      std::cerr << "\n" << error;
-    }
-    std::cerr << std::endl;
+    LogMessage(LogLevel::Error, "Failed to load mesh file: ", path,
+               error.empty() ? "" : "\n", error);
     return;
   }
 

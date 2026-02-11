@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "livision/Color.hpp"
+#include "livision/Log.hpp"
 #include "livision/ObjectBase.hpp"
 #include "livision/imgui/imgui.h"
 #include "livision/implot/implot.h"
@@ -19,8 +20,8 @@ struct ViewerConfig {
   bool vsync = true;                     // Enable VSync
   int width = 1280;                      // Window width
   int height = 720;                      // Window height
-  bool fps = false;                      // Display FPS
   Color background = color::light_gray;  // Background color (RGB is used)
+  LogLevel log_level = LogLevel::Info;   // Log level
 };
 
 /**
