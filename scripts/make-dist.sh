@@ -36,4 +36,7 @@ paths=(
 } | rsync -a --delete --prune-empty-dirs --from0 --files-from=- \
   ./ dist/
 
-tar -cJf livision_0.1.0.orig.tar.xz -C dist ./
+tar -cJf livision_0.2.1.orig.tar.xz -C dist ./
+
+# debuild -S -sa
+# dput ppa:hamatakuzaq/livision ../livision_0.2.1-1~ppa1_source.changes

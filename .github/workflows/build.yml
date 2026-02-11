@@ -18,7 +18,7 @@ jobs:
         run: |
           sudo add-apt-repository ppa:hamatakuzaq/livision
           sudo apt-get update
-          sudo apt-get install -y ninja-build libsdl2-dev libeigen3-dev libsdformat14-dev libassimp-dev ccache
+          sudo apt-get install -y ninja-build libsdl2-dev libeigen3-dev libsdformat14-dev libassimp-dev libcurl4-openssl-dev ccache
 
       - name: Set up ccache
         uses: actions/cache@v4

@@ -9,7 +9,8 @@ Build-Depends:
  libsdl2-dev,
  libeigen3-dev,
  libsdformat14-dev,
- libassimp-dev
+ libassimp-dev,
+ libcurl4-openssl-dev
 Standards-Version: 4.6.0.1
 Rules-Requires-Root: no
 Homepage: https://github.com/hamataku/LiVision
@@ -24,6 +25,6 @@ Description: LiVision rendering library (runtime)
 Package: liblivision-dev
 Section: libdevel
 Architecture: any
-Depends: ${misc:Depends}, liblivision1 (= ${binary:Version}), libsdl2-dev, libeigen3-dev, libsdformat14-dev, libassimp-dev
+Depends: ${misc:Depends}, liblivision1 (= ${binary:Version}), libsdl2-dev, libeigen3-dev, libsdformat14-dev, libassimp-dev, libcurl4-openssl-dev
 Description: LiVision rendering library (development files)
  Headers and development files for building with LiVision.
