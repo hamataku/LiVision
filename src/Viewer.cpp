@@ -192,10 +192,6 @@ bool Viewer::SpinOnce() {
   }
 
   if (!pimpl_->config.headless) {
-    for (auto* object : pimpl_->objects) {
-      if (object->IsVisible()) object->OnDraw(pimpl_->renderer);
-    }
-
     // Camera control
     bx::mtxProj(pimpl_->proj, 60.0F,
                 static_cast<float>(pimpl_->config.width) /
@@ -204,7 +200,12 @@ bool Viewer::SpinOnce() {
                 bx::Handedness::Right);
 
     CameraControl();
+    pimpl_->renderer.SetCameraViewMatrix(pimpl_->view);
     bgfx::setViewTransform(0, pimpl_->view, pimpl_->proj);
+
+    for (auto* object : pimpl_->objects) {
+      if (object->IsVisible()) object->OnDraw(pimpl_->renderer);
+    }
 
     // Event handling
     SDL_Event event = {};

@@ -8,15 +8,18 @@
 #include <bx/math.h>
 
 #include <cstdlib>
+#include <cstring>
+#include <filesystem>
 #include <iostream>
-#include <unordered_map>
-#include <unordered_set>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "livision/internal/file_ops.hpp"
 #include "livision/internal/mesh_buffer_access.hpp"
+#include "livision/imgui/imstb_truetype.h"
 
 namespace livision {
 
@@ -27,6 +30,14 @@ static constexpr uint64_t kPointSpriteState =
     kAlphaState | BGFX_STATE_PT_TRISTRIP;
 
 struct Renderer::Impl {
+  struct FontAtlas {
+    bgfx::TextureHandle texture = BGFX_INVALID_HANDLE;
+    int width = 0;
+    int height = 0;
+    int pixel_height = 0;
+    stbtt_bakedchar glyphs[96] = {};
+  };
+
   bgfx::ProgramHandle program;
   bgfx::ProgramHandle textured_program;
   bgfx::ProgramHandle instancing_program;
@@ -37,9 +48,13 @@ struct Renderer::Impl {
   bgfx::UniformHandle s_texture;
 
   std::unordered_map<std::string, bgfx::TextureHandle> texture_cache;
+  std::unordered_map<std::string, FontAtlas> font_cache;
   std::unordered_set<std::string> warned_no_uv_textures;
+  std::unordered_set<std::string> warned_missing_fonts;
 
   std::vector<std::string> shader_search_paths_;
+  float cam_right[3] = {1.0F, 0.0F, 0.0F};
+  float cam_up[3] = {0.0F, 1.0F, 0.0F};
 };
 
 Renderer::Renderer() : pimpl_(std::make_unique<Impl>()) {}
@@ -180,6 +195,65 @@ bgfx::TextureHandle LoadTexture(const std::string& path, bool srgb) {
   }
   return handle;
 }
+
+std::string ResolveDefaultFontPath() {
+  const char* candidates[] = {
+      "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+      "/usr/share/fonts/TTF/DejaVuSans.ttf",
+      "/Library/Fonts/Arial.ttf",
+      "C:/Windows/Fonts/arial.ttf",
+  };
+  for (const char* path : candidates) {
+    if (std::filesystem::exists(path)) {
+      return path;
+    }
+  }
+  return {};
+}
+
+bool LoadFontAtlas(bgfx::TextureHandle& out_texture, int& out_width,
+                   int& out_height, stbtt_bakedchar out_glyphs[96],
+                   const std::string& font_path, int pixel_height) {
+  std::string font_file;
+  if (!internal::file_ops::ReadFile(font_path, font_file)) {
+    return false;
+  }
+
+  const std::vector<int> sizes = {512, 1024, 2048, 4096};
+  for (const int side : sizes) {
+    std::vector<unsigned char> alpha(side * side, 0U);
+    if (stbtt_BakeFontBitmap(reinterpret_cast<const unsigned char*>(font_file.data()),
+                             0, static_cast<float>(pixel_height), alpha.data(),
+                             side, side, 32, 96, out_glyphs) <= 0) {
+      continue;
+    }
+
+    std::vector<unsigned char> rgba(side * side * 4U, 255U);
+    for (size_t i = 0; i < alpha.size(); ++i) {
+      rgba[i * 4U + 3U] = alpha[i];
+    }
+
+    const uint64_t flags = BGFX_TEXTURE_NONE | BGFX_SAMPLER_U_CLAMP |
+                           BGFX_SAMPLER_V_CLAMP |
+                           BGFX_SAMPLER_MIN_ANISOTROPIC |
+                           BGFX_SAMPLER_MAG_ANISOTROPIC;
+    const bgfx::Memory* mem = bgfx::copy(rgba.data(),
+                                         static_cast<uint32_t>(rgba.size()));
+    const auto handle =
+        bgfx::createTexture2D(static_cast<uint16_t>(side),
+                              static_cast<uint16_t>(side), false, 1,
+                              bgfx::TextureFormat::RGBA8, flags, mem);
+    if (!bgfx::isValid(handle)) {
+      continue;
+    }
+
+    out_width = side;
+    out_height = side;
+    out_texture = handle;
+    return true;
+  }
+  return false;
+}
 }  // namespace
 
 void Renderer::Init() {
@@ -239,7 +313,14 @@ void Renderer::DeInit() {
     }
   }
   pimpl_->texture_cache.clear();
+  for (auto& [_, atlas] : pimpl_->font_cache) {
+    if (bgfx::isValid(atlas.texture)) {
+      bgfx::destroy(atlas.texture);
+    }
+  }
+  pimpl_->font_cache.clear();
   pimpl_->warned_no_uv_textures.clear();
+  pimpl_->warned_missing_fonts.clear();
 
   bgfx::destroy(pimpl_->u_color);
   bgfx::destroy(pimpl_->u_color_mode);
@@ -249,6 +330,17 @@ void Renderer::DeInit() {
 
 void Renderer::SetShaderSearchPaths(std::vector<std::string> paths) {
   pimpl_->shader_search_paths_ = std::move(paths);
+}
+
+void Renderer::SetCameraViewMatrix(const float view[16]) {
+  float inv_view[16];
+  bx::mtxInverse(inv_view, view);
+  pimpl_->cam_right[0] = inv_view[0];
+  pimpl_->cam_right[1] = inv_view[1];
+  pimpl_->cam_right[2] = inv_view[2];
+  pimpl_->cam_up[0] = inv_view[4];
+  pimpl_->cam_up[1] = inv_view[5];
+  pimpl_->cam_up[2] = inv_view[6];
 }
 
 void Renderer::Submit(MeshBuffer& mesh_buffer, const Eigen::Affine3d& mtx,
@@ -379,6 +471,211 @@ void Renderer::SubmitInstanced(MeshBuffer& mesh_buffer,
   bgfx::setInstanceDataBuffer(&idb);
 
   bgfx::submit(0, pimpl_->instancing_program);
+}
+
+void Renderer::SubmitText(const std::string& text, const Eigen::Affine3d& mtx,
+                          const Color& color, const std::string& font_path,
+                          float height, TextFacingMode facing_mode,
+                          TextDepthMode depth_mode, TextAlign align) {
+  if (text.empty() || color.mode == Color::ColorMode::InVisible || height <= 0.0F) {
+    return;
+  }
+
+  std::string resolved_font = font_path;
+  if (resolved_font.empty()) {
+    resolved_font = ResolveDefaultFontPath();
+    if (resolved_font.empty()) {
+      if (pimpl_->warned_missing_fonts.insert("<default>").second) {
+        std::cerr << "[LiVision] No default font found for text rendering."
+                  << std::endl;
+      }
+      return;
+    }
+  }
+  if (!std::filesystem::exists(resolved_font)) {
+    if (pimpl_->warned_missing_fonts.insert(resolved_font).second) {
+      std::cerr << "[LiVision] Font not found: " << resolved_font << std::endl;
+    }
+    return;
+  }
+
+  const int pixel_height = 48;
+  const std::string font_key = resolved_font + "#" + std::to_string(pixel_height);
+  auto it = pimpl_->font_cache.find(font_key);
+  if (it == pimpl_->font_cache.end()) {
+    Impl::FontAtlas atlas;
+    if (!LoadFontAtlas(atlas.texture, atlas.width, atlas.height, atlas.glyphs,
+                       resolved_font, pixel_height)) {
+      if (pimpl_->warned_missing_fonts.insert(font_key).second) {
+        std::cerr << "[LiVision] Failed to bake font atlas: " << resolved_font
+                  << std::endl;
+      }
+      return;
+    }
+    atlas.pixel_height = pixel_height;
+    it = pimpl_->font_cache.emplace(font_key, std::move(atlas)).first;
+  }
+  Impl::FontAtlas& atlas = it->second;
+
+  struct TextVertex {
+    float x;
+    float y;
+    float z;
+    float u;
+    float v;
+  };
+  static bgfx::VertexLayout layout = []() {
+    bgfx::VertexLayout l;
+    l.begin()
+        .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+        .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+        .end();
+    return l;
+  }();
+
+  std::vector<TextVertex> vertices;
+  std::vector<uint16_t> indices;
+  vertices.reserve(text.size() * 4U);
+  indices.reserve(text.size() * 6U);
+
+  const float scale = height / static_cast<float>(atlas.pixel_height);
+  const Eigen::Vector3d anchor = mtx.translation();
+  const Eigen::Matrix3d linear = mtx.linear();
+  const double sx = linear.col(0).norm();
+  const double sy = linear.col(1).norm();
+  const Eigen::Vector3d billboard_right(
+      static_cast<double>(pimpl_->cam_right[0]) * sx,
+      static_cast<double>(pimpl_->cam_right[1]) * sx,
+      static_cast<double>(pimpl_->cam_right[2]) * sx);
+  const Eigen::Vector3d billboard_up(
+      static_cast<double>(pimpl_->cam_up[0]) * sy,
+      static_cast<double>(pimpl_->cam_up[1]) * sy,
+      static_cast<double>(pimpl_->cam_up[2]) * sy);
+  const float line_height = height * 1.2F;
+  std::vector<std::string> lines;
+  lines.emplace_back();
+  for (const char ch : text) {
+    if (ch == '\n') {
+      lines.emplace_back();
+      continue;
+    }
+    lines.back().push_back(ch);
+  }
+
+  for (size_t li = 0; li < lines.size(); ++li) {
+    const std::string& line = lines[li];
+    float width_px = 0.0F;
+    {
+      float tmp_x = 0.0F;
+      float tmp_y = 0.0F;
+      for (const char ch : line) {
+        if (ch < 32 || ch >= 128) {
+          continue;
+        }
+        stbtt_aligned_quad q{};
+        stbtt_GetBakedQuad(atlas.glyphs, atlas.width, atlas.height, ch - 32,
+                           &tmp_x, &tmp_y, &q, 1);
+      }
+      width_px = tmp_x;
+    }
+
+    float pen_x = 0.0F;
+    if (align == TextAlign::Center) {
+      pen_x = -0.5F * width_px;
+    } else if (align == TextAlign::Right) {
+      pen_x = -width_px;
+    }
+    float pen_y = static_cast<float>(li) * static_cast<float>(atlas.pixel_height) *
+                  1.2F;
+
+    for (const char ch : line) {
+      if (ch < 32 || ch >= 128) {
+        continue;
+      }
+      stbtt_aligned_quad q{};
+      stbtt_GetBakedQuad(atlas.glyphs, atlas.width, atlas.height, ch - 32, &pen_x,
+                         &pen_y, &q, 1);
+
+      const float lx0 = q.x0 * scale;
+      const float ly0 = -q.y0 * scale - line_height;
+      const float lx1 = q.x1 * scale;
+      const float ly1 = -q.y1 * scale - line_height;
+
+      const auto to_world = [&](float lx, float ly) -> Eigen::Vector3d {
+        if (facing_mode == TextFacingMode::Billboard) {
+          return anchor + billboard_right * static_cast<double>(lx) +
+                 billboard_up * static_cast<double>(ly);
+        }
+        return mtx * Eigen::Vector3d(lx, ly, 0.0);
+      };
+
+      const Eigen::Vector3d p0 = to_world(lx0, ly0);
+      const Eigen::Vector3d p1 = to_world(lx1, ly0);
+      const Eigen::Vector3d p2 = to_world(lx1, ly1);
+      const Eigen::Vector3d p3 = to_world(lx0, ly1);
+
+      const uint16_t base = static_cast<uint16_t>(vertices.size());
+      vertices.push_back({static_cast<float>(p0.x()), static_cast<float>(p0.y()),
+                          static_cast<float>(p0.z()), q.s0, q.t0});
+      vertices.push_back({static_cast<float>(p1.x()), static_cast<float>(p1.y()),
+                          static_cast<float>(p1.z()), q.s1, q.t0});
+      vertices.push_back({static_cast<float>(p2.x()), static_cast<float>(p2.y()),
+                          static_cast<float>(p2.z()), q.s1, q.t1});
+      vertices.push_back({static_cast<float>(p3.x()), static_cast<float>(p3.y()),
+                          static_cast<float>(p3.z()), q.s0, q.t1});
+      indices.push_back(base + 0);
+      indices.push_back(base + 1);
+      indices.push_back(base + 2);
+      indices.push_back(base + 0);
+      indices.push_back(base + 2);
+      indices.push_back(base + 3);
+    }
+  }
+
+  if (vertices.empty() || indices.empty()) {
+    return;
+  }
+
+  if (bgfx::getAvailTransientVertexBuffer(static_cast<uint32_t>(vertices.size()),
+                                          layout) <
+          static_cast<uint32_t>(vertices.size()) ||
+      bgfx::getAvailTransientIndexBuffer(static_cast<uint32_t>(indices.size())) <
+          static_cast<uint32_t>(indices.size())) {
+    return;
+  }
+
+  bgfx::TransientVertexBuffer tvb;
+  bgfx::TransientIndexBuffer tib;
+  bgfx::allocTransientVertexBuffer(&tvb, static_cast<uint32_t>(vertices.size()),
+                                   layout);
+  bgfx::allocTransientIndexBuffer(&tib, static_cast<uint32_t>(indices.size()));
+  std::memcpy(tvb.data, vertices.data(), vertices.size() * sizeof(TextVertex));
+  std::memcpy(tib.data, indices.data(), indices.size() * sizeof(uint16_t));
+
+  uint64_t state = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
+                   BGFX_STATE_BLEND_ALPHA;
+  if (depth_mode == TextDepthMode::DepthTest) {
+    state |= BGFX_STATE_DEPTH_TEST_LESS | BGFX_STATE_WRITE_Z;
+  }
+  bgfx::setState(state);
+  bgfx::setUniform(pimpl_->u_color, &color.base);
+  float mode_val[4] = {static_cast<float>(static_cast<int>(color.mode)), 0.0F,
+                       0.0F, 0.0F};
+  float rparams[4] = {static_cast<float>(color.rainbow.direction.x()),
+                      static_cast<float>(color.rainbow.direction.y()),
+                      static_cast<float>(color.rainbow.direction.z()),
+                      static_cast<float>(color.rainbow.delta)};
+  bgfx::setUniform(pimpl_->u_color_mode, mode_val);
+  bgfx::setUniform(pimpl_->u_rainbow_params, rparams);
+
+  const float identity[16] = {
+      1.0F, 0.0F, 0.0F, 0.0F, 0.0F, 1.0F, 0.0F, 0.0F,
+      0.0F, 0.0F, 1.0F, 0.0F, 0.0F, 0.0F, 0.0F, 1.0F};
+  bgfx::setTransform(identity);
+  bgfx::setVertexBuffer(0, &tvb);
+  bgfx::setIndexBuffer(&tib);
+  bgfx::setTexture(0, pimpl_->s_texture, atlas.texture);
+  bgfx::submit(0, pimpl_->textured_program);
 }
 
 void Renderer::PrintBackend() {

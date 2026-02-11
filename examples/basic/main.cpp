@@ -1,5 +1,6 @@
 #include <cmath>
 
+#include "livision/Color.hpp"
 #include "livision/Viewer.hpp"
 // objects
 #include "livision/marker/Arrow.hpp"
@@ -9,6 +10,7 @@
 #include "livision/marker/Path.hpp"
 #include "livision/object/Drone.hpp"
 #include "livision/object/Model.hpp"
+#include "livision/object/Text.hpp"
 #include "livision/object/primitives.hpp"
 
 int main() {
@@ -24,6 +26,13 @@ int main() {
   viewer.RegisterUICallback([&viewer]() {
     if (ImGui::Button("Close")) {
       viewer.Close();
+    }
+
+    ImGuiIO& io = ImGui::GetIO();
+    if (!io.WantCaptureKeyboard) {
+      if (ImGui::IsKeyDown(ImGuiKey_Q)) {
+        viewer.Close();
+      }
     }
   });
 
@@ -72,6 +81,14 @@ int main() {
   // Drone
   float theta = 0.0F;
   livision::Drone drone;
+  // Attach 3D text
+  livision::Text text;
+  text.SetText("Drone");
+  text.SetPos(0.0, 0.0, 0.8);
+  text.SetColor(livision::color::red);
+  text.SetHeight(0.5F);
+  text.SetAlign(livision::TextAlign::Center);
+  drone.AddObject(&text);
   viewer.AddObject(&drone);
 
   // Arrow

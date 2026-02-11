@@ -24,6 +24,12 @@ bool HasExtension(const std::string& path, const std::string& ext) {
   return ToLower(path.substr(dot + 1)) == ext;
 }
 
+bool IsDefaultWhite(const Color& color) {
+  return color.mode == Color::ColorMode::Fixed && color.base[0] == 1.0F &&
+         color.base[1] == 1.0F && color.base[2] == 1.0F &&
+         color.base[3] == 1.0F;
+}
+
 std::shared_ptr<MeshBuffer> BufferFromPrimitive(
     internal::sdf_loader::SdfNode::PrimitiveType type) {
   switch (type) {
@@ -86,7 +92,16 @@ void Model::SetFromFile(const std::string& path) {
   for (auto& part : mesh_parts) {
     auto mesh = std::make_unique<Mesh>();
     mesh->SetMeshData(part.vertices, part.indices, part.has_uv);
-    mesh->SetColor(part.has_color ? part.color : params_.color);
+    // User-specified model color should override assimp material color
+    // (e.g. rainbow_z in examples). Material color is used only when the model
+    // color remains the default white.
+    if (!IsDefaultWhite(params_.color)) {
+      mesh->SetColor(params_.color);
+    } else if (part.has_color) {
+      mesh->SetColor(part.color);
+    } else {
+      mesh->SetColor(params_.color);
+    }
     if (!part.texture_uri.empty()) {
       mesh->SetTexture(part.texture_uri);
     }
