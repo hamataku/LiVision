@@ -1,0 +1,76 @@
+<?xml version="1.0"?>
+<sdf version="1.7">
+  <world name="default">
+    <include>
+      <uri>ht01.sdf</uri>
+    </include>
+
+    <model name="primitive_scene">
+      <static>true</static>
+      <link name="base_link">
+        <visual name="box">
+          <pose>2 0 0.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1 1 1</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>1 0 0 1</diffuse>
+          </material>
+        </visual>
+
+        <visual name="sphere">
+          <pose>0 2 0.5 0 0 0</pose>
+          <geometry>
+            <sphere>
+              <radius>0.5</radius>
+            </sphere>
+          </geometry>
+          <material>
+            <diffuse>0 1 0 1</diffuse>
+          </material>
+        </visual>
+
+        <visual name="cylinder">
+          <pose>-2 0 0.75 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.4</radius>
+              <length>1.5</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <diffuse>0 0 1 1</diffuse>
+          </material>
+        </visual>
+
+        <visual name="cone">
+          <pose>0 -2 0.75 0 0 0</pose>
+          <geometry>
+            <cone>
+              <radius>0.6</radius>
+              <length>1.5</length>
+            </cone>
+          </geometry>
+          <material>
+            <diffuse>1 1 0 1</diffuse>
+          </material>
+        </visual>
+
+        <visual name="plane">
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>6 6</size>
+            </plane>
+          </geometry>
+          <material>
+            <diffuse>0.6 0.6 0.6 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+  </world>
+</sdf>

@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <sstream>
 #include <string_view>
 
@@ -9,6 +10,7 @@
 
 #ifdef LIVISION_ENABLE_SDF
 #include <assimp/Importer.hpp>
+#include <assimp/config.h>
 #include <assimp/material.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
@@ -26,6 +28,7 @@
 #include <sdf/Mesh.hh>
 #include <sdf/Plane.hh>
 #include <sdf/Model.hh>
+#include <sdf/ParserConfig.hh>
 #include <sdf/Root.hh>
 #include <sdf/Sphere.hh>
 #include <sdf/Visual.hh>
@@ -89,6 +92,172 @@ std::vector<fs::path> CollectSearchRoots(const fs::path& sdf_dir) {
   }
 
   return roots;
+}
+
+std::vector<fs::path> CollectResourceRoots(const fs::path& sdf_dir) {
+  std::vector<fs::path> roots = CollectSearchRoots(sdf_dir);
+  if (const char* env = std::getenv("GAZEBO_RESOURCE_PATH")) {
+    const auto paths = SplitPathList(env);
+    roots.insert(roots.end(), paths.begin(), paths.end());
+  }
+
+  roots.emplace_back("/usr/share/gazebo");
+  roots.emplace_back("/usr/share/gazebo-11");
+  roots.emplace_back("/usr/share");
+  return roots;
+}
+
+fs::path ResolveResourceUri(const std::string& uri, const fs::path& sdf_dir,
+                            const fs::path& base_dir) {
+  if (uri.empty()) {
+    return {};
+  }
+
+  std::string_view view(uri);
+  if (StartsWith(view, "file://")) {
+    view = view.substr(7);
+  }
+
+  fs::path candidate(view);
+  if (candidate.is_absolute()) {
+    if (fs::exists(candidate)) {
+      return candidate;
+    }
+    return {};
+  }
+
+  fs::path local = base_dir / view;
+  if (fs::exists(local)) {
+    return local;
+  }
+  local = sdf_dir / view;
+  if (fs::exists(local)) {
+    return local;
+  }
+
+  const auto roots = CollectResourceRoots(sdf_dir);
+  for (const auto& root : roots) {
+    fs::path p = root / view;
+    if (fs::exists(p)) {
+      return p;
+    }
+  }
+
+  return {};
+}
+
+std::string Trim(std::string s) {
+  const auto is_space = [](unsigned char c) { return std::isspace(c) != 0; };
+  while (!s.empty() && is_space(static_cast<unsigned char>(s.front()))) {
+    s.erase(s.begin());
+  }
+  while (!s.empty() && is_space(static_cast<unsigned char>(s.back()))) {
+    s.pop_back();
+  }
+  return s;
+}
+
+bool TryParseFloat(const std::string& text, float& out) {
+  char* end = nullptr;
+  const float v = std::strtof(text.c_str(), &end);
+  if (end == text.c_str() || *end != '\0') {
+    return false;
+  }
+  out = v;
+  return true;
+}
+
+bool ParseOgreMaterialDiffuse(const fs::path& material_script_path,
+                              const std::string& material_name,
+                              Color& out_color) {
+  std::ifstream file(material_script_path);
+  if (!file.is_open()) {
+    return false;
+  }
+
+  std::vector<std::string> tokens;
+  std::string line;
+  while (std::getline(file, line)) {
+    const std::size_t comment = line.find("//");
+    if (comment != std::string::npos) {
+      line = line.substr(0, comment);
+    }
+    line = Trim(line);
+    if (line.empty()) {
+      continue;
+    }
+    std::string token;
+    for (const char c : line) {
+      if (std::isspace(static_cast<unsigned char>(c)) != 0) {
+        if (!token.empty()) {
+          tokens.push_back(token);
+          token.clear();
+        }
+      } else if (c == '{' || c == '}') {
+        if (!token.empty()) {
+          tokens.push_back(token);
+          token.clear();
+        }
+        tokens.emplace_back(1, c);
+      } else {
+        token.push_back(c);
+      }
+    }
+    if (!token.empty()) {
+      tokens.push_back(token);
+    }
+  }
+
+  bool waiting_target_open = false;
+  bool in_target_material = false;
+  int brace_depth = 0;
+
+  for (std::size_t i = 0; i < tokens.size(); ++i) {
+    const std::string& tk = tokens[i];
+
+    if (!in_target_material) {
+      if (tk == "material" && i + 1 < tokens.size()) {
+        waiting_target_open = (tokens[i + 1] == material_name);
+        ++i;
+      } else if (waiting_target_open && tk == "{") {
+        in_target_material = true;
+        brace_depth = 1;
+      }
+      continue;
+    }
+
+    if (tk == "{") {
+      ++brace_depth;
+      continue;
+    }
+    if (tk == "}") {
+      --brace_depth;
+      if (brace_depth == 0) {
+        return false;
+      }
+      continue;
+    }
+    if (tk == "diffuse" && i + 3 < tokens.size()) {
+      float r = 0.0F;
+      float g = 0.0F;
+      float b = 0.0F;
+      if (!TryParseFloat(tokens[i + 1], r) || !TryParseFloat(tokens[i + 2], g) ||
+          !TryParseFloat(tokens[i + 3], b)) {
+        continue;
+      }
+      float a = 1.0F;
+      if (i + 4 < tokens.size()) {
+        float maybe_a = 1.0F;
+        if (TryParseFloat(tokens[i + 4], maybe_a)) {
+          a = maybe_a;
+        }
+      }
+      out_color = Color(r, g, b, a);
+      return true;
+    }
+  }
+
+  return false;
 }
 
 fs::path ResolveMeshUri(const std::string& uri, const fs::path& sdf_dir,
@@ -166,10 +335,21 @@ void SetNodePose(SdfNode& node, const gz::math::Pose3d& pose) {
   node.rot = Eigen::Quaterniond(r.W(), r.X(), r.Y(), r.Z());
 }
 
-Color ColorFromMaterial(const sdf::Material* material) {
+Color ColorFromMaterial(const sdf::Material* material, const fs::path& sdf_dir) {
   if (!material) {
     return color::white;
   }
+
+  if (!material->ScriptName().empty() && !material->ScriptUri().empty()) {
+    const fs::path script = ResolveResourceUri(material->ScriptUri(), sdf_dir, sdf_dir);
+    if (!script.empty()) {
+      Color script_color = color::white;
+      if (ParseOgreMaterialDiffuse(script, material->ScriptName(), script_color)) {
+        return script_color;
+      }
+    }
+  }
+
   const auto diffuse = material->Diffuse();
   const auto ambient = material->Ambient();
   const bool has_diffuse = diffuse.R() > 0.0 || diffuse.G() > 0.0 ||
@@ -177,6 +357,24 @@ Color ColorFromMaterial(const sdf::Material* material) {
   const auto chosen = has_diffuse ? diffuse : ambient;
   return Color(static_cast<float>(chosen.R()), static_cast<float>(chosen.G()),
                static_cast<float>(chosen.B()), static_cast<float>(chosen.A()));
+}
+
+bool HasExplicitSdfMaterialColor(const sdf::Material* material) {
+  if (!material) {
+    return false;
+  }
+
+  if (!material->ScriptName().empty() || !material->ScriptUri().empty()) {
+    return true;
+  }
+
+  sdf::ElementPtr elem = material->Element();
+  if (!elem) {
+    return false;
+  }
+
+  return elem->HasElement("diffuse") || elem->HasElement("ambient") ||
+         elem->HasElement("script");
 }
 
 struct AssimpMeshData {
@@ -228,6 +426,8 @@ bool LoadAssimpMeshes(const fs::path& mesh_path,
                       std::vector<AssimpMeshData>& meshes,
                       std::string* error_message) {
   Assimp::Importer importer;
+  // Keep source asset up-axis (e.g. COLLADA Z_UP) to match Gazebo/SDF results.
+  importer.SetPropertyBool(AI_CONFIG_IMPORT_COLLADA_IGNORE_UP_DIRECTION, true);
   const aiScene* scene = importer.ReadFile(
       mesh_path.string(),
       aiProcess_Triangulate | aiProcess_JoinIdenticalVertices |
@@ -294,7 +494,10 @@ bool BuildVisualNode(const sdf::Visual& visual, const fs::path& sdf_dir,
     return false;
   }
   SetNodePose(node, visual.RawPose());
-  const Color sdf_color = ColorFromMaterial(visual.Material());
+  const sdf::Material* visual_material = visual.Material();
+  const Color sdf_color = ColorFromMaterial(visual_material, sdf_dir);
+  const bool prefer_sdf_material_color =
+      HasExplicitSdfMaterialColor(visual_material);
 
   switch (geom->Type()) {
     case sdf::GeometryType::BOX: {
@@ -409,7 +612,9 @@ bool BuildVisualNode(const sdf::Visual& visual, const fs::path& sdf_dir,
     SdfNode mesh_node;
     mesh_node.vertices = std::move(mesh_data.vertices);
     mesh_node.indices = std::move(mesh_data.indices);
-    if (mesh_data.has_color && HasNonZeroColor(mesh_data.color)) {
+    if (prefer_sdf_material_color) {
+      mesh_node.color = sdf_color;
+    } else if (mesh_data.has_color && HasNonZeroColor(mesh_data.color)) {
       mesh_node.color = mesh_data.color;
     } else {
       mesh_node.color = sdf_color;
@@ -584,8 +789,17 @@ bool LoadSdfMeshes(const std::string& sdf_path, std::vector<Vertex>& vertices,
   const fs::path sdf_file(sdf_path);
   const fs::path sdf_dir = sdf_file.parent_path();
 
+  sdf::ParserConfig config;
+  config.SetFindCallback([sdf_dir](const std::string& uri) -> std::string {
+    const fs::path resolved = ResolveMeshUri(uri, sdf_dir, sdf_dir);
+    if (!resolved.empty()) {
+      return resolved.string();
+    }
+    return {};
+  });
+
   sdf::Root root;
-  sdf::Errors errors = root.Load(sdf_path);
+  sdf::Errors errors = root.Load(sdf_path, config);
   if (!errors.empty()) {
     if (error_message) {
       std::ostringstream oss;
@@ -699,8 +913,17 @@ bool LoadSdfScene(const std::string& sdf_path, SdfNode& root,
   const fs::path sdf_file(sdf_path);
   const fs::path sdf_dir = sdf_file.parent_path();
 
+  sdf::ParserConfig config;
+  config.SetFindCallback([sdf_dir](const std::string& uri) -> std::string {
+    const fs::path resolved = ResolveMeshUri(uri, sdf_dir, sdf_dir);
+    if (!resolved.empty()) {
+      return resolved.string();
+    }
+    return {};
+  });
+
   sdf::Root sdf_root;
-  sdf::Errors errors = sdf_root.Load(sdf_path);
+  sdf::Errors errors = sdf_root.Load(sdf_path, config);
   if (!errors.empty()) {
     if (error_message) {
       std::ostringstream oss;

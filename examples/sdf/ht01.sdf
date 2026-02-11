@@ -3,77 +3,303 @@
   <model name="ht01">
     <link name="base_link">
       <visual name="visual">
-        <pose>0 0 0 -1.57079632679 0 0</pose>
+        <pose>0 0 -0.01 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>ht01.dae</uri>
+            <uri>meshes/ht01.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
       </visual>
 
-      <visual name="box">
-        <pose>2 0 0.5 0 0 0</pose>
+    </link>
+    <link name="rotor_0">
+      <gravity>true</gravity>
+      <self_collide>false</self_collide>
+      <velocity_decay />
+      <pose>0.174 -0.174 0.22 0 0 0</pose>
+      <inertial>
+        <mass>0.016076923076923075</mass>
+        <inertia>
+          <ixx>3.8464910483993325e-07</ixx>
+          <iyy>2.6115851691700804e-05</iyy>
+          <izz>2.649858234714004e-05</izz>
+        </inertia>
+      </inertial>
+      <visual name="rotor_0_visual">
+        <pose>-0.022 -0.14638461538461536 -0.016 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.8461538461538461 0.8461538461538461 0.8461538461538461</scale>
+            <uri>meshes/1345_prop_ccw.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name="rotor_0_visual_motor_bell">
+        <pose>0 0 -.032 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>meshes/5010Bell.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <collision name="rotor_0_collision">
+        <pose>0 0 0 0 0 0 </pose>
         <geometry>
           <box>
-            <size>1 1 1</size>
+            <size>0.2792307692307692 0.016923076923076923 0.0008461538461538462</size>
           </box>
         </geometry>
-        <material>
-          <diffuse>1 0 0 1</diffuse>
-        </material>
-      </visual>
-
-      <visual name="sphere">
-        <pose>0 2 0.5 0 0 0</pose>
-        <geometry>
-          <sphere>
-            <radius>0.5</radius>
-          </sphere>
-        </geometry>
-        <material>
-          <diffuse>0 1 0 1</diffuse>
-        </material>
-      </visual>
-
-      <visual name="cylinder">
-        <pose>-2 0 0.75 0 0 0</pose>
-        <geometry>
-          <cylinder>
-            <radius>0.4</radius>
-            <length>1.5</length>
-          </cylinder>
-        </geometry>
-        <material>
-          <diffuse>0 0 1 1</diffuse>
-        </material>
-      </visual>
-
-      <visual name="cone">
-        <pose>0 -2 0.75 0 0 0</pose>
-        <geometry>
-          <cone>
-            <radius>0.6</radius>
-            <length>1.5</length>
-          </cone>
-        </geometry>
-        <material>
-          <diffuse>1 1 0 1</diffuse>
-        </material>
-      </visual>
-
-      <visual name="plane">
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <plane>
-            <normal>0 0 1</normal>
-            <size>6 6</size>
-          </plane>
-        </geometry>
-        <material>
-          <diffuse>0.6 0.6 0.6 1</diffuse>
-        </material>
-      </visual>
+        <surface>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+              <max_vel>0</max_vel>
+            </ode>
+          </contact>
+          <friction>
+            <ode />
+          </friction>
+        </surface>
+      </collision>
     </link>
+    <joint name="rotor_0_joint" type="revolute">
+      <parent>base_link</parent>
+      <child>rotor_0</child>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name="rotor_1">
+      <gravity>true</gravity>
+      <self_collide>false</self_collide>
+      <velocity_decay />
+      <pose>-0.174 0.174 0.22 0 0 0</pose>
+      <inertial>
+        <mass>0.016076923076923075</mass>
+        <inertia>
+          <ixx>3.8464910483993325e-07</ixx>
+          <iyy>2.6115851691700804e-05</iyy>
+          <izz>2.649858234714004e-05</izz>
+        </inertia>
+      </inertial>
+      <visual name="rotor_1_visual">
+        <pose>-0.022 -0.14638461538461536 -0.016 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.8461538461538461 0.8461538461538461 0.8461538461538461</scale>
+            <uri>meshes/1345_prop_ccw.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name="rotor_1_visual_motor_top">
+        <pose>0 0 -.032 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>meshes/5010Bell.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <collision name="rotor_1_collision">
+        <pose>0 0 0 0 0 0 </pose>
+        <geometry>
+          <box>
+            <size>0.2792307692307692 0.016923076923076923 0.0008461538461538462</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+              <max_vel>0</max_vel>
+            </ode>
+          </contact>
+          <friction>
+            <ode />
+          </friction>
+        </surface>
+      </collision>
+    </link>
+    <joint name="rotor_1_joint" type="revolute">
+      <parent>base_link</parent>
+      <child>rotor_1</child>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name="rotor_2">
+      <gravity>true</gravity>
+      <self_collide>false</self_collide>
+      <velocity_decay />
+      <pose>0.174 0.174 0.22 0 0 0</pose>
+      <inertial>
+        <mass>0.016076923076923075</mass>
+        <inertia>
+          <ixx>3.8464910483993325e-07</ixx>
+          <iyy>2.6115851691700804e-05</iyy>
+          <izz>2.649858234714004e-05</izz>
+        </inertia>
+      </inertial>
+      <visual name="rotor_2_visual">
+        <pose>-0.022 -0.14638461538461536 -0.016 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.8461538461538461 0.8461538461538461 0.8461538461538461</scale>
+            <uri>meshes/1345_prop_cw.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name="rotor_2_visual_motor_top">
+        <pose>0 0 -.032 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>meshes/5010Bell.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <collision name="rotor_2_collision">
+        <pose>0 0 0 0 0 0 </pose>
+        <geometry>
+          <box>
+            <size>0.2792307692307692 0.016923076923076923 0.0008461538461538462</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+              <max_vel>0</max_vel>
+            </ode>
+          </contact>
+          <friction>
+            <ode />
+          </friction>
+        </surface>
+      </collision>
+    </link>
+    <joint name="rotor_2_joint" type="revolute">
+      <parent>base_link</parent>
+      <child>rotor_2</child>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name="rotor_3">
+      <gravity>true</gravity>
+      <self_collide>false</self_collide>
+      <velocity_decay />
+      <pose>-0.174 -0.174 0.22 0 0 0</pose>
+      <inertial>
+        <mass>0.016076923076923075</mass>
+        <inertia>
+          <ixx>3.8464910483993325e-07</ixx>
+          <iyy>2.6115851691700804e-05</iyy>
+          <izz>2.649858234714004e-05</izz>
+        </inertia>
+      </inertial>
+      <visual name="rotor_3_visual">
+        <pose>-0.022 -0.14638461538461536 -0.016 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.8461538461538461 0.8461538461538461 0.8461538461538461</scale>
+            <uri>meshes/1345_prop_cw.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name="rotor_3_visual_motor_top">
+        <pose>0 0 -.032 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>meshes/5010Bell.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <collision name="rotor_3_collision">
+        <pose>0 0 0 0 0 0 </pose>
+        <geometry>
+          <box>
+            <size>0.2792307692307692 0.016923076923076923 0.0008461538461538462</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+              <max_vel>0</max_vel>
+            </ode>
+          </contact>
+          <friction>
+            <ode />
+          </friction>
+        </surface>
+      </collision>
+    </link>
+    <joint name="rotor_3_joint" type="revolute">
+      <parent>base_link</parent>
+      <child>rotor_3</child>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
   </model>
 </sdf>
