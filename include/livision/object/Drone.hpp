@@ -1,6 +1,6 @@
 #pragma once
 
-#include <array>
+#include <memory>
 
 #include "livision/Container.hpp"
 #include "livision/object/primitives.hpp"
@@ -16,7 +16,7 @@ namespace livision {
  * @brief Simple quadrotor model assembled from primitives.
  * @ingroup object
  */
-class Drone : public Container {
+class Drone : public Container, public SharedInstanceFactory<Drone> {
  public:
   using Container::Container;
 
@@ -24,57 +24,29 @@ class Drone : public Container {
    * @brief Build the drone body parts.
    */
   void OnInit() final {
-    prop_.at(0).SetParams({.pos = {0.3, 0.3, 0.33},
-                           .scale = {0.3, 0.3, 0.03},
-                           .color = color::cyan});
-    prop_.at(1).SetParams({.pos = {-0.3, 0.3, 0.33},
-                           .scale = {0.3, 0.3, 0.03},
-                           .color = color::cyan});
-    prop_.at(2).SetParams({.pos = {-0.3, -0.3, 0.33},
-                           .scale = {0.3, 0.3, 0.03},
-                           .color = color::cyan});
-    prop_.at(3).SetParams({.pos = {0.3, -0.3, 0.33},
-                           .scale = {0.3, 0.3, 0.03},
-                           .color = color::cyan});
-    for (auto& p : prop_) {
-      AddObject(&p);
+    for (int i = 0; i < 4; i++) {
+      float sign_x = (i < 2) ? 1.0F : -1.0F;
+      float sign_y = (i % 2 == 0) ? 1.0F : -1.0F;
+
+      auto prop =
+          Cylinder::Instance({.pos = {0.3F * sign_x, 0.3F * sign_y, 0.33F},
+                              .scale = {0.3F, 0.3F, 0.03F},
+                              .color = color::cyan});
+      AddObject(prop);
+
+      auto leg =
+          Cylinder::Instance({.pos = {0.2F * sign_x, 0.2F * sign_y, 0.13F},
+                              .scale = {0.02F, 0.02F, 0.25F},
+                              .color = color::white});
+      leg->SetDegRotation({15.0F * sign_y, -15.0F * sign_x, 0.0F});
+      AddObject(leg);
     }
 
-    legs_.at(0)
-        .SetParams({.pos = {0.2, 0.2, 0.13},
-                    .scale = {0.01, 0.01, 0.25},
-                    .color = color::white})
-        .SetDegRotation({15.0, 0.0, -45.0});
-
-    legs_.at(1)
-        .SetParams({.pos = {-0.2, 0.2, 0.13},
-                    .scale = {0.01, 0.01, 0.25},
-                    .color = color::white})
-        .SetDegRotation({15.0, 0.0, 45.0});
-    legs_.at(2)
-        .SetParams({.pos = {-0.2, -0.2, 0.13},
-                    .scale = {0.01, 0.01, 0.25},
-                    .color = color::white})
-        .SetDegRotation({15.0, 0.0, 135.0});
-    legs_.at(3)
-        .SetParams({.pos = {0.2, -0.2, 0.13},
-                    .scale = {0.01, 0.01, 0.25},
-                    .color = color::white})
-        .SetDegRotation({15.0, 0.0, 225.0});
-    for (auto& l : legs_) {
-      AddObject(&l);
-    }
-
-    body_.SetParams({.pos = {0.0, 0.0, 0.28},
-                     .scale = {0.4, 0.4, 0.1},
-                     .color = color::dark_gray});
-    AddObject(&body_);
+    auto body = Box::Instance({.pos = {0.0, 0.0, 0.28},
+                               .scale = {0.4, 0.4, 0.1},
+                               .color = color::dark_gray});
+    AddObject(body);
   }
-
- private:
-  std::array<Cylinder, 4> prop_;
-  std::array<Cylinder, 4> legs_;
-  Box body_;
 };
 
 /** @} */

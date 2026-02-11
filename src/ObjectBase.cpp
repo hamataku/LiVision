@@ -24,72 +24,72 @@ void ObjectBase::DeInit() {
   }
 }
 
-ObjectBase& ObjectBase::SetParams(const Params& params) {
+ObjectBase* ObjectBase::SetParams(const Params& params) {
   params_ = params;
   local_mtx_changed_ = true;
-  return *this;
+  return this;
 }
 
-ObjectBase& ObjectBase::SetPos(const Eigen::Vector3d& pos) {
+ObjectBase* ObjectBase::SetPos(const Eigen::Vector3d& pos) {
   params_.pos = pos;
   local_mtx_changed_ = true;
-  return *this;
+  return this;
 }
-ObjectBase& ObjectBase::SetPos(double x, double y, double z) {
+ObjectBase* ObjectBase::SetPos(double x, double y, double z) {
   params_.pos = Eigen::Vector3d(x, y, z);
   local_mtx_changed_ = true;
-  return *this;
+  return this;
 }
-ObjectBase& ObjectBase::SetScale(const Eigen::Vector3d& scale) {
+ObjectBase* ObjectBase::SetScale(const Eigen::Vector3d& scale) {
   params_.scale = scale;
   local_mtx_changed_ = true;
-  return *this;
+  return this;
 }
-ObjectBase& ObjectBase::SetScale(double x, double y, double z) {
+ObjectBase* ObjectBase::SetScale(double x, double y, double z) {
   params_.scale = Eigen::Vector3d(x, y, z);
   local_mtx_changed_ = true;
-  return *this;
+  return this;
 }
-ObjectBase& ObjectBase::SetQuatRotation(const Eigen::Quaterniond& q) {
+ObjectBase* ObjectBase::SetQuatRotation(const Eigen::Quaterniond& q) {
   params_.quat = q;
   local_mtx_changed_ = true;
-  return *this;
+  return this;
 }
-ObjectBase& ObjectBase::SetDegRotation(const Eigen::Vector3d& euler_deg) {
+ObjectBase* ObjectBase::SetDegRotation(const Eigen::Vector3d& euler_deg) {
   Eigen::Vector3d euler_rad = euler_deg * M_PI / 180.0;
   return SetRadRotation(euler_rad);
 }
-ObjectBase& ObjectBase::SetRadRotation(const Eigen::Vector3d& euler_rad) {
+ObjectBase* ObjectBase::SetRadRotation(const Eigen::Vector3d& euler_rad) {
   Eigen::Quaterniond q =
       Eigen::AngleAxisd(euler_rad[2], Eigen::Vector3d::UnitZ()) *
       Eigen::AngleAxisd(euler_rad[1], Eigen::Vector3d::UnitY()) *
       Eigen::AngleAxisd(euler_rad[0], Eigen::Vector3d::UnitX());
   return SetQuatRotation(q);
 }
-ObjectBase& ObjectBase::SetVisible(bool visible) {
+ObjectBase* ObjectBase::SetVisible(bool visible) {
   visible_ = visible;
-  return *this;
+  return this;
 }
-ObjectBase& ObjectBase::SetColor(const Color& color) {
+ObjectBase* ObjectBase::SetColor(const Color& color) {
   params_.color = color;
-  return *this;
+  return this;
 }
-ObjectBase& ObjectBase::SetTexture(const std::string& texture) {
+ObjectBase* ObjectBase::SetTexture(const std::string& texture) {
   params_.texture = texture;
-  return *this;
+  return this;
 }
-ObjectBase& ObjectBase::ClearTexture() {
+ObjectBase* ObjectBase::ClearTexture() {
   params_.texture.clear();
-  return *this;
+  return this;
 }
-ObjectBase& ObjectBase::SetWireColor(const Color& color) {
+ObjectBase* ObjectBase::SetWireColor(const Color& color) {
   params_.wire_color = color;
-  return *this;
+  return this;
 }
 
-ObjectBase& ObjectBase::SetGlobalMatrix(const Eigen::Affine3d& mtx) {
+ObjectBase* ObjectBase::SetGlobalMatrix(const Eigen::Affine3d& mtx) {
   global_mtx_ = mtx;
-  return *this;
+  return this;
 }
 
 // NOLINTNEXTLINE

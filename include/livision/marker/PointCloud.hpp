@@ -13,6 +13,7 @@ namespace livision {
 template <class T = Box>
 class PointCloud : public ObjectBase {
  public:
+  using ObjectBase::ObjectBase;
   /**
    * @brief Draw the point cloud.
    */

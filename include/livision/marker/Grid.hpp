@@ -8,7 +8,7 @@ namespace livision {
  * @brief Ground grid marker.
  * @ingroup marker
  */
-class Grid : public ObjectBase {
+class Grid : public ObjectBase, public SharedInstanceFactory<Grid> {
  public:
   using ObjectBase::ObjectBase;
   /**

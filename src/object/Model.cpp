@@ -2,18 +2,20 @@
 
 #include <algorithm>
 #include <cctype>
-#include <iostream>
 
-#include "livision/internal/sdf_loader.hpp"
 #include "livision/Log.hpp"
+#include "livision/ObjectBase.hpp"
+#include "livision/internal/sdf_loader.hpp"
+#include "livision/object/Mesh.hpp"
 #include "livision/object/primitives.hpp"
 
 namespace livision {
 
 namespace {
 std::string ToLower(std::string value) {
-  std::transform(value.begin(), value.end(), value.begin(),
-                 [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+  std::ranges::transform(value, value.begin(), [](unsigned char c) {
+    return static_cast<char>(std::tolower(c));
+  });
   return value;
 }
 
@@ -61,8 +63,8 @@ std::shared_ptr<MeshBuffer> BufferFromPrimitive(
 }
 }  // namespace
 
-void Model::SetFromFile(const std::string& path) {
-  ClearChildren();
+Model* Model::SetFromFile(const std::string& path) {
+  ClearObjects();
   GetMeshBuffer().reset();
 
   std::string error;
@@ -71,21 +73,21 @@ void Model::SetFromFile(const std::string& path) {
     if (!internal::sdf_loader::LoadSdfScene(path, root, &error)) {
       LogMessage(LogLevel::Error, "Failed to load SDF: ", path,
                  error.empty() ? "" : "\n", error);
-      return;
+      return this;
     }
     BuildFromNode(root);
-    return;
+    return this;
   }
 
   std::vector<internal::sdf_loader::MeshPart> mesh_parts;
   if (!internal::sdf_loader::LoadMeshFileParts(path, mesh_parts, &error)) {
     LogMessage(LogLevel::Error, "Failed to load mesh file: ", path,
                error.empty() ? "" : "\n", error);
-    return;
+    return this;
   }
 
   for (auto& part : mesh_parts) {
-    auto mesh = std::make_unique<Mesh>();
+    auto mesh = std::make_shared<Mesh>();
     mesh->SetMeshData(part.vertices, part.indices, part.has_uv);
     // User-specified model color should override assimp material color
     // (e.g. rainbow_z in examples). Material color is used only when the model
@@ -101,18 +103,13 @@ void Model::SetFromFile(const std::string& path) {
       mesh->SetTexture(part.texture_uri);
     }
     mesh->SetWireColor(params_.wire_color);
-    AddOwned(std::move(mesh));
+    AddOwned(mesh);
   }
+  return this;
 }
 
-void Model::ClearChildren() {
-  owned_children_.clear();
-  ClearObjects();
-}
-
-void Model::AddOwned(std::unique_ptr<ObjectBase> child) {
-  AddObject(child.get());
-  owned_children_.push_back(std::move(child));
+void Model::AddOwned(std::shared_ptr<ObjectBase> child) {
+  AddObject(std::move(child));
 }
 
 void Model::BuildFromNode(const internal::sdf_loader::SdfNode& node) {
@@ -121,27 +118,27 @@ void Model::BuildFromNode(const internal::sdf_loader::SdfNode& node) {
   SetScale(node.scale);
 
   if (node.HasMesh()) {
-    auto mesh = std::make_unique<Mesh>();
+    auto mesh = std::make_shared<Mesh>();
     mesh->SetMeshData(node.vertices, node.indices, node.has_uv);
     mesh->SetColor(node.color);
     if (!node.texture.empty()) {
       mesh->SetTexture(node.texture);
     }
-    AddOwned(std::move(mesh));
+    AddOwned(mesh);
   } else if (node.HasPrimitive()) {
     auto buffer = BufferFromPrimitive(node.primitive);
     if (buffer) {
-      auto mesh = std::make_unique<Mesh>();
+      auto mesh = std::make_shared<Mesh>();
       mesh->SetMeshBuffer(std::move(buffer));
       mesh->SetColor(node.color);
-      AddOwned(std::move(mesh));
+      AddOwned(mesh);
     }
   }
 
   for (const auto& child : node.children) {
-    auto child_model = std::make_unique<Model>();
+    auto child_model = std::make_shared<Model>();
     child_model->BuildFromNode(child);
-    AddOwned(std::move(child_model));
+    AddOwned(child_model);
   }
 }
 

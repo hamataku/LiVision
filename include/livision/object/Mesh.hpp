@@ -13,10 +13,8 @@ namespace livision {
  */
 class Mesh : public ObjectBase {
  public:
-  /**
-   * @brief Construct with optional parameters.
-   */
-  explicit Mesh(Params params = Params()) : ObjectBase(std::move(params)) {}
+  using ObjectBase::ObjectBase;
+
   /**
    * @brief Construct from vertex and index arrays.
    */

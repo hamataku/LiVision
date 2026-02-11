@@ -41,11 +41,25 @@ uint32_t ToRgba8(const Color& color) {
   return (static_cast<uint32_t>(r) << 24) | (static_cast<uint32_t>(g) << 16) |
          (static_cast<uint32_t>(b) << 8) | 0xFFU;
 }
+
+void RegisterObjectRecursive(ObjectBase* object,
+                             std::vector<ObjectBase*>& draw_objects) {
+  object->Init();
+  draw_objects.push_back(object);
+  auto* container = dynamic_cast<Container*>(object);
+  if (!container) {
+    return;
+  }
+  for (const auto& child : container->GetObjects()) {
+    RegisterObjectRecursive(child.get(), draw_objects);
+  }
+}
 }  // namespace
 
 struct Viewer::Impl {
   SDL_Window* window = nullptr;
-  std::vector<ObjectBase*> objects;
+  std::vector<std::shared_ptr<ObjectBase>> owned_objects;
+  std::vector<ObjectBase*> draw_objects;
   ViewerConfig config;
   Renderer renderer;
   std::function<void()> ui_callback = []() {};
@@ -159,7 +173,7 @@ Viewer::Viewer(const ViewerConfig& config) : pimpl_(std::make_unique<Impl>()) {
 }
 
 Viewer::~Viewer() {
-  for (auto* object : pimpl_->objects) {
+  for (auto* object : pimpl_->draw_objects) {
     object->DeInit();
   }
   pimpl_->renderer.DeInit();
@@ -183,7 +197,7 @@ bool Viewer::SpinOnce() {
     pimpl_->last_frame_time = pimpl_->last_fps_time;
     pimpl_->initialized = true;
   }
-  for (auto* object : pimpl_->objects) {
+  for (auto* object : pimpl_->draw_objects) {
     object->UpdateMatrix();
   }
 
@@ -224,7 +238,7 @@ bool Viewer::SpinOnce() {
     pimpl_->renderer.SetCameraViewMatrix(pimpl_->view);
     bgfx::setViewTransform(0, pimpl_->view, pimpl_->proj);
 
-    for (auto* object : pimpl_->objects) {
+    for (auto* object : pimpl_->draw_objects) {
       if (object->IsVisible()) object->OnDraw(pimpl_->renderer);
     }
 
@@ -276,16 +290,12 @@ void Viewer::PrintFPS() {
 
 void Viewer::Close() { pimpl_->quit = true; }
 
-void Viewer::AddObject(ObjectBase* object) {
-  object->Init();
-  pimpl_->objects.push_back(object);
-  auto* container = dynamic_cast<Container*>(object);
-  if (container) {
-    for (auto* obj : container->GetObjects()) {
-      obj->Init();
-      AddObject(obj);
-    }
+void Viewer::AddObject(std::shared_ptr<ObjectBase> object) {
+  if (!object) {
+    return;
   }
+  pimpl_->owned_objects.push_back(object);
+  RegisterObjectRecursive(object.get(), pimpl_->draw_objects);
 }
 
 void Viewer::RegisterUICallback(std::function<void()> ui_callback) {

@@ -8,7 +8,7 @@ namespace livision {
  * @brief Polyline path marker with optional spheres.
  * @ingroup marker
  */
-class Path : public ObjectBase {
+class Path : public ObjectBase, public SharedInstanceFactory<Path> {
  public:
   using ObjectBase::ObjectBase;
 

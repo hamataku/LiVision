@@ -19,7 +19,7 @@ void Path::OnDraw(Renderer& renderer) {
     cylinder_.OnDraw(renderer);
 
     if (is_sphere_) {
-      sphere_.SetPos(p2).SetScale(
+      sphere_.SetPos(p2)->SetScale(
           Eigen::Vector3d(sphere_size_, sphere_size_, sphere_size_));
       sphere_.UpdateMatrix();
       sphere_.OnDraw(renderer);

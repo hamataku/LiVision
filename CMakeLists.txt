@@ -106,8 +106,8 @@ target_link_libraries(${PROJECT_NAME}
         $<BUILD_INTERFACE:bimg>
         $<BUILD_INTERFACE:bimg_decode>
         $<BUILD_INTERFACE:bgfx>
-        SDL2::SDL2
     PUBLIC
+        SDL2::SDL2
         Eigen3::Eigen
 )
 if(LIVISION_ENABLE_SDF)

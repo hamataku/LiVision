@@ -8,8 +8,9 @@ namespace livision {
  * @brief Box primitive.
  * @ingroup object
  */
-class Box : public ObjectBase {
+class Box : public ObjectBase, public SharedInstanceFactory<Box> {
  public:
+  using ObjectBase::ObjectBase;
   /**
    * @brief Construct a box with optional parameters.
    */
@@ -20,8 +21,9 @@ class Box : public ObjectBase {
  * @brief Cone primitive.
  * @ingroup object
  */
-class Cone : public ObjectBase {
+class Cone : public ObjectBase, public SharedInstanceFactory<Cone> {
  public:
+  using ObjectBase::ObjectBase;
   /**
    * @brief Construct a cone with optional parameters.
    */
@@ -32,8 +34,9 @@ class Cone : public ObjectBase {
  * @brief Cylinder primitive.
  * @ingroup object
  */
-class Cylinder : public ObjectBase {
+class Cylinder : public ObjectBase, public SharedInstanceFactory<Cylinder> {
  public:
+  using ObjectBase::ObjectBase;
   /**
    * @brief Construct a cylinder with optional parameters.
    */
@@ -44,8 +47,9 @@ class Cylinder : public ObjectBase {
  * @brief Plane primitive.
  * @ingroup object
  */
-class Plane : public ObjectBase {
+class Plane : public ObjectBase, public SharedInstanceFactory<Plane> {
  public:
+  using ObjectBase::ObjectBase;
   /**
    * @brief Construct a plane with optional parameters.
    */
@@ -56,8 +60,9 @@ class Plane : public ObjectBase {
  * @brief Sphere primitive.
  * @ingroup object
  */
-class Sphere : public ObjectBase {
+class Sphere : public ObjectBase, public SharedInstanceFactory<Sphere> {
  public:
+  using ObjectBase::ObjectBase;
   /**
    * @brief Construct a sphere with optional parameters.
    */

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <vector>
 
 #include "livision/ObjectBase.hpp"
@@ -13,24 +14,33 @@ class Container : public ObjectBase {
   using ObjectBase::ObjectBase;
 
   /**
-   * @brief Add a child object and register this as its parent.
+   * @brief Add and co-own a child object via shared_ptr.
    */
-  Container& AddObject(ObjectBase* object) {
-    objects_.push_back(object);
+  Container* AddObject(std::shared_ptr<ObjectBase> object) {
+    if (!object) {
+      return this;
+    }
     object->RegisterParentObject(this);
-    return *this;
+    objects_.push_back(std::move(object));
+    return this;
   }
   /**
    * @brief Get the list of child objects.
    */
-  std::vector<ObjectBase*>& GetObjects() { return objects_; }
+  std::vector<std::shared_ptr<ObjectBase>>& GetObjects() { return objects_; }
+  /**
+   * @brief Get the list of child objects.
+   */
+  const std::vector<std::shared_ptr<ObjectBase>>& GetObjects() const {
+    return objects_;
+  }
   /**
    * @brief Clear the list of child objects.
    */
   void ClearObjects() { objects_.clear(); }
 
  private:
-  std::vector<ObjectBase*> objects_;
+  std::vector<std::shared_ptr<ObjectBase>> objects_;
 };
 
 }  // namespace livision

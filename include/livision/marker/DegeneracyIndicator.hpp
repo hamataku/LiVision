@@ -9,7 +9,8 @@ namespace livision {
  * @brief Visualizes degeneracy directions for translation and rotation.
  * @ingroup marker
  */
-class DegeneracyIndicator : public ObjectBase {
+class DegeneracyIndicator : public ObjectBase,
+                            public SharedInstanceFactory<DegeneracyIndicator> {
  public:
   using ObjectBase::ObjectBase;
   /**

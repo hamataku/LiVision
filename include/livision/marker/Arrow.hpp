@@ -16,7 +16,7 @@ namespace livision {
  * @brief Arrow marker composed of a cylinder body and cone head.
  * @ingroup marker
  */
-class Arrow : public ObjectBase {
+class Arrow : public ObjectBase, public SharedInstanceFactory<Arrow> {
  public:
   using ObjectBase::ObjectBase;
 

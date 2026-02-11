@@ -54,13 +54,17 @@ target_link_libraries(your_program
 ```
 
 ```cpp
+#include "livision/Color.hpp"
+#include "livision/Viewer.hpp"
+#include "livision/object/Model.hpp"
+#include "livision/object/primitives.hpp"
+
 int main() {
   livision::Viewer viewer{{
       .headless = false,  // Set to true for headless mode
       .vsync = true,      // Set to true to enable VSync
       .width = 1280,      // Set the window width
       .height = 720,      // Set the window height
-      .fps = true,        // Target frames per second
   }};
 
   // UI callback
@@ -70,17 +74,25 @@ int main() {
     }
   });
 
-  // Plane
-  livision::Plane plane(
-      {.scale = {20.0, 20.0, 0.0}, .color = livision::color::light_gray});
-  viewer.AddObject(&plane);
+  // AddObject accepts shared_ptr only.
+  auto plane = livision::Plane::Instance(
+      livision::ObjectBase::Params{.scale = {20.0, 20.0, 0.0},
+                                   .color = livision::color::light_gray});
+  viewer.AddObject(plane);
 
-  // Sphere
-  livision::Sphere sphere({.pos = {0.0, 0.0, 1.0},
-                           .scale = {2.0, 2.0, 2.0},
-                           .color = livision::color::rainbow_z,
-                           .wire_color = livision::color::black});
-  viewer.AddObject(&sphere);
+  auto sphere = livision::Sphere::Instance(livision::ObjectBase::Params{
+      .pos = {0.0, 0.0, 1.0},
+      .scale = {2.0, 2.0, 2.0},
+      .color = livision::color::rainbow_z,
+      .wire_color = livision::color::black});
+  viewer.AddObject(sphere);
+
+  // Model from mesh file.
+  auto bunny = livision::Model::InstanceWithFile(
+      "path/to/model.stl",
+      {.scale = {8.0, 8.0, 8.0}, .color = livision::color::rainbow_z});
+  bunny->SetPos(0.0, 0.0, -2.0);
+  viewer.AddObject(bunny);
 
   while (viewer.SpinOnce()) {
   }

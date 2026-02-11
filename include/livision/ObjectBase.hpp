@@ -63,61 +63,61 @@ class ObjectBase {
   /**
    * @brief Set all parameters.
    */
-  ObjectBase& SetParams(const Params& params);
+  ObjectBase* SetParams(const Params& params);
 
   /**
    * @brief Set position.
    */
-  ObjectBase& SetPos(const Eigen::Vector3d& pos);
+  ObjectBase* SetPos(const Eigen::Vector3d& pos);
   /**
    * @brief Set position from components.
    */
-  ObjectBase& SetPos(double x, double y, double z);
+  ObjectBase* SetPos(double x, double y, double z);
   /**
    * @brief Set scale.
    */
-  ObjectBase& SetScale(const Eigen::Vector3d& scale);
+  ObjectBase* SetScale(const Eigen::Vector3d& scale);
   /**
    * @brief Set scale from components.
    */
-  ObjectBase& SetScale(double x, double y, double z);
+  ObjectBase* SetScale(double x, double y, double z);
   /**
    * @brief Set rotation from quaternion.
    */
-  ObjectBase& SetQuatRotation(const Eigen::Quaterniond& q);
+  ObjectBase* SetQuatRotation(const Eigen::Quaterniond& q);
   /**
    * @brief Set rotation from Euler degrees.
    */
-  ObjectBase& SetDegRotation(const Eigen::Vector3d& euler_deg);
+  ObjectBase* SetDegRotation(const Eigen::Vector3d& euler_deg);
   /**
    * @brief Set rotation from Euler radians.
    */
-  ObjectBase& SetRadRotation(const Eigen::Vector3d& euler_rad);
+  ObjectBase* SetRadRotation(const Eigen::Vector3d& euler_rad);
   /**
    * @brief Set visibility flag.
    */
-  ObjectBase& SetVisible(bool visible);
+  ObjectBase* SetVisible(bool visible);
   /**
    * @brief Set base color.
    */
-  ObjectBase& SetColor(const Color& color);
+  ObjectBase* SetColor(const Color& color);
   /**
    * @brief Set texture path / URI.
    */
-  ObjectBase& SetTexture(const std::string& texture);
+  ObjectBase* SetTexture(const std::string& texture);
   /**
    * @brief Clear texture.
    */
-  ObjectBase& ClearTexture();
+  ObjectBase* ClearTexture();
   /**
    * @brief Set wireframe color.
    */
-  ObjectBase& SetWireColor(const Color& color);
+  ObjectBase* SetWireColor(const Color& color);
 
   /**
    * @brief Override global transform matrix.
    */
-  ObjectBase& SetGlobalMatrix(const Eigen::Affine3d& mtx);
+  ObjectBase* SetGlobalMatrix(const Eigen::Affine3d& mtx);
 
   /**
    * @brief Get visibility flag.
@@ -159,4 +159,17 @@ class ObjectBase {
 
   std::shared_ptr<MeshBuffer> mesh_buf_;
 };
+
+template <typename Derived>
+class SharedInstanceFactory {
+ public:
+  using Ptr = std::shared_ptr<Derived>;
+
+  static Ptr Instance() { return std::make_shared<Derived>(); }
+
+  static Ptr Instance(ObjectBase::Params params) {
+    return std::make_shared<Derived>(std::move(params));
+  }
+};
+
 }  // namespace livision

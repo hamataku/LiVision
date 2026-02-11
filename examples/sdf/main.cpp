@@ -18,11 +18,10 @@ int main() {
   });
 
   constexpr const char* ex_dir = LIVISION_EXAMPLE_DIR;
-  livision::Model sdf_model;
-  sdf_model.SetFromFile(std::string(ex_dir) + "/world.sdf");
-  sdf_model.SetPos(0.0, 0.0, 0.0);
-  sdf_model.SetScale(1.0, 1.0, 1.0);
-  viewer.AddObject(&sdf_model);
+  auto sdf_model = livision::Model::Instance(
+      {.pos = {0.0, 0.0, 0.0}, .scale = {1.0, 1.0, 1.0}});
+  sdf_model->SetFromFile(std::string(ex_dir) + "/world.sdf");
+  viewer.AddObject(sdf_model);
 
   while (viewer.SpinOnce()) {
   }

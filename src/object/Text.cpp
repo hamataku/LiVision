@@ -2,8 +2,6 @@
 
 namespace livision {
 
-Text::Text() : Text(Params()) {}
-
 Text::Text(Params params)
     : ObjectBase(static_cast<ObjectBase::Params>(params)),
       text_(std::move(params.text)),

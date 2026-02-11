@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "livision/Container.hpp"
 #include "livision/marker/Arrow.hpp"
 
@@ -9,7 +11,7 @@ namespace livision {
  * @brief XYZ axis arrows representing odometry pose.
  * @ingroup marker
  */
-class Odometry : public Container {
+class Odometry : public Container, public SharedInstanceFactory<Odometry> {
  public:
   using Container::Container;
   /**
@@ -35,9 +37,9 @@ class Odometry : public Container {
   Odometry& SetBodyRadius(double radius);
 
  private:
-  Arrow arrow_x_;
-  Arrow arrow_y_;
-  Arrow arrow_z_;
+  std::shared_ptr<Arrow> arrow_x_;
+  std::shared_ptr<Arrow> arrow_y_;
+  std::shared_ptr<Arrow> arrow_z_;
 };
 
 }  // namespace livision

@@ -50,7 +50,7 @@ class Viewer {
   /**
    * @brief Add an object to be rendered.
    */
-  void AddObject(ObjectBase* object);
+  void AddObject(std::shared_ptr<ObjectBase> object);
   /**
    * @brief Register a UI callback (ImGui).
    */

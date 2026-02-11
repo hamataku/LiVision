@@ -10,8 +10,10 @@ namespace livision {
  * @brief World-space text object.
  * @ingroup object
  */
-class Text : public ObjectBase {
+class Text : public ObjectBase, public SharedInstanceFactory<Text> {
  public:
+  using ObjectBase::ObjectBase;
+
   struct Params : public ObjectBase::Params {
     Params() = default;
     std::string text;
@@ -22,7 +24,6 @@ class Text : public ObjectBase {
     TextAlign align = TextAlign::Left;
   };
 
-  Text();
   explicit Text(Params params);
 
   void OnDraw(Renderer& renderer) final;
