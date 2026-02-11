@@ -1,30 +1,28 @@
 #include "livision/Viewer.hpp"
-#include "livision/marker/Grid.hpp"
 #include "livision/object/Model.hpp"
-#include "livision/object/primitives.hpp"
 
 int main() {
-  livision::Viewer viewer{{
+  auto viewer = livision::Viewer::Instance({
       .headless = false,
       .vsync = true,
       .width = 1280,
       .height = 720,
-  }};
+  });
 
-  viewer.RegisterUICallback([&viewer]() {
+  viewer->RegisterUICallback([&viewer]() {
     if (ImGui::Button("Close")) {
-      viewer.Close();
+      viewer->Close();
     }
   });
 
-  constexpr const char* ex_dir = LIVISION_EXAMPLE_DIR;
+  std::string ex_dir = LIVISION_EXAMPLE_DIR;
   auto sdf_model = livision::Model::Instance();
-  sdf_model->SetFromFile(std::string(ex_dir) + "/sonoma_raceway/model.sdf");
+  sdf_model->SetFromFile(ex_dir + "/sonoma_raceway/model.sdf");
   sdf_model->SetPos(0.0, 0.0, 0.0);
   sdf_model->SetScale(1.0, 1.0, 1.0);
-  viewer.AddObject(sdf_model);
+  viewer->AddObject(sdf_model);
 
-  while (viewer.SpinOnce()) {
+  while (viewer->SpinOnce()) {
   }
 
   return 0;

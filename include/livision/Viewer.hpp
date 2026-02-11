@@ -38,6 +38,10 @@ class Viewer {
    */
   ~Viewer();
 
+  static std::shared_ptr<Viewer> Instance(const ViewerConfig& config) {
+    return std::make_shared<Viewer>(config);
+  }
+
   /**
    * @brief Run a single frame.
    * @return True while the viewer should continue running.

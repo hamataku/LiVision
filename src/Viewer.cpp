@@ -9,14 +9,13 @@
 #include <bgfx/platform.h>
 #include <bx/math.h>
 
-#include <iostream>
-#include <stdexcept>
 #include <algorithm>
+#include <stdexcept>
 #include <utility>
 
 #include "imgui_impl_bgfx.h"
-#include "livision/Container.hpp"
 #include "livision/Camera.hpp"
+#include "livision/Container.hpp"
 #include "livision/Log.hpp"
 #include "livision/Renderer.hpp"
 #include "livision/imgui/imgui_impl_sdl2.h"
@@ -31,7 +30,7 @@ uint8_t ToU8(float x) {
   if (x > 1.0F) {
     return 255;
   }
-  return static_cast<uint8_t>(x * 255.0F + 0.5F);
+  return static_cast<uint8_t>((x * 255.0F) + 0.5F);
 }
 
 uint32_t ToRgba8(const Color& color) {
