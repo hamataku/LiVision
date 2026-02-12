@@ -1,28 +1,23 @@
 ![LiVision](docs/assets/livision_logo.png)
 
-LiVision is a lightweight C++ 3D visualizer for rapid prototyping with imgui & implot.
+LiVision is a lightweight C++ 3D visualizer for rapid prototyping with ImGui and ImPlot.
 
 [![PPA liblivision-dev](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.launchpad.net%2F1.0%2F~hamatakuzaq%2F%2Barchive%2Fubuntu%2Flivision%3Fws.op%3DgetPublishedBinaries%26status%3DPublished%26binary_name%3Dliblivision-dev%26exact_match%3Dtrue%26order_by_date%3Dtrue&query=entries.0.binary_package_version&label=ppa%3Aliblivision-dev)](https://launchpad.net/~hamatakuzaq/+archive/ubuntu/livision)
 [![build](https://github.com/hamataku/LiVision/actions/workflows/build.yml/badge.svg)](https://github.com/hamataku/LiVision/actions/workflows/build.yml)
 
-* [Documentation(en)](https://hamataku.github.io/LiVision/)
-* [ドキュメント(日本語)](https://hamataku.github.io/LiVision/ja/)
-* [API Reference](https://hamataku.github.io/LiVision/api/)
+* 📘 [Documentation (EN)](https://hamataku.github.io/LiVision/)
+* 📙 [ドキュメント(日本語)](https://hamataku.github.io/LiVision/ja/)
+* 🧩 [API Reference](https://hamataku.github.io/LiVision/api/)
 
-## Features
-- Simple object hierarchy with transforms and visibility control
-- Mesh rendering with optional wireframe
-- STL (binary) loading
-- ImGui/ImPlot UI callback
-- Shader search path control and precompiled shader support
+## ✨ Features
+- 🧪 **Rapid Prototyping**: Fast setup for visual experiments and ideas.
+- 🔷 **Primitive-Rich Drawing**: Plane, box, sphere, cylinder, cone, and more.
+- 🗂️ **Container-Based Group Control**: Move/transform multiple objects together.
+- 🌐 **3D Object Coverage**: Meshes, models, and **SDF-based** objects.
+- 📊 **ImGui + ImPlot UI**: Quick interactive tools and plotting dashboards.
 
-## Requirements
-- SDL2
-- Eigen3
-- bgfx(submodule)
-
-## クイックスタート
-### インストール
+## 🚀 Quick Start
+### 📦 Installation
 #### Install from PPA
 ```bash
 sudo add-apt-repository ppa:hamatakuzaq/livision
@@ -32,15 +27,26 @@ sudo apt install -y liblivision-dev
 
 #### Install from source
 ```bash
-sudo apt install -y libeigen3-dev libsdl2-dev
+sudo apt update
+sudo apt install -y \
+  build-essential \
+  cmake \
+  pkg-config \
+  git \
+  libsdl2-dev \
+  libeigen3-dev \
+  libsdformat14-dev \
+  libassimp-dev \
+  libcurl4-openssl-dev
+
 git clone https://github.com/hamataku/LiVision.git --recursive
-mkdir LiVision/build && cd LiVision/build
+mkdir -p LiVision/build && cd LiVision/build
 cmake ..
-make -j
+make -j"$(nproc)"
 sudo make install
 ```
 
-### CMakeの例
+### 🛠️ CMake Example
 ```cmake
 # Find package
 find_package(livision REQUIRED)
@@ -54,7 +60,7 @@ target_link_libraries(your_program
 )
 ```
 
-### サンプルプログラム
+### 💻 Example Program
 ```cpp
 #include "livision/Color.hpp"
 #include "livision/Viewer.hpp"
@@ -101,102 +107,7 @@ int main() {
 }
 ```
 
-### ライセンス
+## 📄 License
 MIT. See `LICENSE`. Third-party notices are listed in `NOTICE`.
 
-## 基本操作
-### ビューワーインスタンスの作成
-```cpp
-auto viewer = livision::Viewer::Instance({
-    .headless = false,
-    .vsync = true,
-    .width = 1280,
-    .height = 720,
-});
-```
-
-### オブジェクトの登録
-`AddObject` は `std::shared_ptr<ObjectBase>` のみを受け取ります。
-
-```cpp
-auto sphere = livision::Sphere::Instance(
-    {.pos = {0.0, 0.0, 1.0}, .scale = {2.0, 2.0, 2.0}});
-viewer->AddObject(sphere);
-```
-
-### ImGuiコールバックの登録
-```cpp
-viewer->RegisterUICallback([&]() {
-  if (ImGui::Button("Close")) viewer->Close();
-});
-```
-
-## 色設定
-`livision::Color` と `livision::color::*` を使います。
-
-- 固定色: `livision::color::red`, `livision::color::light_gray` など
-- レインボー色: `livision::color::rainbow_x/y/z`
-- 透過/非表示: `livision::color::transparent`, `livision::color::invisible`
-
-```cpp
-auto box = livision::Box::Instance({
-    .color = livision::color::rainbow_z,
-    .wire_color = livision::color::black,
-});
-```
-
-## オブジェクト一覧
-### Primitives
-- `Plane`
-- `Box`
-- `Sphere`
-- `Cylinder`
-- `Cone`
-
-### Objects
-- `Mesh`
-- `Model`
-- `Text`
-- `Drone`
-
-### Markers
-- `Arrow`
-- `Grid`
-- `Path`
-- `Odometry`
-- `DegeneracyIndicator`
-- `PointCloud`
-
-## コンテナ
-`Container` は子オブジェクトを `shared_ptr` で保持する階層オブジェクトです。
-
-- `Container::AddObject(std::shared_ptr<ObjectBase>)`
-- `Container::GetObjects()`
-- `Container::ClearObjects()`
-
-`Model` や `Drone`、`Odometry` は `Container` ベースで実装されています。
-
-## カメラ操作クラス
-`Viewer` はカメラコントローラ差し替えに対応しています。
-
-- `CameraBase` (抽象基底)
-- `MouseOrbitCamera` (デフォルト)
-- `KeyboardOrbitCamera`
-
-```cpp
-viewer->SetCameraController(std::make_unique<livision::KeyboardOrbitCamera>());
-```
-
-## ドキュメントページ
-- クイックスタート: `docs/quick_start.md`
-- 基本操作: `docs/basic_operations.md`
-- 色設定: `docs/colors.md`
-- オブジェクト一覧: `docs/objects.md`
-- コンテナ: `docs/container.md`
-- カメラ操作クラス: `docs/camera.md`
-
-## CMake Options
-- `LIVISION_BUILD_SHARED` (default: `OFF`)
-- `LIVISION_BUILD_EXAMPLE` (default: `ON`)
-- `LIVISION_COMPILE_SHADERS` (default: `ON`)
-- `LIVISION_INSTALL_PRECOMPILED_SHADERS` (default: `ON`)
+🙏 Special thanks to koide3/iridescene, which greatly inspired this project.
