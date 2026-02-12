@@ -16,9 +16,10 @@ int main() {
   });
 
   std::string ex_dir = LIVISION_EXAMPLE_DIR;
-  auto sdf_model = livision::Model::Instance(
+
+  auto sdf_model = livision::Model::InstanceWithFile(
+      ex_dir + "/world.sdf",
       {.pos = {0.0, 0.0, 0.0}, .scale = {1.0, 1.0, 1.0}});
-  sdf_model->SetFromFile(ex_dir + "/world.sdf");
   viewer->AddObject(sdf_model);
 
   while (viewer->SpinOnce()) {
