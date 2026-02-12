@@ -21,16 +21,16 @@ int main() {
   auto grid = livision::Grid::Instance({.scale = {15.0, 15.0, 0.0}});
   viewer->AddObject(grid);
 
-  // // Sphere
-  // auto sphere =
-  //     livision::Sphere::Instance({.pos = {0.0, 0.0, 0.0},
-  //                                 .scale = {2.0, 2.0, 2.0},
-  //                                 .color = livision::color::rainbow_z,
-  //                                 .wire_color = livision::color::black});
-  // viewer->AddObject(sphere);
+  // Sphere
+  auto sphere =
+      livision::Sphere::Instance({.pos = {0.0, 0.0, 0.0},
+                                  .scale = {2.0, 2.0, 2.0},
+                                  .color = livision::color::rainbow_z,
+                                  .wire_color = livision::color::black});
+  viewer->AddObject(sphere);
 
   while (viewer->SpinOnce()) {
-    // sphere->SetRadRotation({0, 0, theta});
+    sphere->SetRadRotation({0, 0, theta});
   }
   return 0;
 }

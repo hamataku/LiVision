@@ -2,7 +2,6 @@
 
 #include <memory>
 #include <utility>
-#include <vector>
 
 #include "livision/Container.hpp"
 
@@ -36,7 +35,7 @@ class Model : public Container, public SharedInstanceFactory<Model> {
    * @brief Load model from a file. Supports SDF and mesh formats
    * (STL/DAE/OBJ, etc.).
    */
- Model* SetFromFile(const std::string& path);
+  Model* SetFromFile(const std::string& path);
 
  private:
   void AddOwned(std::shared_ptr<ObjectBase> child);

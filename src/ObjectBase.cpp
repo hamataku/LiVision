@@ -1,7 +1,5 @@
 #include "livision/ObjectBase.hpp"
 
-#include <iostream>
-
 #include "livision/Renderer.hpp"
 
 namespace livision {
@@ -19,13 +17,12 @@ void ObjectBase::Init() {
 }
 
 void ObjectBase::DeInit() {
+  if (!is_initialized_) {
+    return;
+  }
   OnDeInit();
   is_initialized_ = false;
-  if (mesh_buf_) {
-    std::cout << "Destroying mesh buffer" << std::endl;
-    mesh_buf_->Destroy();
-    mesh_buf_.reset();
-  }
+  mesh_buf_.reset();
 }
 
 void ObjectBase::UpdateMatrix(const Eigen::Affine3d& parent_mtx) {

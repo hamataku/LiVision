@@ -17,6 +17,7 @@
 #include "livision/Camera.hpp"
 #include "livision/Log.hpp"
 #include "livision/Renderer.hpp"
+#include "livision/internal/mesh_buffer_manager.hpp"
 #include "livision/imgui/imgui_impl_sdl2.h"
 
 namespace livision {
@@ -127,6 +128,7 @@ Viewer::Viewer(const ViewerConfig& config) : pimpl_(std::make_unique<Impl>()) {
   }
   bgfx_init.platformData = pd;
   bgfx::init(bgfx_init);
+  internal::MeshBufferManager::SetBgfxAlive(true);
 
   bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH,
                      ToRGBA8(pimpl_->config.background), 1.0F, 0);
@@ -157,9 +159,13 @@ Viewer::Viewer(const ViewerConfig& config) : pimpl_(std::make_unique<Impl>()) {
 }
 
 Viewer::~Viewer() {
-  for (auto object : pimpl_->draw_objects) {
-    object.reset();
+  for (auto& object : pimpl_->draw_objects) {
+    if (object) {
+      object->DeInit();
+    }
   }
+  pimpl_->draw_objects.clear();
+  internal::MeshBufferManager::DestroyAllBuffers();
   pimpl_->renderer.DeInit();
 
   ImGui_ImplSDL2_Shutdown();
@@ -167,6 +173,7 @@ Viewer::~Viewer() {
 
   ImPlot::DestroyContext();
   ImGui::DestroyContext();
+  internal::MeshBufferManager::SetBgfxAlive(false);
   bgfx::shutdown();
 
   SDL_DestroyWindow(pimpl_->window);

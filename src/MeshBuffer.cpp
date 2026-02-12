@@ -3,6 +3,7 @@
 #include <unordered_set>
 
 #include "livision/internal/mesh_buffer_access.hpp"
+#include "livision/internal/mesh_buffer_manager.hpp"
 
 namespace livision {
 
@@ -28,6 +29,13 @@ MeshBuffer::MeshBuffer(std::vector<Vertex> vertices,
 MeshBuffer::~MeshBuffer() { Destroy(); }
 
 void MeshBuffer::Destroy() {
+  if (!internal::MeshBufferManager::IsBgfxAlive()) {
+    pimpl_->vbh = BGFX_INVALID_HANDLE;
+    pimpl_->ibh = BGFX_INVALID_HANDLE;
+    pimpl_->wire_ibh = BGFX_INVALID_HANDLE;
+    return;
+  }
+
   if (bgfx::isValid(pimpl_->vbh)) {
     bgfx::destroy(pimpl_->vbh);
     pimpl_->vbh = BGFX_INVALID_HANDLE;
