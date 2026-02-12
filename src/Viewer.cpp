@@ -59,6 +59,21 @@ struct Viewer::Impl {
   std::unique_ptr<CameraBase> camera = std::make_unique<MouseOrbitCamera>();
   float view[16] = {};
   float proj[16];
+
+  void Resize(int width, int height) {
+    if (width <= 0 || height <= 0) {
+      return;
+    }
+
+    config.width = width;
+    config.height = height;
+
+    uint32_t reset_flags = config.vsync ? BGFX_RESET_VSYNC : BGFX_RESET_NONE;
+    bgfx::reset(static_cast<uint32_t>(config.width),
+                static_cast<uint32_t>(config.height), reset_flags);
+    bgfx::setViewRect(0, 0, 0, static_cast<uint16_t>(config.width),
+                      static_cast<uint16_t>(config.height));
+  }
 };
 
 Viewer::Viewer(const ViewerConfig& config) : pimpl_(std::make_unique<Impl>()) {
@@ -80,9 +95,10 @@ Viewer::Viewer(const ViewerConfig& config) : pimpl_(std::make_unique<Impl>()) {
         "Main view", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
         pimpl_->config.width, pimpl_->config.height, SDL_WINDOW_HIDDEN);
   } else {
+    constexpr uint32_t window_flags = SDL_WINDOW_RESIZABLE;
     pimpl_->window = SDL_CreateWindow(
         "Main view", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-        pimpl_->config.width, pimpl_->config.height, 0);
+        pimpl_->config.width, pimpl_->config.height, window_flags);
   }
 
   if (pimpl_->window == nullptr) {
@@ -199,6 +215,10 @@ bool Viewer::SpinOnce() {
       ImGui_ImplSDL2_ProcessEvent(&event);
       if (event.type == SDL_QUIT) {
         pimpl_->quit = true;
+      }
+      if (event.type == SDL_WINDOWEVENT &&
+          event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+        pimpl_->Resize(event.window.data1, event.window.data2);
       }
       if (pimpl_->camera) {
         pimpl_->camera->HandleEvent(event);

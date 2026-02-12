@@ -175,6 +175,7 @@ std::shared_ptr<MeshBuffer> BufferFromPrimitive(
 Model* Model::SetFromFile(const std::string& path, LoadOptions options) {
   ClearObjects();
   GetMeshBuffer().reset();
+  SetName("");
 
   std::string error;
   if (HasExtension(path, "sdf")) {
@@ -184,7 +185,11 @@ Model* Model::SetFromFile(const std::string& path, LoadOptions options) {
                  error.empty() ? "" : "\n", error);
       return this;
     }
-    BuildFromNode(*scene, false);
+    if (scene->tag == "sdf" && scene->children.size() == 1U) {
+      BuildFromNode(scene->children.front(), false);
+    } else {
+      BuildFromNode(*scene, false);
+    }
     return this;
   }
 
@@ -195,8 +200,10 @@ Model* Model::SetFromFile(const std::string& path, LoadOptions options) {
     return this;
   }
 
+  std::size_t mesh_index = 0;
   for (const auto& part : *mesh_parts) {
     auto mesh = std::make_shared<Mesh>();
+    mesh->SetName("mesh#" + std::to_string(mesh_index++));
     const std::string mesh_key =
         BuildMeshKey("model:file_mesh", part.vertices, part.indices, part.has_uv);
     auto mesh_buf = internal::MeshBufferManager::AcquireShared(
@@ -234,6 +241,8 @@ void Model::AddOwned(std::shared_ptr<ObjectBase> child) {
 
 void Model::BuildFromNode(const internal::sdf_loader::SdfNode& node,
                           bool apply_self_transform) {
+  SetName(node.effective_name);
+
   if (apply_self_transform) {
     SetPos(node.pos);
     SetQuatRotation(node.rot);
@@ -242,6 +251,7 @@ void Model::BuildFromNode(const internal::sdf_loader::SdfNode& node,
 
   if (node.HasMesh()) {
     auto mesh = std::make_shared<Mesh>();
+    mesh->SetName("mesh#0");
     const std::string mesh_key =
         BuildMeshKey("model:sdf_node", node.vertices, node.indices, node.has_uv);
     auto mesh_buf = internal::MeshBufferManager::AcquireShared(
@@ -263,6 +273,7 @@ void Model::BuildFromNode(const internal::sdf_loader::SdfNode& node,
     auto buffer = BufferFromPrimitive(node.primitive);
     if (buffer) {
       auto mesh = std::make_shared<Mesh>();
+      mesh->SetName("mesh#0");
       mesh->SetMeshBuffer(std::move(buffer));
       mesh->SetColor(node.color);
       AddOwned(mesh);

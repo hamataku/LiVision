@@ -29,6 +29,7 @@ struct ViewerConfig {
  */
 class Viewer {
  public:
+  using Ptr = std::shared_ptr<Viewer>;
   /**
    * @brief Construct a viewer with the given configuration.
    */
@@ -38,8 +39,8 @@ class Viewer {
    */
   ~Viewer();
 
-  static std::shared_ptr<Viewer> Instance(const ViewerConfig& config) {
-    return std::make_shared<Viewer>(config);
+  static std::unique_ptr<Viewer> Instance(const ViewerConfig& config) {
+    return std::make_unique<Viewer>(config);
   }
 
   /**

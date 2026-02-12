@@ -8,6 +8,7 @@
 #include <functional>
 #include <sstream>
 #include <string_view>
+#include <unordered_map>
 
 #ifdef LIVISION_ENABLE_SDF
 #include <assimp/config.h>
@@ -450,6 +451,23 @@ void SetNodePose(SdfNode& node, const gz::math::Pose3d& pose) {
   node.rot = Eigen::Quaterniond(r.W(), r.X(), r.Y(), r.Z());
 }
 
+void SetNodeIdentity(SdfNode& node, const std::string& tag,
+                     const std::string& explicit_name,
+                     std::unordered_map<std::string, std::size_t>* counters) {
+  node.tag = tag;
+  node.name = explicit_name;
+  if (!explicit_name.empty()) {
+    node.effective_name = explicit_name;
+    return;
+  }
+  if (!counters) {
+    node.effective_name = tag;
+    return;
+  }
+  const std::size_t index = (*counters)[tag]++;
+  node.effective_name = tag + "#" + std::to_string(index);
+}
+
 Color ColorFromMaterial(const sdf::Material* material,
                         const fs::path& sdf_dir) {
   if (!material) {
@@ -626,7 +644,10 @@ bool LoadAssimpMeshes(const std::string& mesh_source,
 
 bool BuildVisualNode(const sdf::Visual& visual, const fs::path& sdf_dir,
                      SdfNode& node, std::string* error_message,
-                     bool& any_mesh_loaded) {
+                     bool& any_mesh_loaded,
+                     std::unordered_map<std::string, std::size_t>& counters) {
+  SetNodeIdentity(node, "visual", visual.Name(), &counters);
+
   const sdf::Geometry* geom = visual.Geom();
   if (!geom) {
     return false;
@@ -747,8 +768,10 @@ bool BuildVisualNode(const sdf::Visual& visual, const fs::path& sdf_dir,
     return false;
   }
 
+  std::unordered_map<std::string, std::size_t> mesh_counters;
   for (auto& mesh_data : assimp_meshes) {
     SdfNode mesh_node;
+    SetNodeIdentity(mesh_node, "mesh", "", &mesh_counters);
     mesh_node.vertices = std::move(mesh_data.vertices);
     mesh_node.indices = std::move(mesh_data.indices);
     mesh_node.has_uv = mesh_data.has_uv;
@@ -769,9 +792,12 @@ bool BuildVisualNode(const sdf::Visual& visual, const fs::path& sdf_dir,
 
 bool BuildLinkNode(const sdf::Link& link, const fs::path& sdf_dir,
                    SdfNode& node, std::string* error_message,
-                   bool& any_mesh_loaded) {
+                   bool& any_mesh_loaded,
+                   std::unordered_map<std::string, std::size_t>& counters) {
+  SetNodeIdentity(node, "link", link.Name(), &counters);
   SetNodePose(node, link.RawPose());
   node.scale = Eigen::Vector3d::Ones();
+  std::unordered_map<std::string, std::size_t> child_counters;
 
   for (uint64_t vi = 0; vi < link.VisualCount(); ++vi) {
     const sdf::Visual* visual = link.VisualByIndex(vi);
@@ -780,7 +806,7 @@ bool BuildLinkNode(const sdf::Link& link, const fs::path& sdf_dir,
     }
     SdfNode visual_node;
     if (BuildVisualNode(*visual, sdf_dir, visual_node, error_message,
-                        any_mesh_loaded)) {
+                        any_mesh_loaded, child_counters)) {
       node.children.push_back(std::move(visual_node));
     }
   }
@@ -790,9 +816,12 @@ bool BuildLinkNode(const sdf::Link& link, const fs::path& sdf_dir,
 
 bool BuildModelNode(const sdf::Model& model, const fs::path& sdf_dir,
                     SdfNode& node, std::string* error_message,
-                    bool& any_mesh_loaded) {
+                    bool& any_mesh_loaded,
+                    std::unordered_map<std::string, std::size_t>& counters) {
+  SetNodeIdentity(node, "model", model.Name(), &counters);
   SetNodePose(node, model.RawPose());
   node.scale = Eigen::Vector3d::Ones();
+  std::unordered_map<std::string, std::size_t> child_counters;
 
   for (uint64_t li = 0; li < model.LinkCount(); ++li) {
     const sdf::Link* link = model.LinkByIndex(li);
@@ -801,7 +830,7 @@ bool BuildModelNode(const sdf::Model& model, const fs::path& sdf_dir,
     }
     SdfNode link_node;
     if (BuildLinkNode(*link, sdf_dir, link_node, error_message,
-                      any_mesh_loaded)) {
+                      any_mesh_loaded, child_counters)) {
       node.children.push_back(std::move(link_node));
     }
   }
@@ -813,7 +842,7 @@ bool BuildModelNode(const sdf::Model& model, const fs::path& sdf_dir,
     }
     SdfNode nested_node;
     if (BuildModelNode(*nested, sdf_dir, nested_node, error_message,
-                       any_mesh_loaded)) {
+                       any_mesh_loaded, child_counters)) {
       node.children.push_back(std::move(nested_node));
     }
   }
@@ -1138,15 +1167,25 @@ bool LoadSdfScene(const std::string& sdf_path, SdfNode& root,
   }
 
   root = SdfNode{};
+  root.tag = "sdf";
+  root.effective_name = "sdf";
   bool any_mesh_loaded = false;
   bool any_model_found = false;
+  std::unordered_map<std::string, std::size_t> world_counters;
 
   if (const sdf::Model* model = sdf_root.Model()) {
     any_model_found = true;
+    SdfNode world_node;
+    SetNodeIdentity(world_node, "world", "", &world_counters);
+    world_node.scale = Eigen::Vector3d::Ones();
+    std::unordered_map<std::string, std::size_t> child_counters;
     SdfNode model_node;
     if (BuildModelNode(*model, sdf_dir, model_node, error_message,
-                       any_mesh_loaded)) {
-      root.children.push_back(std::move(model_node));
+                       any_mesh_loaded, child_counters)) {
+      world_node.children.push_back(std::move(model_node));
+    }
+    if (!world_node.children.empty()) {
+      root.children.push_back(std::move(world_node));
     }
   }
 
@@ -1155,6 +1194,10 @@ bool LoadSdfScene(const std::string& sdf_path, SdfNode& root,
     if (!world) {
       continue;
     }
+    SdfNode world_node;
+    SetNodeIdentity(world_node, "world", world->Name(), &world_counters);
+    world_node.scale = Eigen::Vector3d::Ones();
+    std::unordered_map<std::string, std::size_t> child_counters;
     for (uint64_t mi = 0; mi < world->ModelCount(); ++mi) {
       const sdf::Model* model = world->ModelByIndex(mi);
       if (!model) {
@@ -1163,9 +1206,12 @@ bool LoadSdfScene(const std::string& sdf_path, SdfNode& root,
       any_model_found = true;
       SdfNode model_node;
       if (BuildModelNode(*model, sdf_dir, model_node, error_message,
-                         any_mesh_loaded)) {
-        root.children.push_back(std::move(model_node));
+                         any_mesh_loaded, child_counters)) {
+        world_node.children.push_back(std::move(model_node));
       }
+    }
+    if (!world_node.children.empty()) {
+      root.children.push_back(std::move(world_node));
     }
   }
 

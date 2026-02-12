@@ -24,6 +24,7 @@ class ObjectBase {
     Eigen::Vector3d pos = Eigen::Vector3d::Zero();
     Eigen::Vector3d scale = Eigen::Vector3d::Ones();
     Eigen::Quaterniond quat = Eigen::Quaterniond::Identity();
+    std::string name;
     Color color = color::white;
     std::string texture;
     Color wire_color = color::invisible;
@@ -36,7 +37,9 @@ class ObjectBase {
   /**
    * @brief Construct with initial parameters.
    */
-  explicit ObjectBase(Params params) : params_(std::move(params)) {}
+  explicit ObjectBase(Params params) : params_(std::move(params)) {
+    name_ = params_.name;
+  }
 
   /**
    * @brief Destroy object and release resources.
@@ -121,6 +124,10 @@ class ObjectBase {
    * @brief Set wireframe color.
    */
   ObjectBase* SetWireColor(const Color& color);
+  /**
+   * @brief Set object name.
+   */
+  ObjectBase* SetName(const std::string& name);
 
   /**
    * @brief Override global transform matrix.
@@ -139,6 +146,10 @@ class ObjectBase {
    * @brief Get global transform matrix.
    */
   Eigen::Affine3d GetGlobalMatrix() const;
+  /**
+   * @brief Get object name.
+   */
+  const std::string& GetName() const;
   /**
    * @brief Attach to a parent object for hierarchical transforms.
    */
@@ -159,6 +170,7 @@ class ObjectBase {
   bool is_initialized_ = false;
   bool visible_ = true;
   ObjectBase* parent_object_ = nullptr;
+  std::string name_;
 
   std::shared_ptr<MeshBuffer> mesh_buf_;
 };
@@ -172,6 +184,12 @@ class SharedInstanceFactory {
 
   static Ptr Instance(ObjectBase::Params params) {
     return std::make_shared<Derived>(std::move(params));
+  }
+
+  static Ptr Instance(const std::string& name, ObjectBase::Params params) {
+    auto object = std::make_shared<Derived>(std::move(params));
+    object->SetName(name);
+    return object;
   }
 };
 

@@ -18,12 +18,11 @@ namespace livision {
  */
 class Drone : public Container, public SharedInstanceFactory<Drone> {
  public:
-  using Container::Container;
-
   /**
    * @brief Construct with initial parameters.
    */
-  explicit Drone(ObjectBase::Params params) : Container(std::move(params)) {
+  explicit Drone(ObjectBase::Params params = ObjectBase::Params())
+      : Container(std::move(params)) {
     for (int i = 0; i < 4; i++) {
       float sign_x = (i < 2) ? 1.0F : -1.0F;
       float sign_y = (i % 2 == 0) ? 1.0F : -1.0F;

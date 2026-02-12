@@ -1,8 +1,10 @@
 #pragma once
 
 #include <memory>
+#include <string>
 #include <vector>
 
+#include "livision/Log.hpp"
 #include "livision/ObjectBase.hpp"
 
 namespace livision {
@@ -46,6 +48,40 @@ class Container : public ObjectBase {
    * @brief Clear the list of child objects.
    */
   void ClearObjects();
+  /**
+   * @brief Get the first direct child that matches the name.
+   * @return Matching child, or nullptr when not found.
+   */
+  std::shared_ptr<ObjectBase> GetChild(const std::string& name) const;
+  /**
+   * @brief Get all direct children that match the name.
+   */
+  std::vector<std::shared_ptr<ObjectBase>> GetChildren(
+      const std::string& name) const;
+  /**
+   * @brief Get the first direct child as Container when possible.
+   * @return Matching child as Container, or nullptr when not found / not a
+   * Container.
+   */
+  std::shared_ptr<Container> GetChildContainer(const std::string& name) const;
+  /**
+   * @brief Resolve a '/' separated relative path from this container.
+   * @return Resolved object, or nullptr when not found.
+   */
+  std::shared_ptr<ObjectBase> GetByPath(const std::string& path) const;
+  /**
+   * @brief Resolve a '/' separated relative path as Container.
+   * @return Resolved Container, or nullptr when not found / not a Container.
+   */
+  std::shared_ptr<Container> GetContainerByPath(const std::string& path) const;
+  /**
+   * @brief Dump this container hierarchy as a text tree.
+   */
+  std::string DumpTree() const;
+  /**
+   * @brief Print this container hierarchy to log output.
+   */
+  void PrintTree(LogLevel level = LogLevel::Info) const;
 
  private:
   std::vector<std::shared_ptr<ObjectBase>> objects_;

@@ -41,6 +41,9 @@ bool LoadMeshFileParts(const std::string& mesh_path,
 struct SdfNode {
   enum class PrimitiveType { None, Box, Sphere, Cylinder, Cone, Plane };
 
+  std::string tag;
+  std::string name;
+  std::string effective_name;
   Eigen::Vector3d pos = Eigen::Vector3d::Zero();
   Eigen::Quaterniond rot = Eigen::Quaterniond::Identity();
   Eigen::Vector3d scale = Eigen::Vector3d::Ones();

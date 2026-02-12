@@ -39,6 +39,7 @@ void ObjectBase::UpdateMatrix(const Eigen::Affine3d& parent_mtx) {
 
 ObjectBase* ObjectBase::SetParams(const Params& params) {
   params_ = params;
+  name_ = params_.name;
   local_mtx_changed_ = true;
   return this;
 }
@@ -99,6 +100,11 @@ ObjectBase* ObjectBase::SetWireColor(const Color& color) {
   params_.wire_color = color;
   return this;
 }
+ObjectBase* ObjectBase::SetName(const std::string& name) {
+  name_ = name;
+  params_.name = name;
+  return this;
+}
 
 ObjectBase* ObjectBase::SetGlobalMatrix(const Eigen::Affine3d& mtx) {
   global_mtx_ = mtx;
@@ -117,6 +123,8 @@ bool ObjectBase::IsVisible() const {
 Eigen::Vector3d ObjectBase::GetGlobalPos() { return global_mtx_.translation(); }
 
 Eigen::Affine3d ObjectBase::GetGlobalMatrix() const { return global_mtx_; }
+
+const std::string& ObjectBase::GetName() const { return name_; }
 
 void ObjectBase::RegisterParentObject(ObjectBase* obj) { parent_object_ = obj; }
 

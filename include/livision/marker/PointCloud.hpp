@@ -11,7 +11,8 @@ namespace livision {
  * @ingroup marker
  */
 template <class T = Box>
-class PointCloud : public ObjectBase {
+class PointCloud : public ObjectBase,
+                   public SharedInstanceFactory<PointCloud<T>> {
  public:
   using ObjectBase::ObjectBase;
   /**
