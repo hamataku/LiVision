@@ -56,9 +56,17 @@ class ObjectBase {
    */
   virtual void OnInit() {}
   /**
+   * @brief Called during deinitialization.
+   */
+  virtual void OnDeInit() {}
+  /**
    * @brief Called during draw submission.
    */
   virtual void OnDraw(Renderer& renderer);
+  /**
+   * @brief Update cached transform matrices.
+   */
+  virtual void UpdateMatrix(const Eigen::Affine3d& parent_mtx);
 
   /**
    * @brief Set all parameters.
@@ -131,11 +139,6 @@ class ObjectBase {
    * @brief Get global transform matrix.
    */
   Eigen::Affine3d GetGlobalMatrix() const;
-
-  /**
-   * @brief Update cached transform matrices.
-   */
-  void UpdateMatrix();
   /**
    * @brief Attach to a parent object for hierarchical transforms.
    */

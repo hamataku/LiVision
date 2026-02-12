@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "livision/Container.hpp"
+#include "livision/ObjectBase.hpp"
 #include "livision/marker/Arrow.hpp"
 
 namespace livision {
@@ -15,9 +16,9 @@ class Odometry : public Container, public SharedInstanceFactory<Odometry> {
  public:
   using Container::Container;
   /**
-   * @brief Initialize axis arrows.
+   * @brief Construct with initial parameters.
    */
-  void OnInit() final;
+  explicit Odometry(ObjectBase::Params params);
 
   /**
    * @brief Set parameters for all axis arrows.

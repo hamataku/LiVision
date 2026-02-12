@@ -1,5 +1,7 @@
 #include "livision/ObjectBase.hpp"
 
+#include <iostream>
+
 #include "livision/Renderer.hpp"
 
 namespace livision {
@@ -17,11 +19,25 @@ void ObjectBase::Init() {
 }
 
 void ObjectBase::DeInit() {
+  OnDeInit();
   is_initialized_ = false;
   if (mesh_buf_) {
+    std::cout << "Destroying mesh buffer" << std::endl;
     mesh_buf_->Destroy();
     mesh_buf_.reset();
   }
+}
+
+void ObjectBase::UpdateMatrix(const Eigen::Affine3d& parent_mtx) {
+  if (local_mtx_changed_) {
+    Eigen::Affine3d translation(Eigen::Translation3d(params_.pos));
+    Eigen::Affine3d rotation(params_.quat);
+    Eigen::Affine3d scale(Eigen::Scaling(params_.scale));
+
+    local_mtx_ = translation * rotation * scale;
+    local_mtx_changed_ = false;
+  }
+  global_mtx_ = parent_mtx * local_mtx_;
 }
 
 ObjectBase* ObjectBase::SetParams(const Params& params) {
@@ -101,33 +117,9 @@ bool ObjectBase::IsVisible() const {
   return visible_;
 }
 
-Eigen::Vector3d ObjectBase::GetGlobalPos() {
-  UpdateMatrix();
-  return global_mtx_.translation();
-}
+Eigen::Vector3d ObjectBase::GetGlobalPos() { return global_mtx_.translation(); }
 
 Eigen::Affine3d ObjectBase::GetGlobalMatrix() const { return global_mtx_; }
-
-// NOLINTNEXTLINE
-void ObjectBase::UpdateMatrix() {
-  if (local_mtx_changed_) {
-    Eigen::Affine3d translation(Eigen::Translation3d(params_.pos));
-    Eigen::Affine3d rotation(params_.quat);
-    Eigen::Affine3d scale(Eigen::Scaling(params_.scale));
-
-    // GLM と同じ掛け算順
-    local_mtx_ = translation * rotation * scale;
-    local_mtx_changed_ = false;
-  }
-
-  // グローバル行列の更新
-  if (parent_object_) {
-    parent_object_->UpdateMatrix();
-    global_mtx_ = parent_object_->global_mtx_ * local_mtx_;
-  } else {
-    global_mtx_ = local_mtx_;
-  }
-}
 
 void ObjectBase::RegisterParentObject(ObjectBase* obj) { parent_object_ = obj; }
 

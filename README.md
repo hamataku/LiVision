@@ -62,46 +62,39 @@ target_link_libraries(your_program
 
 ### 💻 Example Program
 ```cpp
-#include "livision/Color.hpp"
 #include "livision/Viewer.hpp"
-#include "livision/object/Model.hpp"
+#include "livision/marker/Grid.hpp"
 #include "livision/object/primitives.hpp"
 
 int main() {
   auto viewer = livision::Viewer::Instance({
-      .headless = false,  // Set to true for headless mode
-      .vsync = true,      // Set to true to enable VSync
-      .width = 1280,      // Set the window width
-      .height = 720,      // Set the window height
+      .width = 1280,
+      .height = 720,
   });
 
   // UI callback
+  float theta = 0;
   viewer->RegisterUICallback([&]() {
+    ImGui::SliderFloat("theta", &theta, 0, M_PI * 2.0F);
     if (ImGui::Button("Close")) {
       viewer->Close();
     }
   });
 
-  auto plane = livision::Plane::Instance(
-      livision::ObjectBase::Params{.scale = {20.0, 20.0, 0.0},
-                                   .color = livision::color::light_gray});
-  viewer->AddObject(plane);
+  // Grid
+  auto grid = livision::Grid::Instance({.scale = {15.0, 15.0, 0.0}});
+  viewer->AddObject(grid);
 
-  auto sphere = livision::Sphere::Instance(livision::ObjectBase::Params{
-      .pos = {0.0, 0.0, 1.0},
-      .scale = {2.0, 2.0, 2.0},
-      .color = livision::color::rainbow_z,
-      .wire_color = livision::color::black});
+  // Sphere
+  auto sphere =
+      livision::Sphere::Instance({.pos = {0.0, 0.0, 0.0},
+                                  .scale = {2.0, 2.0, 2.0},
+                                  .color = livision::color::rainbow_z,
+                                  .wire_color = livision::color::black});
   viewer->AddObject(sphere);
 
-  // Model from mesh file.
-  auto bunny = livision::Model::InstanceWithFile(
-      "path/to/model.stl",
-      {.scale = {8.0, 8.0, 8.0}, .color = livision::color::rainbow_z});
-  bunny->SetPos(0.0, 0.0, -2.0);
-  viewer->AddObject(bunny);
-
   while (viewer->SpinOnce()) {
+    sphere->SetRadRotation({0, 0, theta});
   }
   return 0;
 }

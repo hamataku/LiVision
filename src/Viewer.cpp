@@ -15,7 +15,6 @@
 
 #include "imgui_impl_bgfx.h"
 #include "livision/Camera.hpp"
-#include "livision/Container.hpp"
 #include "livision/Log.hpp"
 #include "livision/Renderer.hpp"
 #include "livision/imgui/imgui_impl_sdl2.h"
@@ -33,32 +32,18 @@ uint8_t ToU8(float x) {
   return static_cast<uint8_t>((x * 255.0F) + 0.5F);
 }
 
-uint32_t ToRgba8(const Color& color) {
+uint32_t ToRGBA8(const Color& color) {
   const uint8_t r = ToU8(color.base[0]);
   const uint8_t g = ToU8(color.base[1]);
   const uint8_t b = ToU8(color.base[2]);
   return (static_cast<uint32_t>(r) << 24) | (static_cast<uint32_t>(g) << 16) |
          (static_cast<uint32_t>(b) << 8) | 0xFFU;
 }
-
-void RegisterObjectRecursive(ObjectBase* object,
-                             std::vector<ObjectBase*>& draw_objects) {
-  object->Init();
-  draw_objects.push_back(object);
-  auto* container = dynamic_cast<Container*>(object);
-  if (!container) {
-    return;
-  }
-  for (const auto& child : container->GetObjects()) {
-    RegisterObjectRecursive(child.get(), draw_objects);
-  }
-}
 }  // namespace
 
 struct Viewer::Impl {
   SDL_Window* window = nullptr;
-  std::vector<std::shared_ptr<ObjectBase>> owned_objects;
-  std::vector<ObjectBase*> draw_objects;
+  std::vector<std::shared_ptr<ObjectBase>> draw_objects;
   ViewerConfig config;
   Renderer renderer;
   std::function<void()> ui_callback = []() {};
@@ -144,7 +129,7 @@ Viewer::Viewer(const ViewerConfig& config) : pimpl_(std::make_unique<Impl>()) {
   bgfx::init(bgfx_init);
 
   bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH,
-                     ToRgba8(pimpl_->config.background), 1.0F, 0);
+                     ToRGBA8(pimpl_->config.background), 1.0F, 0);
   bgfx::setViewRect(0, 0, 0, pimpl_->config.width, pimpl_->config.height);
 
   ImGui::CreateContext();
@@ -172,8 +157,8 @@ Viewer::Viewer(const ViewerConfig& config) : pimpl_(std::make_unique<Impl>()) {
 }
 
 Viewer::~Viewer() {
-  for (auto* object : pimpl_->draw_objects) {
-    object->DeInit();
+  for (auto object : pimpl_->draw_objects) {
+    object.reset();
   }
   pimpl_->renderer.DeInit();
 
@@ -196,8 +181,8 @@ bool Viewer::SpinOnce() {
     pimpl_->last_frame_time = pimpl_->last_fps_time;
     pimpl_->initialized = true;
   }
-  for (auto* object : pimpl_->draw_objects) {
-    object->UpdateMatrix();
+  for (const auto& object : pimpl_->draw_objects) {
+    object->UpdateMatrix(Eigen::Affine3d::Identity());
   }
 
   if (!pimpl_->config.headless) {
@@ -237,7 +222,7 @@ bool Viewer::SpinOnce() {
     pimpl_->renderer.SetCameraViewMatrix(pimpl_->view);
     bgfx::setViewTransform(0, pimpl_->view, pimpl_->proj);
 
-    for (auto* object : pimpl_->draw_objects) {
+    for (const auto& object : pimpl_->draw_objects) {
       if (object->IsVisible()) object->OnDraw(pimpl_->renderer);
     }
 
@@ -293,8 +278,8 @@ void Viewer::AddObject(std::shared_ptr<ObjectBase> object) {
   if (!object) {
     return;
   }
-  pimpl_->owned_objects.push_back(object);
-  RegisterObjectRecursive(object.get(), pimpl_->draw_objects);
+  object->Init();
+  pimpl_->draw_objects.push_back(object);
 }
 
 void Viewer::RegisterUICallback(std::function<void()> ui_callback) {

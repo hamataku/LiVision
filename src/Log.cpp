@@ -20,8 +20,7 @@ bool ShouldLog(LogLevel level) {
   if (level == LogLevel::Off) {
     return false;
   }
-  return static_cast<int>(level) <=
-         g_log_level.load(std::memory_order_relaxed);
+  return static_cast<int>(level) <= g_log_level.load(std::memory_order_relaxed);
 }
 
 void Log(LogLevel level, const std::string& message) {

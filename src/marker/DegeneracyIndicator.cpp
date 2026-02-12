@@ -23,7 +23,7 @@ void DegeneracyIndicator::OnDraw(Renderer& renderer) {
     Eigen::Quaterniond quat =
         Eigen::Quaterniond::FromTwoVectors(z, v).normalized();
     trans_cyl_[i].SetPos(params_.pos)->SetQuatRotation(quat);
-    trans_cyl_[i].UpdateMatrix();
+    trans_cyl_[i].UpdateMatrix(global_mtx_);
     trans_cyl_[i].OnDraw(renderer);
   }
 
@@ -35,11 +35,11 @@ void DegeneracyIndicator::OnDraw(Renderer& renderer) {
     Eigen::Quaterniond quat =
         Eigen::Quaterniond::FromTwoVectors(z, v).normalized();
     rot_cyl_.SetPos(params_.pos)->SetQuatRotation(quat);
-    rot_cyl_.UpdateMatrix();
+    rot_cyl_.UpdateMatrix(global_mtx_);
     rot_cyl_.OnDraw(renderer);
   } else if (degen_rot_.size() >= 2) {
     rot_sphere_.SetPos(params_.pos);
-    rot_sphere_.UpdateMatrix();
+    rot_sphere_.UpdateMatrix(global_mtx_);
     rot_sphere_.OnDraw(renderer);
   }
 }

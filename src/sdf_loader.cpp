@@ -151,8 +151,8 @@ std::string DownloadMeshToCache(const std::string& uri,
   std::ofstream stream(cached_path, std::ios::binary);
   if (!stream) {
     if (error_message) {
-      *error_message =
-          "Failed to open cache file for mesh download: " + cached_path.string();
+      *error_message = "Failed to open cache file for mesh download: " +
+                       cached_path.string();
     }
     return {};
   }
@@ -437,295 +437,418 @@ std::string ResolveMeshUri(const std::string& uri, const fs::path& sdf_dir,
 #endif
 
 #ifdef LIVISION_ENABLE_SDF
-    Eigen::Affine3d PoseToEigen(const gz::math::Pose3d& pose) {
-      Eigen::Translation3d t(pose.Pos().X(), pose.Pos().Y(), pose.Pos().Z());
-      const auto& r = pose.Rot();
-      Eigen::Quaterniond q(r.W(), r.X(), r.Y(), r.Z());
-      return t * q;
-    }
+Eigen::Affine3d PoseToEigen(const gz::math::Pose3d& pose) {
+  Eigen::Translation3d t(pose.Pos().X(), pose.Pos().Y(), pose.Pos().Z());
+  const auto& r = pose.Rot();
+  Eigen::Quaterniond q(r.W(), r.X(), r.Y(), r.Z());
+  return t * q;
+}
 
-    void SetNodePose(SdfNode & node, const gz::math::Pose3d& pose) {
-      node.pos =
-          Eigen::Vector3d(pose.Pos().X(), pose.Pos().Y(), pose.Pos().Z());
-      const auto& r = pose.Rot();
-      node.rot = Eigen::Quaterniond(r.W(), r.X(), r.Y(), r.Z());
-    }
+void SetNodePose(SdfNode& node, const gz::math::Pose3d& pose) {
+  node.pos = Eigen::Vector3d(pose.Pos().X(), pose.Pos().Y(), pose.Pos().Z());
+  const auto& r = pose.Rot();
+  node.rot = Eigen::Quaterniond(r.W(), r.X(), r.Y(), r.Z());
+}
 
-    Color ColorFromMaterial(const sdf::Material* material,
-                            const fs::path& sdf_dir) {
-      if (!material) {
-        return color::white;
+Color ColorFromMaterial(const sdf::Material* material,
+                        const fs::path& sdf_dir) {
+  if (!material) {
+    return color::white;
+  }
+
+  if (!material->ScriptName().empty() && !material->ScriptUri().empty()) {
+    const fs::path script =
+        ResolveResourceUri(material->ScriptUri(), sdf_dir, sdf_dir);
+    if (!script.empty()) {
+      Color script_color = color::white;
+      if (ParseOgreMaterialDiffuse(script, material->ScriptName(),
+                                   script_color)) {
+        return script_color;
       }
+    }
+  }
 
-      if (!material->ScriptName().empty() && !material->ScriptUri().empty()) {
-        const fs::path script =
-            ResolveResourceUri(material->ScriptUri(), sdf_dir, sdf_dir);
-        if (!script.empty()) {
-          Color script_color = color::white;
-          if (ParseOgreMaterialDiffuse(script, material->ScriptName(),
-                                       script_color)) {
-            return script_color;
-          }
+  const auto diffuse = material->Diffuse();
+  const auto ambient = material->Ambient();
+  const bool has_diffuse = diffuse.R() > 0.0 || diffuse.G() > 0.0 ||
+                           diffuse.B() > 0.0 || diffuse.A() > 0.0;
+  const auto chosen = has_diffuse ? diffuse : ambient;
+  return Color(static_cast<float>(chosen.R()), static_cast<float>(chosen.G()),
+               static_cast<float>(chosen.B()), static_cast<float>(chosen.A()));
+}
+
+bool HasExplicitSdfMaterialColor(const sdf::Material* material) {
+  if (!material) {
+    return false;
+  }
+
+  if (!material->ScriptName().empty() || !material->ScriptUri().empty()) {
+    return true;
+  }
+
+  sdf::ElementPtr elem = material->Element();
+  if (!elem) {
+    return false;
+  }
+
+  return elem->HasElement("diffuse") || elem->HasElement("ambient") ||
+         elem->HasElement("script");
+}
+
+struct AssimpMeshData {
+  std::vector<Vertex> vertices;
+  std::vector<uint32_t> indices;
+  bool has_uv = false;
+  std::string texture_uri;
+  bool has_color = false;
+  Color color = color::white;
+};
+
+bool HasNonZeroColor(const Color& c) {
+  return c.base[0] > 0.0F || c.base[1] > 0.0F || c.base[2] > 0.0F ||
+         c.base[3] > 0.0F;
+}
+
+bool GetAssimpDiffuse(const aiMaterial* material, Color& out) {
+  if (!material) {
+    return false;
+  }
+  aiColor4D diffuse;
+  if (aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse) !=
+      aiReturn_SUCCESS) {
+    return false;
+  }
+  out = Color(diffuse.r, diffuse.g, diffuse.b, diffuse.a);
+  return true;
+}
+
+bool GetAssimpVertexColor(const aiMesh* mesh, Color& out) {
+  if (!mesh || !mesh->HasVertexColors(0)) {
+    return false;
+  }
+  const aiColor4D* colors = mesh->mColors[0];
+  if (!colors) {
+    return false;
+  }
+  aiColor4D avg(0, 0, 0, 0);
+  for (unsigned int i = 0; i < mesh->mNumVertices; ++i) {
+    avg.r += colors[i].r;
+    avg.g += colors[i].g;
+    avg.b += colors[i].b;
+    avg.a += colors[i].a;
+  }
+  const float denom = static_cast<float>(mesh->mNumVertices);
+  out = Color(avg.r / denom, avg.g / denom, avg.b / denom, avg.a / denom);
+  return true;
+}
+
+bool LoadAssimpMeshes(const std::string& mesh_source,
+                      std::vector<AssimpMeshData>& meshes,
+                      std::string* error_message) {
+  Assimp::Importer importer;
+  // Keep source asset up-axis (e.g. COLLADA Z_UP) to match Gazebo/SDF
+  // results.
+  importer.SetPropertyBool(AI_CONFIG_IMPORT_COLLADA_IGNORE_UP_DIRECTION, true);
+  const aiScene* scene = importer.ReadFile(
+      mesh_source, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices |
+                       aiProcess_PreTransformVertices);
+  if (!scene || !scene->HasMeshes()) {
+    if (error_message) {
+      std::ostringstream oss;
+      oss << "Assimp failed to load mesh: " << mesh_source;
+      if (importer.GetErrorString() && importer.GetErrorString()[0] != '\0') {
+        oss << " (" << importer.GetErrorString() << ")";
+      }
+      *error_message = oss.str();
+    }
+    return false;
+  }
+
+  meshes.clear();
+  meshes.reserve(scene->mNumMeshes);
+
+  for (unsigned int mi = 0; mi < scene->mNumMeshes; ++mi) {
+    const aiMesh* mesh = scene->mMeshes[mi];
+    if (!mesh || mesh->mNumVertices == 0) {
+      continue;
+    }
+
+    AssimpMeshData out;
+    out.vertices.reserve(mesh->mNumVertices);
+
+    for (unsigned int vi = 0; vi < mesh->mNumVertices; ++vi) {
+      const aiVector3D& v = mesh->mVertices[vi];
+      Vertex vv{.x = v.x, .y = v.y, .z = v.z};
+      if (mesh->HasTextureCoords(0) && mesh->mTextureCoords[0]) {
+        vv.u = mesh->mTextureCoords[0][vi].x;
+        vv.v = mesh->mTextureCoords[0][vi].y;
+        out.has_uv = true;
+      }
+      out.vertices.push_back(vv);
+    }
+
+    for (unsigned int fi = 0; fi < mesh->mNumFaces; ++fi) {
+      const aiFace& face = mesh->mFaces[fi];
+      if (face.mNumIndices != 3) {
+        continue;
+      }
+      out.indices.push_back(face.mIndices[0]);
+      out.indices.push_back(face.mIndices[1]);
+      out.indices.push_back(face.mIndices[2]);
+    }
+
+    Color mesh_color = color::white;
+    bool has_color = GetAssimpVertexColor(mesh, mesh_color);
+    if (scene->mMaterials && mesh->mMaterialIndex < scene->mNumMaterials) {
+      const aiMaterial* mat = scene->mMaterials[mesh->mMaterialIndex];
+      if (!has_color) {
+        has_color = GetAssimpDiffuse(mat, mesh_color);
+      }
+      aiString tex_path;
+      if (mat && aiGetMaterialTexture(mat, aiTextureType_DIFFUSE, 0,
+                                      &tex_path) == aiReturn_SUCCESS) {
+        const std::string tex_uri = tex_path.C_Str();
+        if (!tex_uri.empty()) {
+          const fs::path mesh_base = fs::path(mesh_source).parent_path();
+          const std::string resolved_tex =
+              ResolveMeshUri(tex_uri, mesh_base, mesh_base, nullptr);
+          out.texture_uri = resolved_tex.empty() ? tex_uri : resolved_tex;
         }
       }
-
-      const auto diffuse = material->Diffuse();
-      const auto ambient = material->Ambient();
-      const bool has_diffuse = diffuse.R() > 0.0 || diffuse.G() > 0.0 ||
-                               diffuse.B() > 0.0 || diffuse.A() > 0.0;
-      const auto chosen = has_diffuse ? diffuse : ambient;
-      return Color(
-          static_cast<float>(chosen.R()), static_cast<float>(chosen.G()),
-          static_cast<float>(chosen.B()), static_cast<float>(chosen.A()));
     }
+    out.has_color = has_color;
+    out.color = mesh_color;
+    meshes.push_back(std::move(out));
+  }
 
-    bool HasExplicitSdfMaterialColor(const sdf::Material* material) {
-      if (!material) {
+  return !meshes.empty();
+}
+
+bool BuildVisualNode(const sdf::Visual& visual, const fs::path& sdf_dir,
+                     SdfNode& node, std::string* error_message,
+                     bool& any_mesh_loaded) {
+  const sdf::Geometry* geom = visual.Geom();
+  if (!geom) {
+    return false;
+  }
+  SetNodePose(node, visual.RawPose());
+  const sdf::Material* visual_material = visual.Material();
+  const Color sdf_color = ColorFromMaterial(visual_material, sdf_dir);
+  const bool prefer_sdf_material_color =
+      HasExplicitSdfMaterialColor(visual_material);
+
+  switch (geom->Type()) {
+    case sdf::GeometryType::BOX: {
+      const sdf::Box* box = geom->BoxShape();
+      if (!box) {
         return false;
       }
-
-      if (!material->ScriptName().empty() || !material->ScriptUri().empty()) {
-        return true;
-      }
-
-      sdf::ElementPtr elem = material->Element();
-      if (!elem) {
-        return false;
-      }
-
-      return elem->HasElement("diffuse") || elem->HasElement("ambient") ||
-             elem->HasElement("script");
-    }
-
-    struct AssimpMeshData {
-      std::vector<Vertex> vertices;
-      std::vector<uint32_t> indices;
-      bool has_uv = false;
-      std::string texture_uri;
-      bool has_color = false;
-      Color color = color::white;
-    };
-
-    bool HasNonZeroColor(const Color& c) {
-      return c.base[0] > 0.0F || c.base[1] > 0.0F || c.base[2] > 0.0F ||
-             c.base[3] > 0.0F;
-    }
-
-    bool GetAssimpDiffuse(const aiMaterial* material, Color& out) {
-      if (!material) {
-        return false;
-      }
-      aiColor4D diffuse;
-      if (aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse) !=
-          aiReturn_SUCCESS) {
-        return false;
-      }
-      out = Color(diffuse.r, diffuse.g, diffuse.b, diffuse.a);
+      const auto size = box->Size();
+      node.scale = Eigen::Vector3d(size.X(), size.Y(), size.Z());
+      node.color = sdf_color;
+      node.primitive = SdfNode::PrimitiveType::Box;
+      any_mesh_loaded = true;
       return true;
     }
-
-    bool GetAssimpVertexColor(const aiMesh* mesh, Color& out) {
-      if (!mesh || !mesh->HasVertexColors(0)) {
+    case sdf::GeometryType::SPHERE: {
+      const sdf::Sphere* sphere = geom->SphereShape();
+      if (!sphere) {
         return false;
       }
-      const aiColor4D* colors = mesh->mColors[0];
-      if (!colors) {
-        return false;
-      }
-      aiColor4D avg(0, 0, 0, 0);
-      for (unsigned int i = 0; i < mesh->mNumVertices; ++i) {
-        avg.r += colors[i].r;
-        avg.g += colors[i].g;
-        avg.b += colors[i].b;
-        avg.a += colors[i].a;
-      }
-      const float denom = static_cast<float>(mesh->mNumVertices);
-      out = Color(avg.r / denom, avg.g / denom, avg.b / denom, avg.a / denom);
+      const double r = sphere->Radius();
+      node.scale = Eigen::Vector3d(2.0 * r, 2.0 * r, 2.0 * r);
+      node.color = sdf_color;
+      node.primitive = SdfNode::PrimitiveType::Sphere;
+      any_mesh_loaded = true;
       return true;
     }
-
-    bool LoadAssimpMeshes(const std::string& mesh_source,
-                          std::vector<AssimpMeshData>& meshes,
-                          std::string* error_message) {
-      Assimp::Importer importer;
-      // Keep source asset up-axis (e.g. COLLADA Z_UP) to match Gazebo/SDF
-      // results.
-      importer.SetPropertyBool(AI_CONFIG_IMPORT_COLLADA_IGNORE_UP_DIRECTION,
-                               true);
-      const aiScene* scene = importer.ReadFile(
-          mesh_source, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices |
-                           aiProcess_PreTransformVertices);
-      if (!scene || !scene->HasMeshes()) {
-        if (error_message) {
-          std::ostringstream oss;
-          oss << "Assimp failed to load mesh: " << mesh_source;
-          if (importer.GetErrorString() &&
-              importer.GetErrorString()[0] != '\0') {
-            oss << " (" << importer.GetErrorString() << ")";
-          }
-          *error_message = oss.str();
-        }
+    case sdf::GeometryType::CYLINDER: {
+      const sdf::Cylinder* cyl = geom->CylinderShape();
+      if (!cyl) {
         return false;
       }
-
-      meshes.clear();
-      meshes.reserve(scene->mNumMeshes);
-
-      for (unsigned int mi = 0; mi < scene->mNumMeshes; ++mi) {
-        const aiMesh* mesh = scene->mMeshes[mi];
-        if (!mesh || mesh->mNumVertices == 0) {
-          continue;
-        }
-
-        AssimpMeshData out;
-        out.vertices.reserve(mesh->mNumVertices);
-
-        for (unsigned int vi = 0; vi < mesh->mNumVertices; ++vi) {
-          const aiVector3D& v = mesh->mVertices[vi];
-          Vertex vv{.x = v.x, .y = v.y, .z = v.z};
-          if (mesh->HasTextureCoords(0) && mesh->mTextureCoords[0]) {
-            vv.u = mesh->mTextureCoords[0][vi].x;
-            vv.v = mesh->mTextureCoords[0][vi].y;
-            out.has_uv = true;
-          }
-          out.vertices.push_back(vv);
-        }
-
-        for (unsigned int fi = 0; fi < mesh->mNumFaces; ++fi) {
-          const aiFace& face = mesh->mFaces[fi];
-          if (face.mNumIndices != 3) {
-            continue;
-          }
-          out.indices.push_back(face.mIndices[0]);
-          out.indices.push_back(face.mIndices[1]);
-          out.indices.push_back(face.mIndices[2]);
-        }
-
-        Color mesh_color = color::white;
-        bool has_color = GetAssimpVertexColor(mesh, mesh_color);
-        if (scene->mMaterials && mesh->mMaterialIndex < scene->mNumMaterials) {
-          const aiMaterial* mat = scene->mMaterials[mesh->mMaterialIndex];
-          if (!has_color) {
-            has_color = GetAssimpDiffuse(mat, mesh_color);
-          }
-          aiString tex_path;
-          if (mat &&
-              aiGetMaterialTexture(mat, aiTextureType_DIFFUSE, 0, &tex_path) ==
-                  aiReturn_SUCCESS) {
-            const std::string tex_uri = tex_path.C_Str();
-            if (!tex_uri.empty()) {
-              const fs::path mesh_base = fs::path(mesh_source).parent_path();
-              const std::string resolved_tex =
-                  ResolveMeshUri(tex_uri, mesh_base, mesh_base, nullptr);
-              out.texture_uri = resolved_tex.empty() ? tex_uri : resolved_tex;
-            }
-          }
-        }
-        out.has_color = has_color;
-        out.color = mesh_color;
-        meshes.push_back(std::move(out));
-      }
-
-      return !meshes.empty();
+      const double r = cyl->Radius();
+      const double len = cyl->Length();
+      node.scale = Eigen::Vector3d(2.0 * r, 2.0 * r, len);
+      node.color = sdf_color;
+      node.primitive = SdfNode::PrimitiveType::Cylinder;
+      any_mesh_loaded = true;
+      return true;
     }
-
-    bool BuildVisualNode(const sdf::Visual& visual, const fs::path& sdf_dir,
-                         SdfNode& node, std::string* error_message,
-                         bool& any_mesh_loaded) {
-      const sdf::Geometry* geom = visual.Geom();
-      if (!geom) {
+    case sdf::GeometryType::CONE: {
+      const sdf::Cone* cone = geom->ConeShape();
+      if (!cone) {
         return false;
       }
-      SetNodePose(node, visual.RawPose());
-      const sdf::Material* visual_material = visual.Material();
-      const Color sdf_color = ColorFromMaterial(visual_material, sdf_dir);
-      const bool prefer_sdf_material_color =
-          HasExplicitSdfMaterialColor(visual_material);
-
-      switch (geom->Type()) {
-        case sdf::GeometryType::BOX: {
-          const sdf::Box* box = geom->BoxShape();
-          if (!box) {
-            return false;
-          }
-          const auto size = box->Size();
-          node.scale = Eigen::Vector3d(size.X(), size.Y(), size.Z());
-          node.color = sdf_color;
-          node.primitive = SdfNode::PrimitiveType::Box;
-          any_mesh_loaded = true;
-          return true;
-        }
-        case sdf::GeometryType::SPHERE: {
-          const sdf::Sphere* sphere = geom->SphereShape();
-          if (!sphere) {
-            return false;
-          }
-          const double r = sphere->Radius();
-          node.scale = Eigen::Vector3d(2.0 * r, 2.0 * r, 2.0 * r);
-          node.color = sdf_color;
-          node.primitive = SdfNode::PrimitiveType::Sphere;
-          any_mesh_loaded = true;
-          return true;
-        }
-        case sdf::GeometryType::CYLINDER: {
-          const sdf::Cylinder* cyl = geom->CylinderShape();
-          if (!cyl) {
-            return false;
-          }
-          const double r = cyl->Radius();
-          const double len = cyl->Length();
-          node.scale = Eigen::Vector3d(2.0 * r, 2.0 * r, len);
-          node.color = sdf_color;
-          node.primitive = SdfNode::PrimitiveType::Cylinder;
-          any_mesh_loaded = true;
-          return true;
-        }
-        case sdf::GeometryType::CONE: {
-          const sdf::Cone* cone = geom->ConeShape();
-          if (!cone) {
-            return false;
-          }
-          const double r = cone->Radius();
-          const double len = cone->Length();
-          node.scale = Eigen::Vector3d(2.0 * r, 2.0 * r, len);
-          node.color = sdf_color;
-          node.primitive = SdfNode::PrimitiveType::Cone;
-          any_mesh_loaded = true;
-          return true;
-        }
-        case sdf::GeometryType::PLANE: {
-          const sdf::Plane* plane = geom->PlaneShape();
-          if (!plane) {
-            return false;
-          }
-          const auto size = plane->Size();
-          node.scale = Eigen::Vector3d(size.X(), size.Y(), 1.0);
-          const auto normal = plane->Normal();
-          Eigen::Vector3d n(normal.X(), normal.Y(), normal.Z());
-          if (n.norm() > 1e-8) {
-            n.normalize();
-            Eigen::Quaterniond align =
-                Eigen::Quaterniond::FromTwoVectors(Eigen::Vector3d::UnitZ(), n);
-            node.rot = node.rot * align;
-          }
-          node.color = sdf_color;
-          node.primitive = SdfNode::PrimitiveType::Plane;
-          any_mesh_loaded = true;
-          return true;
-        }
-        case sdf::GeometryType::MESH:
-          break;
-        default:
-          return false;
+      const double r = cone->Radius();
+      const double len = cone->Length();
+      node.scale = Eigen::Vector3d(2.0 * r, 2.0 * r, len);
+      node.color = sdf_color;
+      node.primitive = SdfNode::PrimitiveType::Cone;
+      any_mesh_loaded = true;
+      return true;
+    }
+    case sdf::GeometryType::PLANE: {
+      const sdf::Plane* plane = geom->PlaneShape();
+      if (!plane) {
+        return false;
       }
+      const auto size = plane->Size();
+      node.scale = Eigen::Vector3d(size.X(), size.Y(), 1.0);
+      const auto normal = plane->Normal();
+      Eigen::Vector3d n(normal.X(), normal.Y(), normal.Z());
+      if (n.norm() > 1e-8) {
+        n.normalize();
+        Eigen::Quaterniond align =
+            Eigen::Quaterniond::FromTwoVectors(Eigen::Vector3d::UnitZ(), n);
+        node.rot = node.rot * align;
+      }
+      node.color = sdf_color;
+      node.primitive = SdfNode::PrimitiveType::Plane;
+      any_mesh_loaded = true;
+      return true;
+    }
+    case sdf::GeometryType::MESH:
+      break;
+    default:
+      return false;
+  }
 
+  const sdf::Mesh* mesh = geom->MeshShape();
+  if (!mesh) {
+    return false;
+  }
+
+  node.scale =
+      Eigen::Vector3d(mesh->Scale().X(), mesh->Scale().Y(), mesh->Scale().Z());
+
+  fs::path base_dir = sdf_dir;
+  if (!mesh->FilePath().empty()) {
+    base_dir = fs::path(mesh->FilePath()).parent_path();
+  }
+
+  const std::string resolved =
+      ResolveMeshUri(mesh->Uri(), sdf_dir, base_dir, error_message);
+  if (resolved.empty()) {
+    if (error_message) {
+      std::ostringstream oss;
+      oss << "Failed to resolve mesh URI: " << mesh->Uri();
+      *error_message = oss.str();
+    }
+    return false;
+  }
+
+  std::string assimp_error;
+  std::vector<AssimpMeshData> assimp_meshes;
+  if (!LoadAssimpMeshes(resolved, assimp_meshes, &assimp_error)) {
+    if (error_message) {
+      *error_message = assimp_error;
+    }
+    return false;
+  }
+
+  for (auto& mesh_data : assimp_meshes) {
+    SdfNode mesh_node;
+    mesh_node.vertices = std::move(mesh_data.vertices);
+    mesh_node.indices = std::move(mesh_data.indices);
+    mesh_node.has_uv = mesh_data.has_uv;
+    mesh_node.texture = mesh_data.texture_uri;
+    if (prefer_sdf_material_color) {
+      mesh_node.color = sdf_color;
+    } else if (mesh_data.has_color && HasNonZeroColor(mesh_data.color)) {
+      mesh_node.color = mesh_data.color;
+    } else {
+      mesh_node.color = sdf_color;
+    }
+    node.children.push_back(std::move(mesh_node));
+    any_mesh_loaded = true;
+  }
+
+  return !node.children.empty();
+}
+
+bool BuildLinkNode(const sdf::Link& link, const fs::path& sdf_dir,
+                   SdfNode& node, std::string* error_message,
+                   bool& any_mesh_loaded) {
+  SetNodePose(node, link.RawPose());
+  node.scale = Eigen::Vector3d::Ones();
+
+  for (uint64_t vi = 0; vi < link.VisualCount(); ++vi) {
+    const sdf::Visual* visual = link.VisualByIndex(vi);
+    if (!visual) {
+      continue;
+    }
+    SdfNode visual_node;
+    if (BuildVisualNode(*visual, sdf_dir, visual_node, error_message,
+                        any_mesh_loaded)) {
+      node.children.push_back(std::move(visual_node));
+    }
+  }
+
+  return !node.children.empty();
+}
+
+bool BuildModelNode(const sdf::Model& model, const fs::path& sdf_dir,
+                    SdfNode& node, std::string* error_message,
+                    bool& any_mesh_loaded) {
+  SetNodePose(node, model.RawPose());
+  node.scale = Eigen::Vector3d::Ones();
+
+  for (uint64_t li = 0; li < model.LinkCount(); ++li) {
+    const sdf::Link* link = model.LinkByIndex(li);
+    if (!link) {
+      continue;
+    }
+    SdfNode link_node;
+    if (BuildLinkNode(*link, sdf_dir, link_node, error_message,
+                      any_mesh_loaded)) {
+      node.children.push_back(std::move(link_node));
+    }
+  }
+
+  for (uint64_t mi = 0; mi < model.ModelCount(); ++mi) {
+    const sdf::Model* nested = model.ModelByIndex(mi);
+    if (!nested) {
+      continue;
+    }
+    SdfNode nested_node;
+    if (BuildModelNode(*nested, sdf_dir, nested_node, error_message,
+                       any_mesh_loaded)) {
+      node.children.push_back(std::move(nested_node));
+    }
+  }
+
+  return !node.children.empty();
+}
+
+void AppendModelMeshes(const sdf::Model& model, const fs::path& sdf_dir,
+                       const Eigen::Affine3d& parent_transform,
+                       std::vector<Vertex>& vertices,
+                       std::vector<uint32_t>& indices,
+                       std::string* error_message, bool& any_mesh_loaded) {
+  const Eigen::Affine3d model_tf =
+      parent_transform * PoseToEigen(model.RawPose());
+
+  for (uint64_t li = 0; li < model.LinkCount(); ++li) {
+    const sdf::Link* link = model.LinkByIndex(li);
+    if (!link) {
+      continue;
+    }
+    const Eigen::Affine3d link_tf = model_tf * PoseToEigen(link->RawPose());
+
+    for (uint64_t vi = 0; vi < link->VisualCount(); ++vi) {
+      const sdf::Visual* visual = link->VisualByIndex(vi);
+      if (!visual) {
+        continue;
+      }
+      const sdf::Geometry* geom = visual->Geom();
+      if (!geom || geom->Type() != sdf::GeometryType::MESH) {
+        continue;
+      }
       const sdf::Mesh* mesh = geom->MeshShape();
       if (!mesh) {
-        return false;
+        continue;
       }
-
-      node.scale = Eigen::Vector3d(mesh->Scale().X(), mesh->Scale().Y(),
-                                   mesh->Scale().Z());
 
       fs::path base_dir = sdf_dir;
       if (!mesh->FilePath().empty()) {
@@ -740,8 +863,13 @@ std::string ResolveMeshUri(const std::string& uri, const fs::path& sdf_dir,
           oss << "Failed to resolve mesh URI: " << mesh->Uri();
           *error_message = oss.str();
         }
-        return false;
+        continue;
       }
+
+      Eigen::Affine3d visual_tf = link_tf * PoseToEigen(visual->RawPose());
+      visual_tf =
+          visual_tf * Eigen::Scaling(mesh->Scale().X(), mesh->Scale().Y(),
+                                     mesh->Scale().Z());
 
       std::string assimp_error;
       std::vector<AssimpMeshData> assimp_meshes;
@@ -749,190 +877,56 @@ std::string ResolveMeshUri(const std::string& uri, const fs::path& sdf_dir,
         if (error_message) {
           *error_message = assimp_error;
         }
-        return false;
+        continue;
       }
 
-      for (auto& mesh_data : assimp_meshes) {
-        SdfNode mesh_node;
-        mesh_node.vertices = std::move(mesh_data.vertices);
-        mesh_node.indices = std::move(mesh_data.indices);
-        mesh_node.has_uv = mesh_data.has_uv;
-        mesh_node.texture = mesh_data.texture_uri;
-        if (prefer_sdf_material_color) {
-          mesh_node.color = sdf_color;
-        } else if (mesh_data.has_color && HasNonZeroColor(mesh_data.color)) {
-          mesh_node.color = mesh_data.color;
-        } else {
-          mesh_node.color = sdf_color;
+      for (const auto& mesh_data : assimp_meshes) {
+        const uint32_t base_index = static_cast<uint32_t>(vertices.size());
+        vertices.reserve(vertices.size() + mesh_data.vertices.size());
+        for (const auto& v : mesh_data.vertices) {
+          Eigen::Vector3d p =
+              visual_tf * Eigen::Vector3d(static_cast<double>(v.x),
+                                          static_cast<double>(v.y),
+                                          static_cast<double>(v.z));
+          vertices.push_back(Vertex{.x = static_cast<float>(p.x()),
+                                    .y = static_cast<float>(p.y()),
+                                    .z = static_cast<float>(p.z()),
+                                    .u = v.u,
+                                    .v = v.v});
         }
-        node.children.push_back(std::move(mesh_node));
+        indices.reserve(indices.size() + mesh_data.indices.size());
+        for (const auto idx : mesh_data.indices) {
+          indices.push_back(base_index + idx);
+        }
         any_mesh_loaded = true;
       }
-
-      return !node.children.empty();
     }
+  }
 
-    bool BuildLinkNode(const sdf::Link& link, const fs::path& sdf_dir,
-                       SdfNode& node, std::string* error_message,
-                       bool& any_mesh_loaded) {
-      SetNodePose(node, link.RawPose());
-      node.scale = Eigen::Vector3d::Ones();
-
-      for (uint64_t vi = 0; vi < link.VisualCount(); ++vi) {
-        const sdf::Visual* visual = link.VisualByIndex(vi);
-        if (!visual) {
-          continue;
-        }
-        SdfNode visual_node;
-        if (BuildVisualNode(*visual, sdf_dir, visual_node, error_message,
-                            any_mesh_loaded)) {
-          node.children.push_back(std::move(visual_node));
-        }
-      }
-
-      return !node.children.empty();
+  for (uint64_t mi = 0; mi < model.ModelCount(); ++mi) {
+    const sdf::Model* nested = model.ModelByIndex(mi);
+    if (!nested) {
+      continue;
     }
-
-    bool BuildModelNode(const sdf::Model& model, const fs::path& sdf_dir,
-                        SdfNode& node, std::string* error_message,
-                        bool& any_mesh_loaded) {
-      SetNodePose(node, model.RawPose());
-      node.scale = Eigen::Vector3d::Ones();
-
-      for (uint64_t li = 0; li < model.LinkCount(); ++li) {
-        const sdf::Link* link = model.LinkByIndex(li);
-        if (!link) {
-          continue;
-        }
-        SdfNode link_node;
-        if (BuildLinkNode(*link, sdf_dir, link_node, error_message,
-                          any_mesh_loaded)) {
-          node.children.push_back(std::move(link_node));
-        }
-      }
-
-      for (uint64_t mi = 0; mi < model.ModelCount(); ++mi) {
-        const sdf::Model* nested = model.ModelByIndex(mi);
-        if (!nested) {
-          continue;
-        }
-        SdfNode nested_node;
-        if (BuildModelNode(*nested, sdf_dir, nested_node, error_message,
-                           any_mesh_loaded)) {
-          node.children.push_back(std::move(nested_node));
-        }
-      }
-
-      return !node.children.empty();
-    }
-
-    void AppendModelMeshes(const sdf::Model& model, const fs::path& sdf_dir,
-                           const Eigen::Affine3d& parent_transform,
-                           std::vector<Vertex>& vertices,
-                           std::vector<uint32_t>& indices,
-                           std::string* error_message, bool& any_mesh_loaded) {
-      const Eigen::Affine3d model_tf =
-          parent_transform * PoseToEigen(model.RawPose());
-
-      for (uint64_t li = 0; li < model.LinkCount(); ++li) {
-        const sdf::Link* link = model.LinkByIndex(li);
-        if (!link) {
-          continue;
-        }
-        const Eigen::Affine3d link_tf = model_tf * PoseToEigen(link->RawPose());
-
-        for (uint64_t vi = 0; vi < link->VisualCount(); ++vi) {
-          const sdf::Visual* visual = link->VisualByIndex(vi);
-          if (!visual) {
-            continue;
-          }
-          const sdf::Geometry* geom = visual->Geom();
-          if (!geom || geom->Type() != sdf::GeometryType::MESH) {
-            continue;
-          }
-          const sdf::Mesh* mesh = geom->MeshShape();
-          if (!mesh) {
-            continue;
-          }
-
-          fs::path base_dir = sdf_dir;
-          if (!mesh->FilePath().empty()) {
-            base_dir = fs::path(mesh->FilePath()).parent_path();
-          }
-
-          const std::string resolved =
-              ResolveMeshUri(mesh->Uri(), sdf_dir, base_dir, error_message);
-          if (resolved.empty()) {
-            if (error_message) {
-              std::ostringstream oss;
-              oss << "Failed to resolve mesh URI: " << mesh->Uri();
-              *error_message = oss.str();
-            }
-            continue;
-          }
-
-          Eigen::Affine3d visual_tf = link_tf * PoseToEigen(visual->RawPose());
-          visual_tf =
-              visual_tf * Eigen::Scaling(mesh->Scale().X(), mesh->Scale().Y(),
-                                         mesh->Scale().Z());
-
-          std::string assimp_error;
-          std::vector<AssimpMeshData> assimp_meshes;
-          if (!LoadAssimpMeshes(resolved, assimp_meshes, &assimp_error)) {
-            if (error_message) {
-              *error_message = assimp_error;
-            }
-            continue;
-          }
-
-          for (const auto& mesh_data : assimp_meshes) {
-            const uint32_t base_index = static_cast<uint32_t>(vertices.size());
-            vertices.reserve(vertices.size() + mesh_data.vertices.size());
-            for (const auto& v : mesh_data.vertices) {
-              Eigen::Vector3d p =
-                  visual_tf * Eigen::Vector3d(static_cast<double>(v.x),
-                                              static_cast<double>(v.y),
-                                              static_cast<double>(v.z));
-              vertices.push_back(Vertex{.x = static_cast<float>(p.x()),
-                                        .y = static_cast<float>(p.y()),
-                                        .z = static_cast<float>(p.z()),
-                                        .u = v.u,
-                                        .v = v.v});
-            }
-            indices.reserve(indices.size() + mesh_data.indices.size());
-            for (const auto idx : mesh_data.indices) {
-              indices.push_back(base_index + idx);
-            }
-            any_mesh_loaded = true;
-          }
-        }
-      }
-
-      for (uint64_t mi = 0; mi < model.ModelCount(); ++mi) {
-        const sdf::Model* nested = model.ModelByIndex(mi);
-        if (!nested) {
-          continue;
-        }
-        AppendModelMeshes(*nested, sdf_dir, model_tf, vertices, indices,
-                          error_message, any_mesh_loaded);
-      }
-    }
+    AppendModelMeshes(*nested, sdf_dir, model_tf, vertices, indices,
+                      error_message, any_mesh_loaded);
+  }
+}
 #endif
 
-  }  // namespace
+}  // namespace
 
-  bool LoadSdfMeshes(const std::string& sdf_path, std::vector<Vertex>& vertices,
-                     std::vector<uint32_t>& indices,
-                     std::string* error_message) {
+bool LoadSdfMeshes(const std::string& sdf_path, std::vector<Vertex>& vertices,
+                   std::vector<uint32_t>& indices, std::string* error_message) {
 #ifndef LIVISION_ENABLE_SDF
-    if (error_message) {
-      *error_message =
-          "SDF support is disabled (LIVISION_ENABLE_SDF is not enabled).";
-    }
-    (void)sdf_path;
-    (void)vertices;
-    (void)indices;
-    return false;
+  if (error_message) {
+    *error_message =
+        "SDF support is disabled (LIVISION_ENABLE_SDF is not enabled).";
+  }
+  (void)sdf_path;
+  (void)vertices;
+  (void)indices;
+  return false;
 #else
   const fs::path sdf_file(sdf_path);
   const fs::path sdf_dir = sdf_file.parent_path();
@@ -1004,28 +998,27 @@ std::string ResolveMeshUri(const std::string& uri, const fs::path& sdf_dir,
 
   return true;
 #endif
-  }
+}
 
-  bool LoadMeshFile(const std::string& mesh_path, std::vector<Vertex>& vertices,
-                    std::vector<uint32_t>& indices, bool* has_uv,
-                    std::string* texture_uri,
-                    std::string* error_message) {
+bool LoadMeshFile(const std::string& mesh_path, std::vector<Vertex>& vertices,
+                  std::vector<uint32_t>& indices, bool* has_uv,
+                  std::string* texture_uri, std::string* error_message) {
 #ifndef LIVISION_ENABLE_SDF
-    if (error_message) {
-      *error_message =
-          "Assimp mesh loading is disabled (LIVISION_ENABLE_SDF is not "
-          "enabled).";
-    }
-    (void)mesh_path;
-    (void)vertices;
-    (void)indices;
-    if (has_uv) {
-      *has_uv = false;
-    }
-    if (texture_uri) {
-      texture_uri->clear();
-    }
-    return false;
+  if (error_message) {
+    *error_message =
+        "Assimp mesh loading is disabled (LIVISION_ENABLE_SDF is not "
+        "enabled).";
+  }
+  (void)mesh_path;
+  (void)vertices;
+  (void)indices;
+  if (has_uv) {
+    *has_uv = false;
+  }
+  if (texture_uri) {
+    texture_uri->clear();
+  }
+  return false;
 #else
   std::vector<AssimpMeshData> assimp_meshes;
   std::string assimp_error;
@@ -1065,58 +1058,58 @@ std::string ResolveMeshUri(const std::string& uri, const fs::path& sdf_dir,
 
   return !vertices.empty() && !indices.empty();
 #endif
-  }
+}
 
-  bool LoadMeshFileParts(const std::string& mesh_path,
-                         std::vector<MeshPart>& parts,
-                         std::string* error_message) {
+bool LoadMeshFileParts(const std::string& mesh_path,
+                       std::vector<MeshPart>& parts,
+                       std::string* error_message) {
 #ifndef LIVISION_ENABLE_SDF
-    if (error_message) {
-      *error_message =
-          "Assimp mesh loading is disabled (LIVISION_ENABLE_SDF is not "
-          "enabled).";
-    }
-    (void)mesh_path;
-    (void)parts;
-    return false;
+  if (error_message) {
+    *error_message =
+        "Assimp mesh loading is disabled (LIVISION_ENABLE_SDF is not "
+        "enabled).";
+  }
+  (void)mesh_path;
+  (void)parts;
+  return false;
 #else
-    std::vector<AssimpMeshData> assimp_meshes;
-    std::string assimp_error;
-    if (!LoadAssimpMeshes(mesh_path, assimp_meshes, &assimp_error)) {
-      if (error_message) {
-        *error_message = assimp_error;
-      }
-      return false;
+  std::vector<AssimpMeshData> assimp_meshes;
+  std::string assimp_error;
+  if (!LoadAssimpMeshes(mesh_path, assimp_meshes, &assimp_error)) {
+    if (error_message) {
+      *error_message = assimp_error;
     }
-
-    parts.clear();
-    parts.reserve(assimp_meshes.size());
-    for (auto& src : assimp_meshes) {
-      MeshPart part;
-      part.vertices = std::move(src.vertices);
-      part.indices = std::move(src.indices);
-      part.has_uv = src.has_uv;
-      part.texture_uri = std::move(src.texture_uri);
-      part.has_color = src.has_color;
-      part.color = src.color;
-      if (!part.vertices.empty() && !part.indices.empty()) {
-        parts.push_back(std::move(part));
-      }
-    }
-    return !parts.empty();
-#endif
+    return false;
   }
 
-  bool LoadSdfScene(const std::string& sdf_path, SdfNode& root,
-                    std::string* error_message) {
-#ifndef LIVISION_ENABLE_SDF
-    if (error_message) {
-      *error_message =
-          "SDF support is disabled (LIVISION_ENABLE_SDF is not enabled).";
+  parts.clear();
+  parts.reserve(assimp_meshes.size());
+  for (auto& src : assimp_meshes) {
+    MeshPart part;
+    part.vertices = std::move(src.vertices);
+    part.indices = std::move(src.indices);
+    part.has_uv = src.has_uv;
+    part.texture_uri = std::move(src.texture_uri);
+    part.has_color = src.has_color;
+    part.color = src.color;
+    if (!part.vertices.empty() && !part.indices.empty()) {
+      parts.push_back(std::move(part));
     }
-    (void)sdf_path;
-    (void)root;
-    return false;
+  }
+  return !parts.empty();
+#endif
+}
+
+bool LoadSdfScene(const std::string& sdf_path, SdfNode& root,
+                  std::string* error_message) {
+#ifndef LIVISION_ENABLE_SDF
+  if (error_message) {
+    *error_message =
+        "SDF support is disabled (LIVISION_ENABLE_SDF is not enabled).";
+  }
+  (void)sdf_path;
+  (void)root;
+  return false;
 #else
   const fs::path sdf_file(sdf_path);
   const fs::path sdf_dir = sdf_file.parent_path();
@@ -1193,6 +1186,6 @@ std::string ResolveMeshUri(const std::string& uri, const fs::path& sdf_dir,
 
   return true;
 #endif
-  }
+}
 
 }  // namespace livision::internal::sdf_loader

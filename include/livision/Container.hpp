@@ -14,30 +14,38 @@ class Container : public ObjectBase {
   using ObjectBase::ObjectBase;
 
   /**
+   * @brief Called during initialization.
+   */
+  void OnInit() final;
+  /**
+   * @brief Called during deinitialization.
+   */
+  void OnDeInit() final;
+  /**
+   * @brief Called during draw submission.
+   */
+  void OnDraw(Renderer& renderer) final;
+  /**
+   * @brief Update cached transform matrices.
+   */
+  void UpdateMatrix(const Eigen::Affine3d& parent_mtx) final;
+
+  /**
    * @brief Add and co-own a child object via shared_ptr.
    */
-  Container* AddObject(std::shared_ptr<ObjectBase> object) {
-    if (!object) {
-      return this;
-    }
-    object->RegisterParentObject(this);
-    objects_.push_back(std::move(object));
-    return this;
-  }
+  Container* AddObject(std::shared_ptr<ObjectBase> object);
   /**
    * @brief Get the list of child objects.
    */
-  std::vector<std::shared_ptr<ObjectBase>>& GetObjects() { return objects_; }
+  std::vector<std::shared_ptr<ObjectBase>>& GetObjects();
   /**
    * @brief Get the list of child objects.
    */
-  const std::vector<std::shared_ptr<ObjectBase>>& GetObjects() const {
-    return objects_;
-  }
+  const std::vector<std::shared_ptr<ObjectBase>>& GetObjects() const;
   /**
    * @brief Clear the list of child objects.
    */
-  void ClearObjects() { objects_.clear(); }
+  void ClearObjects();
 
  private:
   std::vector<std::shared_ptr<ObjectBase>> objects_;

@@ -48,7 +48,8 @@ void MouseOrbitCamera::UpdateMouse(bool want_capture_mouse) {
   if ((buttons & SDL_BUTTON_LMASK) != 0) {
     cam_yaw_ += static_cast<float>(delta_x) * kRotScale;
     cam_pitch_ -= static_cast<float>(delta_y) * kRotScale;
-    cam_pitch_ = bx::clamp(cam_pitch_, -bx::kPiHalf + 0.01F, bx::kPiHalf - 0.01F);
+    cam_pitch_ =
+        bx::clamp(cam_pitch_, -bx::kPiHalf + 0.01F, bx::kPiHalf - 0.01F);
   }
 
   if ((buttons & SDL_BUTTON_MMASK) != 0 || (buttons & SDL_BUTTON_RMASK) != 0) {

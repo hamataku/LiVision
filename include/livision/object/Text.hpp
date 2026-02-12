@@ -26,7 +26,7 @@ class Text : public ObjectBase, public SharedInstanceFactory<Text> {
 
   explicit Text(Params params);
 
-  void OnDraw(Renderer& renderer) final;
+  void OnDraw(Renderer& renderer) override;
 
   Text& SetText(const std::string& text);
   Text& SetHeight(float height);

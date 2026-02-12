@@ -14,8 +14,11 @@ class Grid : public ObjectBase, public SharedInstanceFactory<Grid> {
   /**
    * @brief Draw the grid.
    */
-  void OnDraw(Renderer& renderer) final;
-
+  void OnDraw(Renderer& renderer) override;
+  /**
+   * @brief Update cached transform matrices.
+   */
+  void UpdateMatrix(const Eigen::Affine3d& parent_mtx) override;
   /**
    * @brief Set grid resolution (line spacing).
    */
@@ -23,6 +26,6 @@ class Grid : public ObjectBase, public SharedInstanceFactory<Grid> {
 
  private:
   Cylinder cylinder_;
-  double resolution_ = 10.0;
+  double resolution_ = 1.0;
 };
 }  // namespace livision

@@ -16,11 +16,11 @@ class DegeneracyIndicator : public ObjectBase,
   /**
    * @brief Initialize indicator primitives.
    */
-  void OnInit() final;
+  void OnInit() override;
   /**
    * @brief Draw the indicator.
    */
-  void OnDraw(Renderer& renderer) final;
+  void OnDraw(Renderer& renderer) override;
 
   /**
    * @brief Set degeneracy vectors for translation and rotation.

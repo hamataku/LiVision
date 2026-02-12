@@ -5,18 +5,6 @@
 namespace livision {
 
 /**
- * @brief Parameters for rainbow color mapping.
- */
-struct RainbowParams {
-  Eigen::Vector3d direction{1.0F, 0.0F, 0.0F};
-  float delta = 1.0F;
-
-  RainbowParams() = default;
-  RainbowParams(const Eigen::Vector3d& dir, float d)
-      : direction(dir), delta(d) {}
-};
-
-/**
  * @brief RGBA color with optional rainbow mapping.
  */
 struct Color {
@@ -27,7 +15,7 @@ struct Color {
 
   ColorMode mode = ColorMode::Fixed;
   float base[4] = {0.0F, 0.0F, 0.0F, 1.0F};  // r, g, b, a
-  RainbowParams rainbow;
+  Eigen::Vector3d direction{1.0, 0.0, 0.0};
 
   /**
    * @brief Construct a fixed RGBA color.
@@ -36,13 +24,13 @@ struct Color {
   /**
    * @brief Construct a rainbow color with explicit alpha.
    */
-  Color(float r, float g, float b, float a, const RainbowParams& rp)
-      : base{r, g, b, a}, mode(ColorMode::Rainbow), rainbow(rp) {};
+  Color(float r, float g, float b, float a, const Eigen::Vector3d& dir)
+      : mode(ColorMode::Rainbow), base{r, g, b, a}, direction(dir) {};
   /**
    * @brief Construct a rainbow color with alpha = 1.
    */
-  Color(float r, float g, float b, const RainbowParams& rp)
-      : base{r, g, b, 1.0F}, mode(ColorMode::Rainbow), rainbow(rp) {};
+  Color(float r, float g, float b, const Eigen::Vector3d& dir)
+      : mode(ColorMode::Rainbow), base{r, g, b, 1.0F}, direction(dir) {};
   /**
    * @brief Construct a color from a mode.
    */
@@ -89,11 +77,11 @@ struct Color {
     return c;
   }
   /**
-   * @brief Return a copy with updated rainbow parameters.
+   * @brief Return a copy with updated rainbow direction vector.
    */
-  Color SetRainbowParams(const RainbowParams& rp) const {
+  Color SetDirection(const Eigen::Vector3d& dir) const {
     Color c = *this;
-    c.rainbow = rp;
+    c.direction = dir;
     return c;
   }
 };
@@ -128,14 +116,11 @@ inline const Color rose{0.95F, 0.35F, 0.45F};
 inline const Color sand{0.90F, 0.80F, 0.55F};
 
 inline const Color rainbow_x{
-    1.0F, 0.0F, 0.0F, 1.0F,
-    RainbowParams(Eigen::Vector3d(1.0F, 0.0F, 0.0F), 0.1F)};
+    1.0F, 0.0F, 0.0F, 1.0F, Eigen::Vector3d(0.1, 0.0, 0.0)};
 inline const Color rainbow_y{
-    1.0F, 0.0F, 0.0F, 1.0F,
-    RainbowParams(Eigen::Vector3d(0.0F, 1.0F, 0.0F), 0.1F)};
+    1.0F, 0.0F, 0.0F, 1.0F, Eigen::Vector3d(0.0, 0.1, 0.0)};
 inline const Color rainbow_z{
-    1.0F, 0.0F, 0.0F, 1.0F,
-    RainbowParams(Eigen::Vector3d(0.0F, 0.0F, 1.0F), 0.1F)};
+    1.0F, 0.0F, 0.0F, 1.0F, Eigen::Vector3d(0.0, 0.0, 0.1)};
 
 inline std::vector<Color> color_palette{
     red, green, blue, yellow, cyan, magenta, orange, teal, olive, rose, sand};

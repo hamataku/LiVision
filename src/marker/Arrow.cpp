@@ -36,8 +36,7 @@ void Arrow::OnDraw(Renderer& renderer) {
         .color = params_.color,
         .wire_color = params_.wire_color,
     });
-    body_.UpdateMatrix();
-    body_.SetGlobalMatrix(global_mtx_ * body_.GetGlobalMatrix());
+    body_.UpdateMatrix(global_mtx_);
     body_.OnDraw(renderer);
   }
 
@@ -52,8 +51,7 @@ void Arrow::OnDraw(Renderer& renderer) {
       .color = params_.color,
       .wire_color = params_.wire_color,
   });
-  head_.UpdateMatrix();
-  head_.SetGlobalMatrix(global_mtx_ * head_.GetGlobalMatrix());
+  head_.UpdateMatrix(global_mtx_);
   head_.OnDraw(renderer);
 }
 

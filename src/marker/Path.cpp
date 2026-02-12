@@ -15,13 +15,13 @@ void Path::OnDraw(Renderer& renderer) {
     cylinder_.SetScale(Eigen::Vector3d(width_, width_, length));
     cylinder_.SetQuatRotation(Eigen::Quaterniond::FromTwoVectors(
         Eigen::Vector3d(0, 0, 1), direction));
-    cylinder_.UpdateMatrix();
+    cylinder_.UpdateMatrix(global_mtx_);
     cylinder_.OnDraw(renderer);
 
     if (is_sphere_) {
       sphere_.SetPos(p2)->SetScale(
           Eigen::Vector3d(sphere_size_, sphere_size_, sphere_size_));
-      sphere_.UpdateMatrix();
+      sphere_.UpdateMatrix(global_mtx_);
       sphere_.OnDraw(renderer);
     }
   }

@@ -2,19 +2,22 @@
 
 namespace livision {
 
-void Odometry::OnInit() {
+Odometry::Odometry(ObjectBase::Params params) : Container(std::move(params)) {
   arrow_x_ = Arrow::Instance();
   arrow_y_ = Arrow::Instance();
   arrow_z_ = Arrow::Instance();
 
   arrow_x_
-      ->SetFromTo(Eigen::Vector3d(0.0, 0.0, 0.0), Eigen::Vector3d(1.2, 0.0, 0.0))
+      ->SetFromTo(Eigen::Vector3d(0.0, 0.0, 0.0),
+                  Eigen::Vector3d(1.2, 0.0, 0.0))
       .SetColor(color::red);
   arrow_y_
-      ->SetFromTo(Eigen::Vector3d(0.0, 0.0, 0.0), Eigen::Vector3d(0.0, 1.2, 0.0))
+      ->SetFromTo(Eigen::Vector3d(0.0, 0.0, 0.0),
+                  Eigen::Vector3d(0.0, 1.2, 0.0))
       .SetColor(color::green);
   arrow_z_
-      ->SetFromTo(Eigen::Vector3d(0.0, 0.0, 0.0), Eigen::Vector3d(0.0, 0.0, 1.2))
+      ->SetFromTo(Eigen::Vector3d(0.0, 0.0, 0.0),
+                  Eigen::Vector3d(0.0, 0.0, 1.2))
       .SetColor(color::blue);
   AddObject(arrow_x_);
   AddObject(arrow_y_);

@@ -20,7 +20,7 @@ option(LIVISION_BUILD_EXAMPLE "Build example" ON)
 option(LIVISION_COMPILE_SHADERS "Compile shaders at build time" ON)
 option(LIVISION_INSTALL_PRECOMPILED_SHADERS
        "Install precompiled shaders from shader/bin when not compiling"
-       ON)
+       OFF)
 option(LIVISION_ENABLE_SDF "Enable SDF mesh loading via sdformat and assimp" ON)
 set(LIVISION_SHADER_INSTALL_SUBDIR "livision/shaders" CACHE STRING "Install subdir for shader binaries under CMAKE_INSTALL_DATADIR")
 
@@ -94,6 +94,10 @@ target_include_directories(${PROJECT_NAME}
 target_compile_definitions(${PROJECT_NAME}
     PRIVATE
     LIVISION_SHADER_INSTALL_DIR="${CMAKE_INSTALL_FULL_DATADIR}/${LIVISION_SHADER_INSTALL_SUBDIR}"
+)
+target_compile_definitions(${PROJECT_NAME}
+    PRIVATE
+    LIVISION_SHADER_BUILD_DIR="${CMAKE_CURRENT_SOURCE_DIR}/shader/bin"
 )
 if(LIVISION_ENABLE_SDF)
     target_compile_definitions(${PROJECT_NAME} PRIVATE LIVISION_ENABLE_SDF=1)

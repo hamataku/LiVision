@@ -15,7 +15,7 @@ class Path : public ObjectBase, public SharedInstanceFactory<Path> {
   /**
    * @brief Draw the path.
    */
-  void OnDraw(Renderer& renderer) final;
+  void OnDraw(Renderer& renderer) override;
 
   /**
    * @brief Set path points.

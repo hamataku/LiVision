@@ -17,10 +17,10 @@
 #include <unordered_set>
 #include <vector>
 
+#include "livision/Log.hpp"
+#include "livision/imgui/imstb_truetype.h"
 #include "livision/internal/file_ops.hpp"
 #include "livision/internal/mesh_buffer_access.hpp"
-#include "livision/imgui/imstb_truetype.h"
-#include "livision/Log.hpp"
 
 namespace livision {
 
@@ -63,6 +63,16 @@ Renderer::Renderer() : pimpl_(std::make_unique<Impl>()) {}
 Renderer::~Renderer() = default;
 
 namespace {
+void BuildRainbowParams(const Eigen::Vector3d& direction, float out[4]) {
+  const double delta = direction.norm();
+  const Eigen::Vector3d dir =
+      (delta > 1e-12) ? (direction / delta) : Eigen::Vector3d(1.0, 0.0, 0.0);
+  out[0] = static_cast<float>(dir.x());
+  out[1] = static_cast<float>(dir.y());
+  out[2] = static_cast<float>(dir.z());
+  out[3] = static_cast<float>(delta);
+}
+
 std::vector<std::string> SplitPaths(const std::string& paths) {
 #if BX_PLATFORM_WINDOWS
   const char delimiter = ';';
@@ -100,8 +110,7 @@ std::vector<std::string> CollectShaderSearchPaths(
 #ifdef LIVISION_SHADER_SOURCE_DIR
   paths.emplace_back(LIVISION_SHADER_SOURCE_DIR);
 #endif
-
-  paths.emplace_back("shader/bin");
+  paths.emplace_back(LIVISION_SHADER_BUILD_DIR);
 
 #ifdef LIVISION_SHADER_INSTALL_DIR
   paths.emplace_back(LIVISION_SHADER_INSTALL_DIR);
@@ -114,10 +123,10 @@ bgfx::ShaderHandle CreateShaderFromPaths(
     const std::vector<std::string>& search_paths) {
   std::string shader;
   for (const std::string& base : search_paths) {
-      std::string path = base;
-      path += "/";
-      path += file_name;
-      if (internal::file_ops::ReadFile(path, shader)) {
+    std::string path = base;
+    path += "/";
+    path += file_name;
+    if (internal::file_ops::ReadFile(path, shader)) {
       LogMessage(LogLevel::Debug, "Loaded shader: ", path);
       const bgfx::Memory* mem = bgfx::copy(shader.data(), shader.size());
       const bgfx::ShaderHandle handle = bgfx::createShader(mem);
@@ -145,8 +154,7 @@ bgfx::TextureHandle LoadTexture(const std::string& path, bool srgb) {
 
   bx::DefaultAllocator allocator;
   bimg::ImageContainer* image = bimg::imageParse(
-      &allocator,
-      reinterpret_cast<const void*>(texture_file.data()),
+      &allocator, reinterpret_cast<const void*>(texture_file.data()),
       static_cast<uint32_t>(texture_file.size()));
   if (!image) {
     LogMessage(LogLevel::Error, "Failed to decode texture: ", path);
@@ -159,18 +167,19 @@ bgfx::TextureHandle LoadTexture(const std::string& path, bool srgb) {
     flags |= BGFX_TEXTURE_SRGB;
   }
 
-  const auto create2d = [&](const bimg::ImageContainer& img)
-      -> bgfx::TextureHandle {
+  const auto create2d =
+      [&](const bimg::ImageContainer& img) -> bgfx::TextureHandle {
     const auto format = static_cast<bgfx::TextureFormat::Enum>(img.m_format);
-    if (!bgfx::isTextureValid(0, img.m_cubeMap, static_cast<uint16_t>(img.m_numLayers),
-                              format, flags)) {
+    if (!bgfx::isTextureValid(0, img.m_cubeMap,
+                              static_cast<uint16_t>(img.m_numLayers), format,
+                              flags)) {
       return BGFX_INVALID_HANDLE;
     }
     const bgfx::Memory* mem = bgfx::copy(img.m_data, img.m_size);
     return bgfx::createTexture2D(
         static_cast<uint16_t>(img.m_width), static_cast<uint16_t>(img.m_height),
-        img.m_numMips > 1, static_cast<uint16_t>(img.m_numLayers), format, flags,
-        mem);
+        img.m_numMips > 1, static_cast<uint16_t>(img.m_numLayers), format,
+        flags, mem);
   };
 
   bgfx::TextureHandle handle = create2d(*image);
@@ -223,9 +232,10 @@ bool LoadFontAtlas(bgfx::TextureHandle& out_texture, int& out_width,
   const std::vector<int> sizes = {512, 1024, 2048, 4096};
   for (const int side : sizes) {
     std::vector<unsigned char> alpha(side * side, 0U);
-    if (stbtt_BakeFontBitmap(reinterpret_cast<const unsigned char*>(font_file.data()),
-                             0, static_cast<float>(pixel_height), alpha.data(),
-                             side, side, 32, 96, out_glyphs) <= 0) {
+    if (stbtt_BakeFontBitmap(
+            reinterpret_cast<const unsigned char*>(font_file.data()), 0,
+            static_cast<float>(pixel_height), alpha.data(), side, side, 32, 96,
+            out_glyphs) <= 0) {
       continue;
     }
 
@@ -235,15 +245,13 @@ bool LoadFontAtlas(bgfx::TextureHandle& out_texture, int& out_width,
     }
 
     const uint64_t flags = BGFX_TEXTURE_NONE | BGFX_SAMPLER_U_CLAMP |
-                           BGFX_SAMPLER_V_CLAMP |
-                           BGFX_SAMPLER_MIN_ANISOTROPIC |
+                           BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_MIN_ANISOTROPIC |
                            BGFX_SAMPLER_MAG_ANISOTROPIC;
-    const bgfx::Memory* mem = bgfx::copy(rgba.data(),
-                                         static_cast<uint32_t>(rgba.size()));
-    const auto handle =
-        bgfx::createTexture2D(static_cast<uint16_t>(side),
-                              static_cast<uint16_t>(side), false, 1,
-                              bgfx::TextureFormat::RGBA8, flags, mem);
+    const bgfx::Memory* mem =
+        bgfx::copy(rgba.data(), static_cast<uint32_t>(rgba.size()));
+    const auto handle = bgfx::createTexture2D(
+        static_cast<uint16_t>(side), static_cast<uint16_t>(side), false, 1,
+        bgfx::TextureFormat::RGBA8, flags, mem);
     if (!bgfx::isValid(handle)) {
       continue;
     }
@@ -352,10 +360,8 @@ void Renderer::Submit(MeshBuffer& mesh_buffer, const Eigen::Affine3d& mtx,
     bgfx::setUniform(pimpl_->u_color, &color.base);
     float mode_val[4] = {static_cast<float>(static_cast<int>(color.mode)), 0.0F,
                          0.0F, 0.0F};
-    float rparams[4] = {static_cast<float>(color.rainbow.direction.x()),
-                        static_cast<float>(color.rainbow.direction.y()),
-                        static_cast<float>(color.rainbow.direction.z()),
-                        static_cast<float>(color.rainbow.delta)};
+    float rparams[4];
+    BuildRainbowParams(color.direction, rparams);
     bgfx::setUniform(pimpl_->u_color_mode, mode_val);
     bgfx::setUniform(pimpl_->u_rainbow_params, rparams);
 
@@ -399,10 +405,8 @@ void Renderer::Submit(MeshBuffer& mesh_buffer, const Eigen::Affine3d& mtx,
     bgfx::setUniform(pimpl_->u_color, &wire_color.base);
     float mode_val[4] = {static_cast<float>(static_cast<int>(wire_color.mode)),
                          0.0F, 0.0F, 0.0F};
-    float rparams[4] = {static_cast<float>(wire_color.rainbow.direction.x()),
-                        static_cast<float>(wire_color.rainbow.direction.y()),
-                        static_cast<float>(wire_color.rainbow.direction.z()),
-                        static_cast<float>(wire_color.rainbow.delta)};
+    float rparams[4];
+    BuildRainbowParams(wire_color.direction, rparams);
     bgfx::setUniform(pimpl_->u_color_mode, mode_val);
     bgfx::setUniform(pimpl_->u_rainbow_params, rparams);
 
@@ -447,10 +451,8 @@ void Renderer::SubmitInstanced(MeshBuffer& mesh_buffer,
   bgfx::setUniform(pimpl_->u_color, &color.base);
   float mode_val[4] = {static_cast<float>(static_cast<int>(color.mode)), 0.0F,
                        0.0F, 0.0F};
-  float rparams[4] = {static_cast<float>(color.rainbow.direction.x()),
-                      static_cast<float>(color.rainbow.direction.y()),
-                      static_cast<float>(color.rainbow.direction.z()),
-                      static_cast<float>(color.rainbow.delta)};
+  float rparams[4];
+  BuildRainbowParams(color.direction, rparams);
   bgfx::setUniform(pimpl_->u_color_mode, mode_val);
   bgfx::setUniform(pimpl_->u_rainbow_params, rparams);
 
@@ -479,7 +481,8 @@ void Renderer::SubmitText(const std::string& text, const Eigen::Affine3d& mtx,
                           const Color& color, const std::string& font_path,
                           float height, TextFacingMode facing_mode,
                           TextDepthMode depth_mode, TextAlign align) {
-  if (text.empty() || color.mode == Color::ColorMode::InVisible || height <= 0.0F) {
+  if (text.empty() || color.mode == Color::ColorMode::InVisible ||
+      height <= 0.0F) {
     return;
   }
 
@@ -501,14 +504,16 @@ void Renderer::SubmitText(const std::string& text, const Eigen::Affine3d& mtx,
   }
 
   const int pixel_height = 48;
-  const std::string font_key = resolved_font + "#" + std::to_string(pixel_height);
+  const std::string font_key =
+      resolved_font + "#" + std::to_string(pixel_height);
   auto it = pimpl_->font_cache.find(font_key);
   if (it == pimpl_->font_cache.end()) {
     Impl::FontAtlas atlas;
     if (!LoadFontAtlas(atlas.texture, atlas.width, atlas.height, atlas.glyphs,
                        resolved_font, pixel_height)) {
       if (pimpl_->warned_missing_fonts.insert(font_key).second) {
-        LogMessage(LogLevel::Warn, "Failed to bake font atlas: ", resolved_font);
+        LogMessage(LogLevel::Warn,
+                   "Failed to bake font atlas: ", resolved_font);
       }
       return;
     }
@@ -585,16 +590,16 @@ void Renderer::SubmitText(const std::string& text, const Eigen::Affine3d& mtx,
     } else if (align == TextAlign::Right) {
       pen_x = -width_px;
     }
-    float pen_y = static_cast<float>(li) * static_cast<float>(atlas.pixel_height) *
-                  1.2F;
+    float pen_y =
+        static_cast<float>(li) * static_cast<float>(atlas.pixel_height) * 1.2F;
 
     for (const char ch : line) {
       if (ch < 32 || ch >= 128) {
         continue;
       }
       stbtt_aligned_quad q{};
-      stbtt_GetBakedQuad(atlas.glyphs, atlas.width, atlas.height, ch - 32, &pen_x,
-                         &pen_y, &q, 1);
+      stbtt_GetBakedQuad(atlas.glyphs, atlas.width, atlas.height, ch - 32,
+                         &pen_x, &pen_y, &q, 1);
 
       const float lx0 = q.x0 * scale;
       const float ly0 = -q.y0 * scale - line_height;
@@ -615,13 +620,17 @@ void Renderer::SubmitText(const std::string& text, const Eigen::Affine3d& mtx,
       const Eigen::Vector3d p3 = to_world(lx0, ly1);
 
       const uint16_t base = static_cast<uint16_t>(vertices.size());
-      vertices.push_back({static_cast<float>(p0.x()), static_cast<float>(p0.y()),
+      vertices.push_back({static_cast<float>(p0.x()),
+                          static_cast<float>(p0.y()),
                           static_cast<float>(p0.z()), q.s0, q.t0});
-      vertices.push_back({static_cast<float>(p1.x()), static_cast<float>(p1.y()),
+      vertices.push_back({static_cast<float>(p1.x()),
+                          static_cast<float>(p1.y()),
                           static_cast<float>(p1.z()), q.s1, q.t0});
-      vertices.push_back({static_cast<float>(p2.x()), static_cast<float>(p2.y()),
+      vertices.push_back({static_cast<float>(p2.x()),
+                          static_cast<float>(p2.y()),
                           static_cast<float>(p2.z()), q.s1, q.t1});
-      vertices.push_back({static_cast<float>(p3.x()), static_cast<float>(p3.y()),
+      vertices.push_back({static_cast<float>(p3.x()),
+                          static_cast<float>(p3.y()),
                           static_cast<float>(p3.z()), q.s0, q.t1});
       indices.push_back(base + 0);
       indices.push_back(base + 1);
@@ -636,11 +645,11 @@ void Renderer::SubmitText(const std::string& text, const Eigen::Affine3d& mtx,
     return;
   }
 
-  if (bgfx::getAvailTransientVertexBuffer(static_cast<uint32_t>(vertices.size()),
-                                          layout) <
+  if (bgfx::getAvailTransientVertexBuffer(
+          static_cast<uint32_t>(vertices.size()), layout) <
           static_cast<uint32_t>(vertices.size()) ||
-      bgfx::getAvailTransientIndexBuffer(static_cast<uint32_t>(indices.size())) <
-          static_cast<uint32_t>(indices.size())) {
+      bgfx::getAvailTransientIndexBuffer(static_cast<uint32_t>(
+          indices.size())) < static_cast<uint32_t>(indices.size())) {
     return;
   }
 
@@ -652,8 +661,8 @@ void Renderer::SubmitText(const std::string& text, const Eigen::Affine3d& mtx,
   std::memcpy(tvb.data, vertices.data(), vertices.size() * sizeof(TextVertex));
   std::memcpy(tib.data, indices.data(), indices.size() * sizeof(uint16_t));
 
-  uint64_t state = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
-                   BGFX_STATE_BLEND_ALPHA;
+  uint64_t state =
+      BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_BLEND_ALPHA;
   if (depth_mode == TextDepthMode::DepthTest) {
     state |= BGFX_STATE_DEPTH_TEST_LESS | BGFX_STATE_WRITE_Z;
   }
@@ -661,16 +670,13 @@ void Renderer::SubmitText(const std::string& text, const Eigen::Affine3d& mtx,
   bgfx::setUniform(pimpl_->u_color, &color.base);
   float mode_val[4] = {static_cast<float>(static_cast<int>(color.mode)), 0.0F,
                        0.0F, 0.0F};
-  float rparams[4] = {static_cast<float>(color.rainbow.direction.x()),
-                      static_cast<float>(color.rainbow.direction.y()),
-                      static_cast<float>(color.rainbow.direction.z()),
-                      static_cast<float>(color.rainbow.delta)};
+  float rparams[4];
+  BuildRainbowParams(color.direction, rparams);
   bgfx::setUniform(pimpl_->u_color_mode, mode_val);
   bgfx::setUniform(pimpl_->u_rainbow_params, rparams);
 
-  const float identity[16] = {
-      1.0F, 0.0F, 0.0F, 0.0F, 0.0F, 1.0F, 0.0F, 0.0F,
-      0.0F, 0.0F, 1.0F, 0.0F, 0.0F, 0.0F, 0.0F, 1.0F};
+  const float identity[16] = {1.0F, 0.0F, 0.0F, 0.0F, 0.0F, 1.0F, 0.0F, 0.0F,
+                              0.0F, 0.0F, 1.0F, 0.0F, 0.0F, 0.0F, 0.0F, 1.0F};
   bgfx::setTransform(identity);
   bgfx::setVertexBuffer(0, &tvb);
   bgfx::setIndexBuffer(&tib);
@@ -699,10 +705,9 @@ void Renderer::PrintBackend() {
     vendor = "Software Rasterizer";
   }
 
-  LogMessage(LogLevel::Info, "Vendor: ", vendor, " (ID: 0x",
-             std::hex, caps->vendorId, "), Device ID: 0x", caps->deviceId,
-             std::dec, ", Backend: ",
-             bgfx::getRendererName(bgfx::getRendererType()));
+  LogMessage(LogLevel::Info, "Vendor: ", vendor, " (ID: 0x", std::hex,
+             caps->vendorId, "), Device ID: 0x", caps->deviceId, std::dec,
+             ", Backend: ", bgfx::getRendererName(bgfx::getRendererType()));
 }
 
 }  // namespace livision
