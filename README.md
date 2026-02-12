@@ -2,6 +2,7 @@
 
 LiVision is a lightweight C++ 3D visualizer for rapid prototyping with imgui & implot.
 
+[![PPA liblivision-dev](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.launchpad.net%2F1.0%2F~hamatakuzaq%2F%2Barchive%2Fubuntu%2Flivision%3Fws.op%3DgetPublishedBinaries%26status%3DPublished%26binary_name%3Dliblivision-dev%26exact_match%3Dtrue%26order_by_date%3Dtrue&query=entries.0.binary_package_version&label=ppa%3Aliblivision-dev)](https://launchpad.net/~hamatakuzaq/+archive/ubuntu/livision)
 [![build](https://github.com/hamataku/LiVision/actions/workflows/build.yml/badge.svg)](https://github.com/hamataku/LiVision/actions/workflows/build.yml)
 
 * [Documentation(en)](https://hamataku.github.io/LiVision/)
