@@ -25,7 +25,7 @@ class DegeneracyIndicator : public ObjectBase,
   /**
    * @brief Set degeneracy vectors for translation and rotation.
    */
-  DegeneracyIndicator& SetDegeneracyInfo(
+  DegeneracyIndicator* SetDegeneracyInfo(
       const std::vector<Eigen::Vector3d>& degen_trans,
       const std::vector<Eigen::Vector3d>& degen_rot);
 

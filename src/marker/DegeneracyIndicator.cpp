@@ -44,12 +44,12 @@ void DegeneracyIndicator::OnDraw(Renderer& renderer) {
   }
 }
 
-DegeneracyIndicator& DegeneracyIndicator::SetDegeneracyInfo(
+DegeneracyIndicator* DegeneracyIndicator::SetDegeneracyInfo(
     const std::vector<Eigen::Vector3d>& degen_trans,
     const std::vector<Eigen::Vector3d>& degen_rot) {
   degen_trans_ = degen_trans;
   degen_rot_ = degen_rot;
-  return *this;
+  return this;
 }
 
 }  // namespace livision

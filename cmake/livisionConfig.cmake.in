@@ -3,5 +3,12 @@
 include(CMakeFindDependencyMacro)
 find_dependency(SDL2 REQUIRED)
 find_dependency(Eigen3 REQUIRED)
+if(@LIVISION_ENABLE_SDF@)
+  find_dependency(sdformat14 REQUIRED)
+  find_dependency(assimp REQUIRED)
+  find_dependency(CURL REQUIRED)
+endif()
 
 include("${CMAKE_CURRENT_LIST_DIR}/@PACKAGE_TARGETS_FILE@")
+
+check_required_components(@PACKAGE_NAME@)

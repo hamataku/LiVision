@@ -20,7 +20,7 @@ class Path : public ObjectBase, public SharedInstanceFactory<Path> {
   /**
    * @brief Set path points.
    */
-  Path& SetPath(const std::vector<Eigen::Vector3d>& path);
+  Path* SetPath(const std::vector<Eigen::Vector3d>& path);
   /**
    * @brief Get the current path points.
    */
@@ -29,15 +29,15 @@ class Path : public ObjectBase, public SharedInstanceFactory<Path> {
   /**
    * @brief Set path width.
    */
-  Path& SetPathWidth(double width);
+  Path* SetPathWidth(double width);
   /**
    * @brief Toggle sphere markers on the path.
    */
-  Path& SetSphereVisible(bool is_sphere);
+  Path* SetSphereVisible(bool is_sphere);
   /**
    * @brief Set sphere marker size.
    */
-  Path& SetSphereSize(double size);
+  Path* SetSphereSize(double size);
 
  private:
   Cylinder cylinder_;
@@ -45,7 +45,7 @@ class Path : public ObjectBase, public SharedInstanceFactory<Path> {
 
   std::vector<Eigen::Vector3d> path_;
   double width_ = 0.1;
-  bool is_sphere_ = true;
+  bool is_sphere_ = false;
   double sphere_size_ = 0.1;
 };
 }  // namespace livision

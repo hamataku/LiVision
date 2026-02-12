@@ -27,22 +27,22 @@ void Path::OnDraw(Renderer& renderer) {
   }
 }
 
-Path& Path::SetPath(const std::vector<Eigen::Vector3d>& path) {
+Path* Path::SetPath(const std::vector<Eigen::Vector3d>& path) {
   path_ = path;
-  return *this;
+  return this;
 }
-Path& Path::SetPathWidth(double width) {
+Path* Path::SetPathWidth(double width) {
   width_ = width;
-  return *this;
+  return this;
 }
 
-Path& Path::SetSphereVisible(bool is_sphere) {
+Path* Path::SetSphereVisible(bool is_sphere) {
   is_sphere_ = is_sphere;
-  return *this;
+  return this;
 }
-Path& Path::SetSphereSize(double size) {
+Path* Path::SetSphereSize(double size) {
   sphere_size_ = size;
-  return *this;
+  return this;
 }
 
 }  // namespace livision

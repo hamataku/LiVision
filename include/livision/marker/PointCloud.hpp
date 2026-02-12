@@ -30,28 +30,28 @@ class PointCloud : public ObjectBase,
   /**
    * @brief Set points from 3D positions (uniform size).
    */
-  PointCloud& SetPoints(const std::vector<Eigen::Vector3d>& points_with_size) {
+  PointCloud* SetPoints(const std::vector<Eigen::Vector3d>& points_with_size) {
     points_.clear();
     for (const auto& p : points_with_size) {
       points_.emplace_back(p.x(), p.y(), p.z(), size_);
     }
-    return *this;
+    return this;
   }
 
   /**
    * @brief Set points with per-point size in w component.
    */
-  PointCloud& SetPoints(const std::vector<Eigen::Vector4d>& points) {
+  PointCloud* SetPoints(const std::vector<Eigen::Vector4d>& points) {
     points_ = points;
-    return *this;
+    return this;
   }
 
   /**
    * @brief Set the uniform point size.
    */
-  PointCloud& SetSize(double size) {
+  PointCloud* SetSize(double size) {
     size_ = size;
-    return *this;
+    return this;
   }
 
   /**

@@ -16,34 +16,34 @@ void Text::OnDraw(Renderer& renderer) {
                       facing_mode_, depth_mode_, align_);
 }
 
-Text& Text::SetText(const std::string& text) {
+Text* Text::SetText(const std::string& text) {
   text_ = text;
-  return *this;
+  return this;
 }
 
-Text& Text::SetHeight(float height) {
+Text* Text::SetHeight(float height) {
   height_ = height;
-  return *this;
+  return this;
 }
 
-Text& Text::SetFont(const std::string& font_path) {
+Text* Text::SetFont(const std::string& font_path) {
   font_ = font_path;
-  return *this;
+  return this;
 }
 
-Text& Text::SetFacingMode(TextFacingMode mode) {
+Text* Text::SetFacingMode(TextFacingMode mode) {
   facing_mode_ = mode;
-  return *this;
+  return this;
 }
 
-Text& Text::SetDepthMode(TextDepthMode mode) {
+Text* Text::SetDepthMode(TextDepthMode mode) {
   depth_mode_ = mode;
-  return *this;
+  return this;
 }
 
-Text& Text::SetAlign(TextAlign align) {
+Text* Text::SetAlign(TextAlign align) {
   align_ = align;
-  return *this;
+  return this;
 }
 
 }  // namespace livision

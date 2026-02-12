@@ -83,6 +83,7 @@ int main() {
 
   // Grid
   auto grid = livision::Grid::Instance({.scale = {15.0, 15.0, 0.0}});
+  grid->SetResolution(1.0)->SetColor(livision::color::dark_gray);
   viewer->AddObject(grid);
 
   // Sphere

@@ -55,28 +55,28 @@ void Arrow::OnDraw(Renderer& renderer) {
   head_.OnDraw(renderer);
 }
 
-Arrow& Arrow::SetFromTo(const Eigen::Vector3d& from,
+Arrow* Arrow::SetFromTo(const Eigen::Vector3d& from,
                         const Eigen::Vector3d& to) {
   arrow_params_.from_ = from;
   arrow_params_.to_ = to;
-  return *this;
+  return this;
 }
 
-Arrow& Arrow::SetArrowParams(const ArrowParams& params) {
+Arrow* Arrow::SetArrowParams(const ArrowParams& params) {
   arrow_params_ = params;
-  return *this;
+  return this;
 }
-Arrow& Arrow::SetHeadLength(double length) {
+Arrow* Arrow::SetHeadLength(double length) {
   arrow_params_.head_length_ = length;
-  return *this;
+  return this;
 }
-Arrow& Arrow::SetHeadRadius(double radius) {
+Arrow* Arrow::SetHeadRadius(double radius) {
   arrow_params_.head_radius_ = radius;
-  return *this;
+  return this;
 }
-Arrow& Arrow::SetBodyRadius(double radius) {
+Arrow* Arrow::SetBodyRadius(double radius) {
   arrow_params_.body_radius_ = radius;
-  return *this;
+  return this;
 }
 
 }  // namespace livision

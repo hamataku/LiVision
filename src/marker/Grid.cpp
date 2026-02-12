@@ -39,9 +39,9 @@ void Grid::UpdateMatrix(const Eigen::Affine3d& parent_mtx) {
   global_mtx_ = parent_mtx;
 }
 
-Grid& Grid::SetResolution(double resolution) {
+Grid* Grid::SetResolution(double resolution) {
   resolution_ = resolution;
-  return *this;
+  return this;
 }
 
 }  // namespace livision

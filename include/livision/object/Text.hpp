@@ -28,12 +28,12 @@ class Text : public ObjectBase, public SharedInstanceFactory<Text> {
 
   void OnDraw(Renderer& renderer) override;
 
-  Text& SetText(const std::string& text);
-  Text& SetHeight(float height);
-  Text& SetFont(const std::string& font_path);
-  Text& SetFacingMode(TextFacingMode mode);
-  Text& SetDepthMode(TextDepthMode mode);
-  Text& SetAlign(TextAlign align);
+  Text* SetText(const std::string& text);
+  Text* SetHeight(float height);
+  Text* SetFont(const std::string& font_path);
+  Text* SetFacingMode(TextFacingMode mode);
+  Text* SetDepthMode(TextDepthMode mode);
+  Text* SetAlign(TextAlign align);
 
  private:
   std::string text_;

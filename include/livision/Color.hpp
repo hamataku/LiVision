@@ -90,7 +90,6 @@ struct Color {
  * @brief Predefined colors and palettes.
  */
 namespace color {
-inline const Color invisible{Color::ColorMode::InVisible};
 inline const Color transparent{Color::ColorMode::InVisible};
 
 inline const Color white{1.0F, 1.0F, 1.0F};
@@ -115,12 +114,12 @@ inline const Color violet{0.65F, 0.40F, 0.90F};
 inline const Color rose{0.95F, 0.35F, 0.45F};
 inline const Color sand{0.90F, 0.80F, 0.55F};
 
-inline const Color rainbow_x{
-    1.0F, 0.0F, 0.0F, 1.0F, Eigen::Vector3d(0.1, 0.0, 0.0)};
-inline const Color rainbow_y{
-    1.0F, 0.0F, 0.0F, 1.0F, Eigen::Vector3d(0.0, 0.1, 0.0)};
-inline const Color rainbow_z{
-    1.0F, 0.0F, 0.0F, 1.0F, Eigen::Vector3d(0.0, 0.0, 0.1)};
+inline const Color rainbow_x{1.0F, 0.0F, 0.0F, 1.0F,
+                             Eigen::Vector3d(0.1, 0.0, 0.0)};
+inline const Color rainbow_y{1.0F, 0.0F, 0.0F, 1.0F,
+                             Eigen::Vector3d(0.0, 0.1, 0.0)};
+inline const Color rainbow_z{1.0F, 0.0F, 0.0F, 1.0F,
+                             Eigen::Vector3d(0.0, 0.0, 0.1)};
 
 inline std::vector<Color> color_palette{
     red, green, blue, yellow, cyan, magenta, orange, teal, olive, rose, sand};

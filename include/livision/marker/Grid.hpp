@@ -22,7 +22,7 @@ class Grid : public ObjectBase, public SharedInstanceFactory<Grid> {
   /**
    * @brief Set grid resolution (line spacing).
    */
-  Grid& SetResolution(double resolution);
+  Grid* SetResolution(double resolution);
 
  private:
   Cylinder cylinder_;

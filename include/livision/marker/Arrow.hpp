@@ -39,24 +39,24 @@ class Arrow : public ObjectBase, public SharedInstanceFactory<Arrow> {
   /**
    * @brief Set the arrow start and end points.
    */
-  Arrow& SetFromTo(const Eigen::Vector3d& from, const Eigen::Vector3d& to);
+  Arrow* SetFromTo(const Eigen::Vector3d& from, const Eigen::Vector3d& to);
 
   /**
    * @brief Set all arrow parameters.
    */
-  Arrow& SetArrowParams(const ArrowParams& params);
+  Arrow* SetArrowParams(const ArrowParams& params);
   /**
    * @brief Set head length.
    */
-  Arrow& SetHeadLength(double length);
+  Arrow* SetHeadLength(double length);
   /**
    * @brief Set head radius.
    */
-  Arrow& SetHeadRadius(double radius);
+  Arrow* SetHeadRadius(double radius);
   /**
    * @brief Set body radius.
    */
-  Arrow& SetBodyRadius(double radius);
+  Arrow* SetBodyRadius(double radius);
 
  private:
   livision::Cylinder body_;

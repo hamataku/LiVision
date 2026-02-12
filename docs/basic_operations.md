@@ -18,6 +18,7 @@ auto viewer = livision::Viewer::Instance({
 ```cpp
 auto sphere = livision::Sphere::Instance(
     {.pos = {0.0, 0.0, 1.0}, .scale = {2.0, 2.0, 2.0}});
+sphere->SetColor(livision::color::cyan)->SetWireColor(livision::color::black);
 viewer->AddObject(sphere);
 ```
 

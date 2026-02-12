@@ -41,7 +41,7 @@ int main() {
 
   // Grid
   auto grid = livision::Grid::Instance();
-  grid->SetResolution(1.0).SetScale(Eigen::Vector3d(40.0, 40.0, 0.0));
+  grid->SetResolution(1.0)->SetScale(Eigen::Vector3d(40.0, 40.0, 0.0));
   viewer->AddObject(grid);
 
   // Mesh bunny
@@ -102,7 +102,7 @@ int main() {
                         .head_length_ = 1.0,
                         .head_radius_ = 0.2,
                         .body_radius_ = 0.1})
-      .SetColor(livision::color::yellow);
+      ->SetColor(livision::color::yellow);
   viewer->AddObject(arrow);
 
   // Odometry
@@ -118,8 +118,8 @@ int main() {
   }
   auto path = livision::Path::Instance();
   path->SetPath(path_points)
-      .SetPathWidth(0.1)
-      .SetColor(livision::color::rainbow_x);
+      ->SetPathWidth(0.1)
+      ->SetColor(livision::color::rainbow_x);
   viewer->AddObject(path);
 
   while (viewer->SpinOnce()) {

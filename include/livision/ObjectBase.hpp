@@ -24,10 +24,10 @@ class ObjectBase {
     Eigen::Vector3d pos = Eigen::Vector3d::Zero();
     Eigen::Vector3d scale = Eigen::Vector3d::Ones();
     Eigen::Quaterniond quat = Eigen::Quaterniond::Identity();
-    std::string name;
     Color color = color::white;
-    std::string texture;
-    Color wire_color = color::invisible;
+    Color wire_color = color::transparent;
+    std::string texture = std::string("");
+    std::string name = std::string("");
   };
 
   /**
@@ -37,9 +37,7 @@ class ObjectBase {
   /**
    * @brief Construct with initial parameters.
    */
-  explicit ObjectBase(Params params) : params_(std::move(params)) {
-    name_ = params_.name;
-  }
+  explicit ObjectBase(Params params) : params_(std::move(params)) {}
 
   /**
    * @brief Destroy object and release resources.
