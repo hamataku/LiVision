@@ -46,7 +46,7 @@ int main() {
 
   // Mesh bunny
   std::string ex_dir = LIVISION_EXAMPLE_DIR;
-  auto bunny = livision::Model::InstanceWithFile(
+  auto bunny = livision::Model::InstanceWithPath(
       ex_dir + "/bunny.stl", {
                                  .pos = {0.0, 0.0, -2.0},
                                  .scale = {50.0, 50.0, 50.0},

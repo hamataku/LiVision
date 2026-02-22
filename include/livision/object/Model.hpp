@@ -22,12 +22,12 @@ class Model : public Container, public SharedInstanceFactory<Model> {
     bool force_reload = false;
   };
 
-  static Model::Ptr InstanceWithFile(const std::string& path,
+  static Model::Ptr InstanceWithPath(const std::string& path,
                                      Params params = Params()) {
     return std::make_shared<Model>(path, std::move(params));
   }
 
-  static Model::Ptr InstanceWithFile(const std::string& path, Params params,
+  static Model::Ptr InstanceWithPath(const std::string& path, Params params,
                                      LoadOptions options) {
     return std::make_shared<Model>(path, std::move(params), options);
   }

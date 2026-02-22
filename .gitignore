@@ -5,6 +5,7 @@ generated/
 imgui.ini
 .vscode/
 .cache
+.serena/
 test_livision/
 docs/api/
 site/

@@ -27,7 +27,7 @@
 ## Model読み込み
 
 ```cpp
-auto model = livision::Model::InstanceWithFile(
+auto model = livision::Model::InstanceWithPath(
     "path/to/model.sdf",
     {.scale = {1.0, 1.0, 1.0}});
 viewer->AddObject(model);
