@@ -466,7 +466,7 @@ void Renderer::SubmitInstanced(MeshBuffer& mesh_buffer,
   bgfx::setTransform(model_mtx);
 
   const auto vbh = internal::MeshBufferAccess::VertexBuffer(mesh_buffer);
-  const auto ibh = internal::MeshBufferAccess::WireIndexBuffer(mesh_buffer);
+  const auto ibh = internal::MeshBufferAccess::IndexBuffer(mesh_buffer);
   const auto mesh_index_count =
       internal::MeshBufferAccess::GetIndexCount(mesh_buffer);
 
