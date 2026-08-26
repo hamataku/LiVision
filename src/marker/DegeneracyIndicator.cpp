@@ -14,6 +14,10 @@ void DegeneracyIndicator::OnInit() {
 }
 
 void DegeneracyIndicator::OnDraw(Renderer& renderer) {
+  // The child primitives are placed with UpdateMatrix(global_mtx_), and
+  // global_mtx_ already contains params_.pos. Their local position must
+  // therefore stay at the origin; setting it to params_.pos applied the
+  // translation twice and drew the marker at 2x the requested position.
   // draw trans degeneracy
   assert(degen_trans_.size() < 3 &&
          "DegeneracyIndicator: degen_trans_ exceeds 3");
@@ -22,7 +26,7 @@ void DegeneracyIndicator::OnDraw(Renderer& renderer) {
     Eigen::Vector3d v = degen_trans_[i].normalized();
     Eigen::Quaterniond quat =
         Eigen::Quaterniond::FromTwoVectors(z, v).normalized();
-    trans_cyl_[i].SetPos(params_.pos)->SetQuatRotation(quat);
+    trans_cyl_[i].SetPos(Eigen::Vector3d::Zero())->SetQuatRotation(quat);
     trans_cyl_[i].UpdateMatrix(global_mtx_);
     trans_cyl_[i].OnDraw(renderer);
   }
@@ -34,11 +38,11 @@ void DegeneracyIndicator::OnDraw(Renderer& renderer) {
     Eigen::Vector3d v = degen_rot_[0].normalized();
     Eigen::Quaterniond quat =
         Eigen::Quaterniond::FromTwoVectors(z, v).normalized();
-    rot_cyl_.SetPos(params_.pos)->SetQuatRotation(quat);
+    rot_cyl_.SetPos(Eigen::Vector3d::Zero())->SetQuatRotation(quat);
     rot_cyl_.UpdateMatrix(global_mtx_);
     rot_cyl_.OnDraw(renderer);
   } else if (degen_rot_.size() >= 2) {
-    rot_sphere_.SetPos(params_.pos);
+    rot_sphere_.SetPos(Eigen::Vector3d::Zero());
     rot_sphere_.UpdateMatrix(global_mtx_);
     rot_sphere_.OnDraw(renderer);
   }

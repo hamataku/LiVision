@@ -1,3 +1,10 @@
+livision (0.3.4-1~jammy) jammy; urgency=medium
+
+  * Fix DegeneracyIndicator drawing its markers at 2x the requested position
+    (child primitives had params_.pos applied on top of global_mtx_).
+
+ -- Taku Hamazaki <hamataku07130713@gmail.com>  Wed, 26 Aug 2026 10:37:26 +0900
+
 livision (0.3.3-1~noble) noble; urgency=medium
 
   * Release v0.3.3 for noble.
