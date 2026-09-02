@@ -24,8 +24,17 @@
 
 namespace livision {
 
+// Two-sided by default: user-supplied meshes (STL scans, LiDAR meshes, open
+// surfaces) are often not closed or have mixed winding, so back-face culling
+// makes triangles vanish. Culling is re-enabled only for translucent surfaces
+// to avoid inner faces stacking up through the alpha blend.
 static constexpr uint64_t kAlphaState =
-    BGFX_STATE_DEFAULT | BGFX_STATE_BLEND_ALPHA;
+    (BGFX_STATE_DEFAULT & ~BGFX_STATE_CULL_MASK) | BGFX_STATE_BLEND_ALPHA;
+
+static uint64_t SurfaceState(const Color& color) {
+  return color.base[3] < 1.0F ? (kAlphaState | BGFX_STATE_CULL_CW)
+                              : kAlphaState;
+}
 static constexpr uint64_t kPointState = kAlphaState | BGFX_STATE_PT_POINTS;
 static constexpr uint64_t kPointSpriteState =
     kAlphaState | BGFX_STATE_PT_TRISTRIP;
@@ -356,7 +365,7 @@ void Renderer::Submit(MeshBuffer& mesh_buffer, const Eigen::Affine3d& mtx,
                       const Color& color, const std::string& texture,
                       const Color& wire_color) {
   if (color.mode != Color::ColorMode::InVisible) {
-    bgfx::setState(kAlphaState);
+    bgfx::setState(SurfaceState(color));
     bgfx::setUniform(pimpl_->u_color, &color.base);
     // y = 1 enables headlight shading (filled surfaces only).
     float mode_val[4] = {static_cast<float>(static_cast<int>(color.mode)), 1.0F,
@@ -448,7 +457,7 @@ void Renderer::SubmitInstanced(MeshBuffer& mesh_buffer,
     data += 4;
   }
 
-  bgfx::setState(kAlphaState);
+  bgfx::setState(SurfaceState(color));
   bgfx::setUniform(pimpl_->u_color, &color.base);
   float mode_val[4] = {static_cast<float>(static_cast<int>(color.mode)), 1.0F,
                        0.0F, 0.0F};
