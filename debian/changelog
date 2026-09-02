@@ -1,3 +1,12 @@
+livision (0.3.5-1~jammy) jammy; urgency=medium
+
+  * Add headlight shading: filled surfaces are now lit by a camera-fixed
+    light using screen-space derivative normals, so shape and depth are
+    visible without configuring any lights. Wireframe and text are
+    unaffected.
+
+ -- Taku Hamazaki <hamataku07130713@gmail.com>  Wed, 02 Sep 2026 14:51:56 +0900
+
 livision (0.3.4-1~jammy) jammy; urgency=medium
 
   * Fix DegeneracyIndicator drawing its markers at 2x the requested position

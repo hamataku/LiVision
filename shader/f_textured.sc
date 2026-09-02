@@ -4,7 +4,7 @@ $input v_worldPos, v_texcoord0
 
 uniform vec4 u_color;
 uniform vec4 u_rainbow_params; // xyz = direction, w = delta
-uniform vec4 u_color_mode;     // x = 0 fixed, 1 rainbow
+uniform vec4 u_color_mode;     // x = 0 fixed, 1 rainbow; y = 0 flat, 1 headlight shading
 SAMPLER2D(s_texture, 0);
 
 vec3 rgb2hsv(vec3 c) {
@@ -46,6 +46,19 @@ vec3 hsv2rgb(vec3 c) {
     return vec3(v, p, q);
 }
 
+// Headlight shading: face normal from screen-space derivatives, lit by a
+// light fixed to the camera (slightly upper-left). No vertex normals needed.
+vec3 applyHeadlight(vec3 color, vec3 worldPos) {
+    vec3 n = normalize(cross(dFdx(worldPos), dFdy(worldPos)));
+    vec3 n_view = normalize(mul(u_view, vec4(n, 0.0)).xyz);
+    vec3 light_dir = normalize(vec3(0.3, 0.5, 1.0));
+    // abs(): independent of winding order / backend Y-flip, two-sided.
+    float ndotl = abs(dot(n_view, light_dir));
+    float ambient = 0.35;
+    float shade = ambient + (1.0 - ambient) * ndotl;
+    return color * shade;
+}
+
 void main() {
     vec4 tint = u_color;
 
@@ -61,5 +74,9 @@ void main() {
     }
 
     vec4 texel = texture2D(s_texture, v_texcoord0);
-    gl_FragColor = texel * tint;
+    vec4 outColor = texel * tint;
+    if (int(u_color_mode.y) != 0) {
+        outColor.rgb = applyHeadlight(outColor.rgb, v_worldPos);
+    }
+    gl_FragColor = outColor;
 }

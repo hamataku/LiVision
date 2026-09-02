@@ -358,7 +358,8 @@ void Renderer::Submit(MeshBuffer& mesh_buffer, const Eigen::Affine3d& mtx,
   if (color.mode != Color::ColorMode::InVisible) {
     bgfx::setState(kAlphaState);
     bgfx::setUniform(pimpl_->u_color, &color.base);
-    float mode_val[4] = {static_cast<float>(static_cast<int>(color.mode)), 0.0F,
+    // y = 1 enables headlight shading (filled surfaces only).
+    float mode_val[4] = {static_cast<float>(static_cast<int>(color.mode)), 1.0F,
                          0.0F, 0.0F};
     float rparams[4];
     BuildRainbowParams(color.direction, rparams);
@@ -449,7 +450,7 @@ void Renderer::SubmitInstanced(MeshBuffer& mesh_buffer,
 
   bgfx::setState(kAlphaState);
   bgfx::setUniform(pimpl_->u_color, &color.base);
-  float mode_val[4] = {static_cast<float>(static_cast<int>(color.mode)), 0.0F,
+  float mode_val[4] = {static_cast<float>(static_cast<int>(color.mode)), 1.0F,
                        0.0F, 0.0F};
   float rparams[4];
   BuildRainbowParams(color.direction, rparams);
