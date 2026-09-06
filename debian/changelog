@@ -1,3 +1,12 @@
+livision (0.3.7-1~jammy) jammy; urgency=medium
+
+  * Add Python bindings (pybind11): pip-installable livision package
+    mirroring the C++ API. Fix object name given in Params being
+    ignored. Add MouseOrbitCamera::SetTarget/SetYawPitch for initial
+    camera pose.
+
+ -- Taku Hamazaki <hamataku07130713@gmail.com>  Sun, 06 Sep 2026 15:23:55 +0900
+
 livision (0.3.6-1~jammy) jammy; urgency=medium
 
   * Render opaque surfaces two-sided so open or mixed-winding meshes
