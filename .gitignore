@@ -18,3 +18,8 @@ dist/
 *.changes
 *.dsc
 *.upload
+# Python
+__pycache__/
+*.egg-info/
+*.whl
+python/livision/*.so

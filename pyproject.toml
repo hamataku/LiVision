@@ -1,0 +1,46 @@
+[build-system]
+requires = ["scikit-build-core>=0.10", "pybind11>=2.10"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "livision"
+dynamic = ["version"]
+description = "Lightweight C++ 3D visualizer for rapid prototyping, with Python bindings"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Taku Hamazaki", email = "hamataku07130713@gmail.com" }]
+requires-python = ">=3.8"
+dependencies = ["numpy"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: C++",
+  "Operating System :: POSIX :: Linux",
+  "Topic :: Scientific/Engineering :: Visualization",
+]
+
+[project.urls]
+Homepage = "https://github.com/hamataku/LiVision"
+Documentation = "https://hamataku.github.io/LiVision/"
+
+[tool.scikit-build]
+minimum-version = "0.10"
+build-dir = "build-py/{wheel_tag}"
+wheel.packages = ["python/livision"]
+wheel.install-dir = "livision"
+cmake.args = [
+  "-DLIVISION_BUILD_EXAMPLE=OFF",
+  "-DLIVISION_COMPILE_SHADERS=ON",
+]
+sdist.exclude = [
+  "docs/", "site/", "dist/", "examples/", "scripts/", ".github/",
+  "*.orig.tar.xz", "*.debian.tar.xz", "*.dsc", "*.changes", "*.build",
+  "*.buildinfo", "*.upload", "*.patch", "*.log",
+  "third-party/bgfx.cmake/bgfx/examples/", "third-party/bgfx.cmake/bgfx/tools/",
+  "third-party/bgfx.cmake/bgfx/bindings/", "third-party/bgfx.cmake/bx/tools/",
+  "third-party/bgfx.cmake/bx/tests/", "third-party/bgfx.cmake/bimg/tools/",
+]
+
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.regex"
+input = "CMakeLists.txt"
+regex = 'project\(livision VERSION (?P<value>[0-9.]+)'

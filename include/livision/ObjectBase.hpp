@@ -37,7 +37,8 @@ class ObjectBase {
   /**
    * @brief Construct with initial parameters.
    */
-  explicit ObjectBase(Params params) : params_(std::move(params)) {}
+  explicit ObjectBase(Params params)
+      : params_(std::move(params)), name_(params_.name) {}
 
   /**
    * @brief Destroy object and release resources.

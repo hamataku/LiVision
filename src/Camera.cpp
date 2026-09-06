@@ -89,6 +89,21 @@ void MouseOrbitCamera::ApplyScroll() {
   scroll_delta_ = 0.0F;
 }
 
+MouseOrbitCamera* MouseOrbitCamera::SetTarget(float x, float y, float z) {
+  target_x_ = x;
+  target_y_ = y;
+  target_z_ = z;
+  RebuildView();
+  return this;
+}
+
+MouseOrbitCamera* MouseOrbitCamera::SetYawPitch(float yaw, float pitch) {
+  cam_yaw_ = yaw;
+  cam_pitch_ = bx::clamp(pitch, -bx::kPiHalf + 0.01F, bx::kPiHalf - 0.01F);
+  RebuildView();
+  return this;
+}
+
 void MouseOrbitCamera::RebuildView() {
   const bx::Vec3 eye = {
       target_x_ - (kFixedDistance * bx::cos(cam_pitch_) * bx::cos(cam_yaw_)),

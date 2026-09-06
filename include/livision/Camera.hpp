@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 union SDL_Event;
 
 namespace livision {
@@ -40,6 +42,21 @@ class MouseOrbitCamera : public CameraBase {
 
   void HandleEvent(const SDL_Event& event) override;
   const float* Update(const CameraInputContext& context) override;
+
+  /**
+   * @brief Set the point the camera sits at (this controller flies rather
+   * than orbits, so the target is effectively the eye position).
+   */
+  MouseOrbitCamera* SetTarget(float x, float y, float z);
+  /**
+   * @brief Set view direction angles in radians.
+   */
+  MouseOrbitCamera* SetYawPitch(float yaw, float pitch);
+  std::array<float, 3> GetTarget() const {
+    return {target_x_, target_y_, target_z_};
+  }
+  float GetYaw() const { return cam_yaw_; }
+  float GetPitch() const { return cam_pitch_; }
 
  protected:
   void UpdateMouse(bool want_capture_mouse);

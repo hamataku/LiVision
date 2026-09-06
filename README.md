@@ -101,6 +101,22 @@ int main() {
 }
 ```
 
+## 🐍 Python
+The same API is available from Python (pybind11). Building from source takes a few minutes.
+```bash
+pip install .
+```
+```python
+import livision as lv
+
+viewer = lv.Viewer()
+viewer.add_object(lv.Grid(scale=[15.0, 15.0, 0.0]))
+viewer.add_object(lv.Sphere(scale=2.0, color=lv.color.rainbow_z, wire_color=lv.color.black))
+while viewer.spin_once():
+    pass
+```
+See the [Python guide](https://hamataku.github.io/LiVision/python/) for the full mapping from C++.
+
 ## 📄 License
 MIT. See `LICENSE`. Third-party notices are listed in `NOTICE`.
 

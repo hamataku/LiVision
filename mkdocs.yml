@@ -40,6 +40,7 @@ plugins:
             Object List: オブジェクト一覧
             Container: コンテナ
             Camera Controllers: カメラ操作クラス
+            Python: Python
             API Reference: APIリファレンス
 
 nav:
@@ -50,4 +51,5 @@ nav:
   - Object List: objects.md
   - Container: container.md
   - Camera Controllers: camera.md
+  - Python: python.md
   - API Reference: api/index.html

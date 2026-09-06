@@ -22,7 +22,19 @@ option(LIVISION_INSTALL_PRECOMPILED_SHADERS
        "Install precompiled shaders from shader/bin when not compiling"
        OFF)
 option(LIVISION_ENABLE_SDF "Enable SDF mesh loading via sdformat and assimp" ON)
+option(LIVISION_BUILD_PYTHON "Build Python bindings (pybind11)" OFF)
 set(LIVISION_SHADER_INSTALL_SUBDIR "livision/shaders" CACHE STRING "Install subdir for shader binaries under CMAKE_INSTALL_DATADIR")
+
+# When built by pip / scikit-build-core (SKBUILD), everything is installed
+# flat into the Python package directory instead of the system layout.
+if(SKBUILD)
+    set(LIVISION_BUILD_PYTHON ON)
+    set(LIVISION_LIB_INSTALL_DIR ".")
+    set(LIVISION_SHADER_INSTALL_DEST "shaders")
+else()
+    set(LIVISION_LIB_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR})
+    set(LIVISION_SHADER_INSTALL_DEST ${CMAKE_INSTALL_DATADIR}/${LIVISION_SHADER_INSTALL_SUBDIR})
+endif()
 
 # bgfx
 set(BGFX_LIBRARY_TYPE "STATIC" CACHE STRING "" FORCE)
@@ -59,10 +71,13 @@ else()
     add_library(${PROJECT_NAME} STATIC)
 endif()
 
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    VERSION ${PROJECT_VERSION}
-    SOVERSION ${PROJECT_VERSION_MAJOR}
-)
+if(NOT SKBUILD)
+    # Wheels cannot carry symlinks, so keep a single unversioned file there.
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        VERSION ${PROJECT_VERSION}
+        SOVERSION ${PROJECT_VERSION_MAJOR}
+    )
+endif()
 
 # Source files
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
@@ -160,7 +175,7 @@ if(LIVISION_COMPILE_SHADERS)
     add_dependencies(${PROJECT_NAME} compile-shaders)
 
     install(FILES ${SHADER_BINARIES}
-        DESTINATION ${CMAKE_INSTALL_DATADIR}/${LIVISION_SHADER_INSTALL_SUBDIR}
+        DESTINATION ${LIVISION_SHADER_INSTALL_DEST}
     )
 else()
     file(GLOB SHADER_BINARIES_PREBUILT
@@ -169,7 +184,7 @@ else()
     if(LIVISION_INSTALL_PRECOMPILED_SHADERS)
         if(SHADER_BINARIES_PREBUILT)
             install(FILES ${SHADER_BINARIES_PREBUILT}
-                DESTINATION ${CMAKE_INSTALL_DATADIR}/${LIVISION_SHADER_INSTALL_SUBDIR}
+                DESTINATION ${LIVISION_SHADER_INSTALL_DEST}
             )
         else()
             message(WARNING "LIVISION_COMPILE_SHADERS=OFF but no precompiled shaders found in shader/bin")
@@ -184,10 +199,19 @@ set(LIVISION_EXPORT_TARGETS ${PROJECT_NAME})
 
 install(TARGETS ${LIVISION_EXPORT_TARGETS}
     EXPORT livisionTargets
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${LIVISION_LIB_INSTALL_DIR}
+    LIBRARY DESTINATION ${LIVISION_LIB_INSTALL_DIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+# Python bindings
+if(LIVISION_BUILD_PYTHON)
+    add_subdirectory(python)
+endif()
+
+if(SKBUILD)
+    return()  # Headers and CMake package config are not part of the wheel.
+endif()
 
 install(DIRECTORY
     ${CMAKE_CURRENT_SOURCE_DIR}/include/livision/
