@@ -1,3 +1,14 @@
+livision (0.3.8-1~jammy) jammy; urgency=medium
+
+  * Add screenshot and video recording: Viewer::SaveScreenshot writes
+    PNG, StartRecording/StopRecording stream frames to ffmpeg as H.264
+    or GIF, and the control panel gains a Capture section. Headless
+    viewers now keep their configured resolution and draw the scene, so
+    offscreen rendering to PNG works; previously they rendered a blank
+    1x1 frame.
+
+ -- Taku Hamazaki <hamataku07130713@gmail.com>  Sun, 06 Sep 2026 19:23:09 +0900
+
 livision (0.3.7-1~jammy) jammy; urgency=medium
 
   * Add Python bindings (pybind11): pip-installable livision package
