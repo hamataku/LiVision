@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(livision VERSION 0.3.5 LANGUAGES CXX)
+project(livision VERSION 0.3.6 LANGUAGES CXX)
 
 include(GNUInstallDirs)
 
