@@ -10,13 +10,18 @@
 #include <bx/math.h>
 
 #include <algorithm>
+#include <chrono>
+#include <cstdio>
+#include <ctime>
 #include <stdexcept>
+#include <string>
 #include <utility>
 
 #include "imgui_impl_bgfx.h"
 #include "livision/Camera.hpp"
 #include "livision/Log.hpp"
 #include "livision/Renderer.hpp"
+#include "livision/internal/capture.hpp"
 #include "livision/internal/mesh_buffer_manager.hpp"
 #include "livision/imgui/imgui_impl_sdl2.h"
 
@@ -31,6 +36,16 @@ uint8_t ToU8(float x) {
     return 255;
   }
   return static_cast<uint8_t>((x * 255.0F) + 0.5F);
+}
+
+std::string TimestampedName(const char* extension) {
+  const auto now = std::chrono::system_clock::now();
+  const std::time_t t = std::chrono::system_clock::to_time_t(now);
+  std::tm tm{};
+  localtime_r(&t, &tm);
+  char buf[64];
+  std::strftime(buf, sizeof(buf), "livision_%Y%m%d_%H%M%S", &tm);
+  return std::string(buf) + extension;
 }
 
 uint32_t ToRGBA8(const Color& color) {
@@ -60,17 +75,74 @@ struct Viewer::Impl {
   float view[16] = {};
   float proj[16];
 
+  internal::CaptureCallback capture;
+  char capture_path_buf[512] = {};
+  bool pending_screenshot = false;
+  std::string clean_screenshot_path;
+  bool start_recording_requested = false;
+  bool stop_recording_requested = false;
+
+  uint32_t ResetFlags() const {
+    uint32_t flags = config.vsync ? BGFX_RESET_VSYNC : BGFX_RESET_NONE;
+    if (capture.IsRecording()) {
+      flags |= BGFX_RESET_CAPTURE;
+    }
+    return flags;
+  }
+
+  /**
+   * @brief Re-apply the reset flags, e.g. after capture is toggled.
+   */
+  void ApplyReset() {
+    bgfx::reset(static_cast<uint32_t>(config.width),
+                static_cast<uint32_t>(config.height), ResetFlags());
+  }
+
+  /**
+   * @brief Built-in Capture section of the control panel.
+   */
+  void DrawCaptureUI() {
+    if (!config.capture_ui) {
+      return;
+    }
+    ImGui::Separator();
+    if (!ImGui::CollapsingHeader("Capture")) {
+      return;
+    }
+    ImGui::InputTextWithHint("##capture_path", "output path (blank = auto)",
+                             capture_path_buf, sizeof(capture_path_buf));
+    if (ImGui::Button("Screenshot")) {
+      pending_screenshot = true;
+    }
+    ImGui::SameLine();
+    if (capture.IsRecording()) {
+      if (ImGui::Button("Stop recording")) {
+        stop_recording_requested = true;
+      }
+      ImGui::SameLine();
+      ImGui::Text("REC %u", capture.RecordedFrames());
+    } else if (ImGui::Button("Record")) {
+      start_recording_requested = true;
+    }
+  }
+
   void Resize(int width, int height) {
     if (width <= 0 || height <= 0) {
       return;
     }
 
+    if (capture.IsRecording()) {
+      LogMessage(LogLevel::Warn,
+                 "Window resized while recording; stopping the recording so "
+                 "the file written so far is kept.");
+      capture.EndRecording();
+    }
+
     config.width = width;
     config.height = height;
 
-    uint32_t reset_flags = config.vsync ? BGFX_RESET_VSYNC : BGFX_RESET_NONE;
     bgfx::reset(static_cast<uint32_t>(config.width),
-                static_cast<uint32_t>(config.height), reset_flags);
+                static_cast<uint32_t>(config.height), ResetFlags());
     bgfx::setViewRect(0, 0, 0, static_cast<uint16_t>(config.width),
                       static_cast<uint16_t>(config.height));
   }
@@ -79,11 +151,6 @@ struct Viewer::Impl {
 Viewer::Viewer(const ViewerConfig& config) : pimpl_(std::make_unique<Impl>()) {
   pimpl_->config = config;
   SetLogLevel(pimpl_->config.log_level);
-
-  if (pimpl_->config.headless) {
-    pimpl_->config.width = 1;
-    pimpl_->config.height = 1;
-  }
 
   if (SDL_Init(SDL_INIT_VIDEO) != 0) {
     throw std::runtime_error(
@@ -143,6 +210,7 @@ Viewer::Viewer(const ViewerConfig& config) : pimpl_(std::make_unique<Impl>()) {
     bgfx_init.resolution.reset = BGFX_RESET_NONE;
   }
   bgfx_init.platformData = pd;
+  bgfx_init.callback = &pimpl_->capture;
   bgfx::init(bgfx_init);
   internal::MeshBufferManager::SetBgfxAlive(true);
 
@@ -175,6 +243,10 @@ Viewer::Viewer(const ViewerConfig& config) : pimpl_(std::make_unique<Impl>()) {
 }
 
 Viewer::~Viewer() {
+  if (pimpl_->capture.IsRecording()) {
+    StopRecording();
+    bgfx::frame();  // Let bgfx deliver captureEnd() and close the encoder.
+  }
   for (auto& object : pimpl_->draw_objects) {
     if (object) {
       object->DeInit();
@@ -208,52 +280,57 @@ bool Viewer::SpinOnce() {
     object->UpdateMatrix(Eigen::Affine3d::Identity());
   }
 
-  if (!pimpl_->config.headless) {
-    // Event handling
-    SDL_Event event = {};
-    while (SDL_PollEvent(&event)) {
-      ImGui_ImplSDL2_ProcessEvent(&event);
-      if (event.type == SDL_QUIT) {
-        pimpl_->quit = true;
-      }
-      if (event.type == SDL_WINDOWEVENT &&
-          event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
-        pimpl_->Resize(event.window.data1, event.window.data2);
-      }
-      if (pimpl_->camera) {
-        pimpl_->camera->HandleEvent(event);
-      }
+  // Event handling. A headless viewer still drains the queue to catch Ctrl+C,
+  // but window resizes and camera input only apply to a visible window.
+  SDL_Event event = {};
+  while (SDL_PollEvent(&event)) {
+    ImGui_ImplSDL2_ProcessEvent(&event);
+    if (event.type == SDL_QUIT) {
+      pimpl_->quit = true;
     }
-
-    const uint32_t now = SDL_GetTicks();
-    const float delta_time_sec =
-        static_cast<float>(now - pimpl_->last_frame_time) / 1000.0F;
-    pimpl_->last_frame_time = now;
-
-    // Camera control
-    bx::mtxProj(pimpl_->proj, 60.0F,
-                static_cast<float>(pimpl_->config.width) /
-                    static_cast<float>(pimpl_->config.height),
-                0.1F, 1000.0F, bgfx::getCaps()->homogeneousDepth,
-                bx::Handedness::Right);
-
+    if (pimpl_->config.headless) {
+      continue;
+    }
+    if (event.type == SDL_WINDOWEVENT &&
+        event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+      pimpl_->Resize(event.window.data1, event.window.data2);
+    }
     if (pimpl_->camera) {
-      CameraInputContext input_context;
-      input_context.want_capture_mouse = ImGui::GetIO().WantCaptureMouse;
-      input_context.want_capture_keyboard = ImGui::GetIO().WantCaptureKeyboard;
-      input_context.delta_time_sec = delta_time_sec;
-      const float* view = pimpl_->camera->Update(input_context);
-      std::copy(view, view + 16, pimpl_->view);
+      pimpl_->camera->HandleEvent(event);
     }
+  }
 
-    pimpl_->renderer.SetCameraViewMatrix(pimpl_->view);
-    bgfx::setViewTransform(0, pimpl_->view, pimpl_->proj);
+  const uint32_t now = SDL_GetTicks();
+  const float delta_time_sec =
+      static_cast<float>(now - pimpl_->last_frame_time) / 1000.0F;
+  pimpl_->last_frame_time = now;
 
-    for (const auto& object : pimpl_->draw_objects) {
-      if (object->IsVisible()) object->OnDraw(pimpl_->renderer);
-    }
+  // Camera control
+  bx::mtxProj(pimpl_->proj, 60.0F,
+              static_cast<float>(pimpl_->config.width) /
+                  static_cast<float>(pimpl_->config.height),
+              0.1F, 1000.0F, bgfx::getCaps()->homogeneousDepth,
+              bx::Handedness::Right);
 
-    // Render ImGui
+  if (pimpl_->camera) {
+    CameraInputContext input_context;
+    input_context.want_capture_mouse = ImGui::GetIO().WantCaptureMouse;
+    input_context.want_capture_keyboard = ImGui::GetIO().WantCaptureKeyboard;
+    input_context.delta_time_sec = delta_time_sec;
+    const float* view = pimpl_->camera->Update(input_context);
+    std::copy(view, view + 16, pimpl_->view);
+  }
+
+  pimpl_->renderer.SetCameraViewMatrix(pimpl_->view);
+  bgfx::setViewTransform(0, pimpl_->view, pimpl_->proj);
+
+  // The scene is drawn in headless mode too, so screenshots and recordings
+  // work without a visible window. Only the ImGui overlay is skipped.
+  for (const auto& object : pimpl_->draw_objects) {
+    if (object->IsVisible()) object->OnDraw(pimpl_->renderer);
+  }
+
+  if (!pimpl_->config.headless) {
     ImGui_Implbgfx_NewFrame();
     ImGui_ImplSDL2_NewFrame();
 
@@ -261,19 +338,36 @@ bool Viewer::SpinOnce() {
     ImGui::Begin("Control panel", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
     pimpl_->ui_callback();
+    pimpl_->DrawCaptureUI();
 
     ImGui::End();
     ImGui::Render();
-    ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
-  } else {
-    // Headless Event handling(Catch Ctrl+C)
-    SDL_Event event = {};
-    while (SDL_PollEvent(&event)) {
-      ImGui_ImplSDL2_ProcessEvent(&event);
-      if (event.type == SDL_QUIT) {
-        pimpl_->quit = true;
-      }
+    // The overlay is built either way so the user callback still runs; only
+    // its submission is skipped for a clean screenshot.
+    if (pimpl_->clean_screenshot_path.empty()) {
+      ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
     }
+  }
+
+  if (!pimpl_->clean_screenshot_path.empty()) {
+    bgfx::requestScreenShot(BGFX_INVALID_HANDLE,
+                            pimpl_->clean_screenshot_path.c_str());
+    pimpl_->clean_screenshot_path.clear();
+  }
+
+  // UI buttons only set flags; the work happens here so it is applied to the
+  // frame that is about to be submitted.
+  if (pimpl_->pending_screenshot) {
+    pimpl_->pending_screenshot = false;
+    SaveScreenshot(pimpl_->capture_path_buf);
+  }
+  if (pimpl_->start_recording_requested) {
+    pimpl_->start_recording_requested = false;
+    StartRecording(pimpl_->capture_path_buf);
+  }
+  if (pimpl_->stop_recording_requested) {
+    pimpl_->stop_recording_requested = false;
+    StopRecording();
   }
 
   bgfx::frame();
@@ -300,6 +394,41 @@ void Viewer::PrintFPS() {
 }
 
 void Viewer::Close() { pimpl_->quit = true; }
+
+std::string Viewer::SaveScreenshot(const std::string& path, bool include_ui) {
+  const std::string out = path.empty() ? TimestampedName(".png") : path;
+  if (include_ui || pimpl_->config.headless) {
+    bgfx::requestScreenShot(BGFX_INVALID_HANDLE, out.c_str());
+  } else {
+    // Deferred: the request is issued once a frame has been rendered without
+    // submitting the ImGui draw lists.
+    pimpl_->clean_screenshot_path = out;
+  }
+  return out;
+}
+
+std::string Viewer::StartRecording(const std::string& path, int fps) {
+  if (pimpl_->capture.IsRecording()) {
+    LogMessage(LogLevel::Warn, "Already recording to ",
+               pimpl_->capture.RecordingPath());
+    return pimpl_->capture.RecordingPath();
+  }
+  const std::string out = path.empty() ? TimestampedName(".mp4") : path;
+  pimpl_->capture.BeginRecording(out, fps);
+  // Capture only starts once the swap chain is reset with the capture flag.
+  pimpl_->ApplyReset();
+  return out;
+}
+
+void Viewer::StopRecording() {
+  if (!pimpl_->capture.IsRecording()) {
+    return;
+  }
+  pimpl_->capture.EndRecording();
+  pimpl_->ApplyReset();
+}
+
+bool Viewer::IsRecording() const { return pimpl_->capture.IsRecording(); }
 
 void Viewer::AddObject(std::shared_ptr<ObjectBase> object) {
   if (!object) {

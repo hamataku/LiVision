@@ -112,3 +112,32 @@ viewer.set_camera_controller(lv.KeyboardOrbitCamera(target=[0, -9, 5], yaw=-1.6,
 ```
 
 `target` is the camera position, and `yaw`/`pitch` are in radians.
+
+## Screenshots and recording
+
+```python
+# PNG of the next rendered frame; include_ui=False leaves out the overlay.
+viewer.save_screenshot("scene.png", include_ui=False)
+
+# Record until stop_recording(). ".gif" writes a GIF, anything else H.264.
+viewer.start_recording("scene.mp4", fps=30)
+...
+viewer.stop_recording()
+```
+
+The file is written during the following `spin_once()`, so call it once more
+before reading the image. An empty path produces a timestamped name in the
+current directory. Recording needs `ffmpeg` on `PATH`.
+
+`Viewer(headless=True)` renders the scene without a window, which makes it a
+convenient way to turn a script into an image:
+
+```python
+viewer = lv.Viewer(headless=True, width=1280, height=720)
+viewer.add_object(lv.Box(scale=2.0, color=lv.color.red))
+viewer.spin_once()
+viewer.save_screenshot("out.png")
+viewer.spin_once()
+```
+
+See `examples/python/capture.py` and `examples/python/headless_render.py`.

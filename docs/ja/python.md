@@ -111,3 +111,32 @@ viewer.set_camera_controller(lv.KeyboardOrbitCamera(target=[0, -9, 5], yaw=-1.6,
 ```
 
 `target` はカメラ位置、`yaw`/`pitch` はラジアンです。
+
+## スクリーンショットと録画
+
+```python
+# 次のフレームを PNG 保存。include_ui=False でオーバーレイを除外。
+viewer.save_screenshot("scene.png", include_ui=False)
+
+# stop_recording() まで録画。".gif" なら GIF、それ以外は H.264。
+viewer.start_recording("scene.mp4", fps=30)
+...
+viewer.stop_recording()
+```
+
+ファイルは次の `spin_once()` の実行中に書き込まれるので、画像を読む前にもう一度
+呼んでください。パスを空にするとカレントディレクトリに日時入りの名前で生成します。
+録画には `PATH` の通った `ffmpeg` が必要です。
+
+`Viewer(headless=True)` はウィンドウなしでシーンを描画するため、スクリプトから
+画像を生成する用途に向いています。
+
+```python
+viewer = lv.Viewer(headless=True, width=1280, height=720)
+viewer.add_object(lv.Box(scale=2.0, color=lv.color.red))
+viewer.spin_once()
+viewer.save_screenshot("out.png")
+viewer.spin_once()
+```
+
+`examples/python/capture.py` と `examples/python/headless_render.py` を参照してください。

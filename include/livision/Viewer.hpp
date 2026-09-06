@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <memory>
+#include <string>
 
 #include "livision/Camera.hpp"
 #include "livision/Color.hpp"
@@ -22,6 +23,7 @@ struct ViewerConfig {
   int height = 720;                      // Window height
   Color background = color::light_gray;  // Background color (RGB is used)
   LogLevel log_level = LogLevel::Info;   // Log level
+  bool capture_ui = true;  // Show the built-in Capture section in the panel
 };
 
 /**
@@ -52,6 +54,42 @@ class Viewer {
    * @brief Request viewer shutdown.
    */
   void Close();
+  /**
+   * @brief Request a PNG screenshot of the next rendered frame.
+   *
+   * The image is written while the following SpinOnce() renders, so call
+   * SpinOnce() once more before reading the file.
+   *
+   * @param path Output path. When empty, a timestamped name is generated in
+   *   the current directory.
+   * @param include_ui Keep the ImGui overlay in the image. Pass false for a
+   *   clean render; the overlay is hidden for that one frame only.
+   * @return Path the image will be written to.
+   */
+  std::string SaveScreenshot(const std::string& path = "",
+                             bool include_ui = true);
+  /**
+   * @brief Start recording rendered frames to a video file.
+   *
+   * Frames are streamed to ffmpeg, which must be installed and on PATH. The
+   * container is chosen from the extension; ".gif" is encoded with a
+   * generated palette, anything else with H.264. Output is paced on the wall
+   * clock, so the video plays at real speed even if rendering is slower.
+   *
+   * @param path Output path. When empty, a timestamped .mp4 is generated in
+   *   the current directory.
+   * @param fps Frame rate of the written video.
+   * @return Path being recorded to, or an empty string on failure.
+   */
+  std::string StartRecording(const std::string& path = "", int fps = 30);
+  /**
+   * @brief Stop the current recording and finish writing the file.
+   */
+  void StopRecording();
+  /**
+   * @brief Whether a recording is currently running.
+   */
+  bool IsRecording() const;
   /**
    * @brief Add an object to be rendered.
    */

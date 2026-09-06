@@ -16,6 +16,7 @@ LiVision is a lightweight C++ 3D visualizer for rapid prototyping with ImGui and
 - 🗂️ **Container-Based Group Control**: Move/transform multiple objects together.
 - 🌐 **3D Object Coverage**: Meshes, models, and **SDF-based** objects.
 - 📊 **ImGui + ImPlot UI**: Quick interactive tools and plotting dashboards.
+- 📸 **Capture**: Save PNG screenshots and record MP4/GIF, with or without a window.
 
 ## 🚀 Quick Start
 ### 📦 Installation

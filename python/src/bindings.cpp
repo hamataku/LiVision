@@ -783,7 +783,8 @@ void BindCamera(py::module_& m) {
 void BindViewer(py::module_& m) {
   py::class_<Viewer, std::unique_ptr<Viewer>>(m, "Viewer")
       .def(py::init([](bool headless, bool vsync, int width, int height,
-                       const Color& background, LogLevel log_level) {
+                       const Color& background, LogLevel log_level,
+                       bool capture_ui) {
              ViewerConfig cfg;
              cfg.headless = headless;
              cfg.vsync = vsync;
@@ -791,11 +792,12 @@ void BindViewer(py::module_& m) {
              cfg.height = height;
              cfg.background = background;
              cfg.log_level = log_level;
+             cfg.capture_ui = capture_ui;
              return std::make_unique<Viewer>(cfg);
            }),
            "headless"_a = false, "vsync"_a = true, "width"_a = 1280,
            "height"_a = 720, "background"_a = color::light_gray,
-           "log_level"_a = LogLevel::Info,
+           "log_level"_a = LogLevel::Info, "capture_ui"_a = true,
            "Create the window and renderer. Only one Viewer may exist at a "
            "time.")
       .def("spin_once", &Viewer::SpinOnce,
@@ -803,6 +805,21 @@ void BindViewer(py::module_& m) {
            "Process events and render one frame. Returns False once the "
            "window is closed.")
       .def("close", &Viewer::Close, "Request the window to close.")
+      .def("save_screenshot", &Viewer::SaveScreenshot, "path"_a = "",
+           "include_ui"_a = true,
+           "Request a PNG of the next rendered frame and return its path. "
+           "The file is written during the following spin_once(), so call "
+           "spin_once() once more before reading it. Pass include_ui=False "
+           "for a render without the ImGui overlay.")
+      .def("start_recording", &Viewer::StartRecording, "path"_a = "",
+           "fps"_a = 30,
+           "Start recording frames to a video file and return its path. "
+           "Requires ffmpeg on PATH. A '.gif' extension writes a GIF, "
+           "anything else H.264. Output is paced on the wall clock so the "
+           "video plays at real speed.")
+      .def("stop_recording", &Viewer::StopRecording,
+           "Stop recording and finish writing the file.")
+      .def("is_recording", &Viewer::IsRecording)
       .def("add_object", &Viewer::AddObject, "object"_a,
            "Add a top-level object to the scene.")
       .def("register_ui_callback", &Viewer::RegisterUICallback, "callback"_a,
