@@ -27,17 +27,28 @@ minimum-version = "0.10"
 build-dir = "build-py/{wheel_tag}"
 wheel.packages = ["python/livision"]
 wheel.install-dir = "livision"
+# Use the precompiled shaders tracked in shader/bin so the pip build does not
+# need bgfx's shaderc toolchain (much faster, and scripts/ is not shipped).
 cmake.args = [
   "-DLIVISION_BUILD_EXAMPLE=OFF",
-  "-DLIVISION_COMPILE_SHADERS=ON",
+  "-DLIVISION_COMPILE_SHADERS=OFF",
+  "-DLIVISION_INSTALL_PRECOMPILED_SHADERS=ON",
 ]
+# Patterns are gitignore-style; leading "/" anchors them to the repository root
+# so bgfx's own scripts/ and docs/ directories stay in the sdist.
 sdist.exclude = [
-  "docs/", "site/", "dist/", "examples/", "scripts/", ".github/",
+  "/docs/", "/site/", "/dist/", "/examples/", "/scripts/", "/.github/",
   "*.orig.tar.xz", "*.debian.tar.xz", "*.dsc", "*.changes", "*.build",
   "*.buildinfo", "*.upload", "*.patch", "*.log",
-  "third-party/bgfx.cmake/bgfx/examples/", "third-party/bgfx.cmake/bgfx/tools/",
-  "third-party/bgfx.cmake/bgfx/bindings/", "third-party/bgfx.cmake/bx/tools/",
-  "third-party/bgfx.cmake/bx/tests/", "third-party/bgfx.cmake/bimg/tools/",
+  "/third-party/bgfx.cmake/bgfx/examples/", "/third-party/bgfx.cmake/bgfx/tools/",
+  "/third-party/bgfx.cmake/bgfx/bindings/", "/third-party/bgfx.cmake/bx/tools/",
+  "/third-party/bgfx.cmake/bx/tests/", "/third-party/bgfx.cmake/bimg/tools/",
+]
+# The repository .gitignore lists generated/, which would otherwise drop these
+# tracked bgfx.cmake inputs from the sdist.
+sdist.include = [
+  "third-party/bgfx.cmake/cmake/bgfx/generated/**",
+  "third-party/bgfx.cmake/bgfx/3rdparty/spirv-tools/include/generated/**",
 ]
 
 [tool.scikit-build.metadata.version]
