@@ -6,15 +6,21 @@ colors, and a small ImGui subset for UI callbacks.
 
 ## Installation
 
-Build dependencies are the same as the C++ library. The bindings are built
-from source by `pip`, which takes a few minutes the first time (bgfx is
-compiled as part of the build).
+LiVision is published on PyPI as a source distribution, so `pip` compiles it
+on install. That takes a few minutes the first time and needs the same build
+dependencies as the C++ library.
 
 ```bash
-sudo apt install -y build-essential cmake pkg-config git \
+sudo apt install -y build-essential cmake pkg-config \
   libsdl2-dev libeigen3-dev libsdformat14-dev libassimp-dev libcurl4-openssl-dev \
   python3-dev
 
+pip install livision
+```
+
+To build from a checkout instead:
+
+```bash
 git clone https://github.com/hamataku/LiVision.git --recursive
 cd LiVision
 pip install .

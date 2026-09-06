@@ -6,14 +6,20 @@ UI コールバック用の小さな ImGui サブセットを提供します。
 
 ## インストール
 
-ビルド依存は C++ ライブラリと同じです。バインディングは `pip` がソースからビルドします。
-初回は bgfx ごとコンパイルするため数分かかります。
+LiVision は PyPI にソース配布として公開しているため、`pip` がインストール時に
+ビルドします。初回は数分かかり、C++ ライブラリと同じビルド依存が必要です。
 
 ```bash
-sudo apt install -y build-essential cmake pkg-config git \
+sudo apt install -y build-essential cmake pkg-config \
   libsdl2-dev libeigen3-dev libsdformat14-dev libassimp-dev libcurl4-openssl-dev \
   python3-dev
 
+pip install livision
+```
+
+チェックアウトからビルドする場合は次のとおりです。
+
+```bash
 git clone https://github.com/hamataku/LiVision.git --recursive
 cd LiVision
 pip install .
