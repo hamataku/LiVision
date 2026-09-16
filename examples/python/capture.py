@@ -12,7 +12,7 @@ import livision as lv
 
 viewer = lv.Viewer(width=960, height=540)
 viewer.set_camera_controller(
-    lv.KeyboardOrbitCamera(target=[0, -8, 4], yaw=-1.626, pitch=0.35)
+    lv.KeyboardOrbitCamera(target=[0, -8, 4], yaw=1.516, pitch=-0.35)
 )
 
 viewer.add_object(lv.Plane(scale=[30.0, 30.0, 0.0], color=lv.color.light_gray))

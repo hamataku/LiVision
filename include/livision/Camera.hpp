@@ -50,6 +50,11 @@ class MouseOrbitCamera : public CameraBase {
   MouseOrbitCamera* SetTarget(float x, float y, float z);
   /**
    * @brief Set view direction angles in radians.
+   *
+   * The camera looks along
+   * (cos(pitch) * cos(yaw), cos(pitch) * sin(yaw), sin(pitch)) in the world
+   * frame (z up): yaw is measured from +x toward +y, and positive pitch looks
+   * up. For example yaw = 0, pitch = 0 looks along +x.
    */
   MouseOrbitCamera* SetYawPitch(float yaw, float pitch);
   std::array<float, 3> GetTarget() const {
@@ -67,8 +72,10 @@ class MouseOrbitCamera : public CameraBase {
   float target_x_ = 0.0F;
   float target_y_ = 0.0F;
   float target_z_ = 5.0F;
-  float cam_yaw_ = -1.57079632679F;
-  float cam_pitch_ = 1.57079632679F - 0.02F;
+  // Looks straight down at the origin from above (same initial view as before
+  // the handedness fix, which is why yaw/pitch are +90 deg / about -90 deg).
+  float cam_yaw_ = 1.57079632679F;
+  float cam_pitch_ = -(1.57079632679F - 0.02F);
   float scroll_delta_ = 0.0F;
   int prev_mouse_x_ = 0;
   int prev_mouse_y_ = 0;

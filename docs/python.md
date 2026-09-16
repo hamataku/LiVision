@@ -108,10 +108,13 @@ Inside the UI callback, `lv.imgui` provides `begin`/`end`, `text`, `button`,
 `MouseOrbitCamera` and `KeyboardOrbitCamera` accept an initial pose:
 
 ```python
-viewer.set_camera_controller(lv.KeyboardOrbitCamera(target=[0, -9, 5], yaw=-1.6, pitch=0.4))
+viewer.set_camera_controller(lv.KeyboardOrbitCamera(target=[0, -9, 5], yaw=1.542, pitch=-0.4))
 ```
 
-`target` is the camera position, and `yaw`/`pitch` are in radians.
+`target` is the camera position, and `yaw`/`pitch` are in radians. The camera
+looks along `(cos(pitch) cos(yaw), cos(pitch) sin(yaw), sin(pitch))`: yaw is
+measured from +x toward +y and positive pitch looks up, so `yaw=0, pitch=0`
+looks along +x.
 
 ## Screenshots and recording
 

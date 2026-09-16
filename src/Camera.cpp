@@ -46,8 +46,11 @@ void MouseOrbitCamera::UpdateMouse(bool want_capture_mouse) {
   const int delta_y = mouse_y - prev_mouse_y_;
 
   if ((buttons & SDL_BUTTON_LMASK) != 0) {
+    // Drag to grab the scene: dragging down tilts the view up. The pitch sign
+    // is chosen so this feel is unchanged by the handedness fix in
+    // RebuildView(); yaw already keeps its feel.
     cam_yaw_ += static_cast<float>(delta_x) * kRotScale;
-    cam_pitch_ -= static_cast<float>(delta_y) * kRotScale;
+    cam_pitch_ += static_cast<float>(delta_y) * kRotScale;
     cam_pitch_ =
         bx::clamp(cam_pitch_, -bx::kPiHalf + 0.01F, bx::kPiHalf - 0.01F);
   }
@@ -112,7 +115,12 @@ void MouseOrbitCamera::RebuildView() {
 
   const bx::Vec3 up_vec = {0.0F, 0.0F, 1.0F};
   const bx::Vec3 target = {target_x_, target_y_, target_z_};
-  bx::mtxLookAt(view_, eye, target, up_vec);
+  // The projection is built right-handed (Viewer.cpp). bx::mtxLookAt defaults
+  // to left-handed, and with that mismatch the rendered view faced the
+  // opposite of `forward` (cos pitch cos yaw, cos pitch sin yaw, sin pitch):
+  // SetYawPitch looked the wrong way, and scrolling / WASD moved away from
+  // what was on screen. Match the projection so the camera looks along forward.
+  bx::mtxLookAt(view_, eye, target, up_vec, bx::Handedness::Right);
 }
 
 const float* KeyboardOrbitCamera::Update(const CameraInputContext& context) {

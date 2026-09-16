@@ -107,10 +107,12 @@ UI コールバック内で `lv.imgui` の `begin`/`end`、`text`、`button`、
 `MouseOrbitCamera` と `KeyboardOrbitCamera` は初期姿勢を受け取れます。
 
 ```python
-viewer.set_camera_controller(lv.KeyboardOrbitCamera(target=[0, -9, 5], yaw=-1.6, pitch=0.4))
+viewer.set_camera_controller(lv.KeyboardOrbitCamera(target=[0, -9, 5], yaw=1.542, pitch=-0.4))
 ```
 
-`target` はカメラ位置、`yaw`/`pitch` はラジアンです。
+`target` はカメラ位置、`yaw`/`pitch` はラジアンです。カメラは
+`(cos(pitch) cos(yaw), cos(pitch) sin(yaw), sin(pitch))` の方向を向きます。
+yaw は +x から +y へ測り、pitch は正で上向きなので、`yaw=0, pitch=0` は +x を向きます。
 
 ## スクリーンショットと録画
 
