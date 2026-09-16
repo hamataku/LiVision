@@ -1,3 +1,14 @@
+livision (0.3.9-1~jammy) jammy; urgency=medium
+
+  * Fix the camera looking opposite to its yaw/pitch. RebuildView used a
+    left-handed lookAt with the right-handed projection, so SetYawPitch
+    pointed the wrong way and scrolling / WASD moved away from the view.
+    The default pose and mouse drag keep their previous look and feel;
+    wheel-up and W now move toward the view, and the Up/Down arrow keys
+    tilt the view in the pressed direction.
+
+ -- Taku Hamazaki <hamataku07130713@gmail.com>  Wed, 16 Sep 2026 21:42:12 +0900
+
 livision (0.3.8-1~jammy) jammy; urgency=medium
 
   * Add screenshot and video recording: Viewer::SaveScreenshot writes
